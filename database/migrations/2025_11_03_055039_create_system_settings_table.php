@@ -16,8 +16,8 @@ return new class extends Migration
             $table->string('key', 100)->unique();
             $table->text('value');
             $table->text('description')->nullable();
-            $table->enum('type', ['string', 'number', 'boolean', 'json'])->default('string');
-            $table->timestamp('updated_at');
+            $table->enum('type', ['string', 'number', 'boolean', 'json', 'integer', 'time'])->default('string');
+            $table->timestamps();
         });
     }
 

@@ -8,6 +8,7 @@ class MyRequests extends Component
 {
     public function render()
     {
-        return view('livewire.swap.my-requests');
+        return view('livewire.swap.my-requests')
+            ->layout('layouts.app');
     }
 }

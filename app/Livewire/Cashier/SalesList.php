@@ -8,6 +8,7 @@ class SalesList extends Component
 {
     public function render()
     {
-        return view('livewire.cashier.sales-list');
+        return view('livewire.cashier.sales-list')
+            ->layout('layouts.app');
     }
 }

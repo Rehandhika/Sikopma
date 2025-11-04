@@ -60,7 +60,7 @@ class PenaltyTypeSeeder extends Seeder
                 'is_active' => true,
             ],
             [
-                'code' => 'INAPPROPRIATE_BEHAVIOR',
+                'code' => 'BAD_BEHAVIOR',
                 'name' => 'Perilaku Tidak Pantas',
                 'description' => 'Perilaku yang tidak sesuai dengan norma koperasi',
                 'points' => 7,

@@ -18,11 +18,14 @@ return new class extends Migration
             $table->text('message');
             $table->enum('type', ['info', 'warning', 'error', 'success']);
             $table->boolean('is_read')->default(false);
+            $table->timestamp('read_at')->nullable();
+            $table->string('action_url')->nullable();
             $table->json('data')->nullable();
             $table->timestamps();
 
             $table->index('user_id');
             $table->index('is_read');
+            $table->index('read_at');
             $table->index('type');
         });
     }

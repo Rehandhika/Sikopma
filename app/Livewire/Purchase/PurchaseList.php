@@ -8,6 +8,7 @@ class PurchaseList extends Component
 {
     public function render()
     {
-        return view('livewire.purchase.purchase-list');
+        return view('livewire.purchase.purchase-list')
+            ->layout('layouts.app');
     }
 }

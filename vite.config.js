@@ -6,8 +6,39 @@ export default defineConfig({
     plugins: [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.js'],
-            refresh: true,
+            refresh: [
+                'resources/views/**',
+                'app/Livewire/**',
+            ],
         }),
         tailwindcss(),
     ],
+    build: {
+        chunkSizeWarningLimit: 1000,
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    vendor: [
+                        'alpinejs',
+                    ],
+                    charts: [
+                        'chart.js',
+                    ],
+                    forms: [
+                        'flatpickr',
+                        'tom-select',
+                    ],
+                    utils: [
+                        'sortablejs',
+                        'filepond',
+                    ],
+                },
+            },
+        },
+    },
+    server: {
+        hmr: {
+            host: 'localhost',
+        },
+    },
 });

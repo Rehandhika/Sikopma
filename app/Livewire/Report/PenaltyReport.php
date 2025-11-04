@@ -8,6 +8,7 @@ class PenaltyReport extends Component
 {
     public function render()
     {
-        return view('livewire.report.penalty-report');
+        return view('livewire.report.penalty-report')
+            ->layout('layouts.app');
     }
 }

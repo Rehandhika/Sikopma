@@ -56,7 +56,10 @@ class NotificationService
      */
     public static function markAsRead(Notification $notification): void
     {
-        $notification->update(['read_at' => now()]);
+        $notification->update([
+            'is_read' => true,
+            'read_at' => now(),
+        ]);
     }
 
     /**
@@ -66,7 +69,10 @@ class NotificationService
     {
         $user->notifications()
             ->whereNull('read_at')
-            ->update(['read_at' => now()]);
+            ->update([
+                'is_read' => true,
+                'read_at' => now(),
+            ]);
     }
 
     /**

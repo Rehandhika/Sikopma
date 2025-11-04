@@ -8,6 +8,7 @@ class CreateRequest extends Component
 {
     public function render()
     {
-        return view('livewire.swap.create-request');
+        return view('livewire.swap.create-request')
+            ->layout('layouts.app');
     }
 }

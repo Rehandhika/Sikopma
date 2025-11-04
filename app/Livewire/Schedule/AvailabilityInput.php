@@ -8,6 +8,7 @@ class AvailabilityInput extends Component
 {
     public function render()
     {
-        return view('livewire.schedule.availability-input');
+        return view('livewire.schedule.availability-input')
+            ->layout('layouts.app');
     }
 }

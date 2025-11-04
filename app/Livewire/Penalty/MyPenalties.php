@@ -8,6 +8,7 @@ class MyPenalties extends Component
 {
     public function render()
     {
-        return view('livewire.penalty.my-penalties');
+        return view('livewire.penalty.my-penalties')
+            ->layout('layouts.app');
     }
 }
