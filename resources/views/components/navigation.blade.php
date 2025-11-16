@@ -58,6 +58,9 @@
         <a href="{{ route('schedule.availability') }}" class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('schedule.availability') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
             Ketersediaan
         </a>
+        <a href="{{ route('schedule.create') }}" class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('schedule.create') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
+            Tambah Jadwal
+        </a>
     </div>
 </div>
 

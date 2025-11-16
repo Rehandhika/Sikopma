@@ -12,10 +12,6 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
-        then: function () {
-            // Authentication routes (optional API endpoints)
-            Route::middleware('web')->group(base_path('routes/auth.php'));
-        },
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {

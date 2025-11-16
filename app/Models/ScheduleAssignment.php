@@ -117,4 +117,75 @@ class ScheduleAssignment extends Model
         ];
         return $labels[$this->day] ?? '';
     }
+
+    /**
+     * Check if assignment is available for swap
+     */
+    public function isAvailableForSwap(): bool
+    {
+        return $this->canSwap() && !$this->swapped_to_user_id;
+    }
+
+    /**
+     * Get conflict status
+     */
+    public function getConflictStatusAttribute(): ?string
+    {
+        // Check for double assignment
+        $doubleAssignment = self::where('user_id', $this->user_id)
+            ->where('date', $this->date)
+            ->where('session', $this->session)
+            ->where('id', '!=', $this->id)
+            ->exists();
+
+        if ($doubleAssignment) {
+            return 'double_assignment';
+        }
+
+        // Check if user is inactive
+        if ($this->user && $this->user->status !== 'active') {
+            return 'inactive_user';
+        }
+
+        // Check availability mismatch
+        $availability = Availability::where('user_id', $this->user_id)
+            ->whereHas('details', function($query) {
+                $dayName = strtolower($this->date->englishDayOfWeek);
+                $query->where('day', $dayName)
+                      ->where('session', $this->session)
+                      ->where('is_available', false);
+            })
+            ->exists();
+
+        if ($availability) {
+            return 'availability_mismatch';
+        }
+
+        return null;
+    }
+
+    /**
+     * Check if user is available for this assignment
+     */
+    public function checkUserAvailability(): bool
+    {
+        $dayName = strtolower($this->date->englishDayOfWeek);
+        
+        return AvailabilityDetail::whereHas('availability', function($query) {
+            $query->where('user_id', $this->user_id)
+                  ->where('status', 'submitted');
+        })
+        ->where('day', $dayName)
+        ->where('session', $this->session)
+        ->where('is_available', true)
+        ->exists();
+    }
+
+    /**
+     * Get formatted date and session
+     */
+    public function getFormattedSlotAttribute(): string
+    {
+        return $this->date->locale('id')->isoFormat('dddd, D MMMM Y') . ' - Sesi ' . $this->session;
+    }
 }

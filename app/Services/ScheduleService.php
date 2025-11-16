@@ -2,395 +2,327 @@
 
 namespace App\Services;
 
-use App\Models\Schedule;
-use App\Models\Availability;
-use App\Models\ScheduleAssignment;
-use App\Models\User;
-use App\Repositories\ScheduleRepository;
-use App\Exceptions\BusinessException;
-use App\Exceptions\ScheduleConflictException;
+use App\Models\{Schedule, ScheduleAssignment, User, Notification};
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class ScheduleService
 {
-    protected ScheduleRepository $repository;
-
-    public function __construct(ScheduleRepository $repository = null)
+    /**
+     * Create a new schedule
+     */
+    public function createSchedule(array $data): Schedule
     {
-        $this->repository = $repository ?: new ScheduleRepository();
+        // Validate dates
+        $weekStart = Carbon::parse($data['week_start_date']);
+        $weekEnd = Carbon::parse($data['week_end_date']);
+
+        if (!$weekStart->isMonday()) {
+            throw ValidationException::withMessages([
+                'week_start_date' => 'Tanggal mulai harus hari Senin.'
+            ]);
+        }
+
+        if (!$weekStart->copy()->addDays(3)->isSameDay($weekEnd)) {
+            throw ValidationException::withMessages([
+                'week_end_date' => 'Periode jadwal harus 4 hari (Senin-Kamis).'
+            ]);
+        }
+
+        // Check for duplicate schedule
+        if (Schedule::where('week_start_date', $weekStart->toDateString())->exists()) {
+            throw ValidationException::withMessages([
+                'week_start_date' => 'Jadwal untuk minggu ini sudah ada.'
+            ]);
+        }
+
+        // Create schedule
+        $schedule = Schedule::create([
+            'week_start_date' => $weekStart,
+            'week_end_date' => $weekEnd,
+            'status' => 'draft',
+            'generated_by' => auth()->id(),
+            'generated_at' => now(),
+            'total_slots' => 12, // 4 days × 3 sessions
+            'filled_slots' => 0,
+            'coverage_rate' => 0,
+            'notes' => $data['notes'] ?? null,
+        ]);
+
+        Log::info('Schedule created', [
+            'schedule_id' => $schedule->id,
+            'week_start' => $weekStart->toDateString(),
+            'created_by' => auth()->id(),
+        ]);
+
+        return $schedule;
     }
 
     /**
-     * Move schedule to new date/time
+     * Add assignment to schedule
      */
-    public function moveSchedule(int $scheduleId, Carbon $newDate, int $newSession, bool $force = false): bool
+    public function addAssignment(Schedule $schedule, array $data): ScheduleAssignment
     {
-        try {
-            return DB::transaction(function () use ($scheduleId, $newDate, $newSession, $force) {
-                $schedule = ScheduleAssignment::findOrFail($scheduleId);
-                
-                // Check for conflicts
-                if (!$force && $this->repository->hasConflict($schedule->user_id, $newDate, $newSession)) {
-                    throw new ScheduleConflictException('Schedule conflict detected');
-                }
+        // Validate schedule is editable
+        if (!$schedule->canEdit()) {
+            throw new \Exception('Jadwal tidak dapat diubah karena sudah dipublikasikan.');
+        }
 
-                // If force move, remove existing schedule
-                if ($force) {
-                    ScheduleAssignment::where('user_id', $schedule->user_id)
-                        ->where('date', $newDate)
-                        ->where('session', $newSession)
-                        ->delete();
-                }
-
-                // Update the schedule
-                $updated = $this->repository->update($scheduleId, [
-                    'date' => $newDate,
-                    'session' => $newSession,
-                ]);
-
-                if ($updated) {
-                    Log::info('Schedule moved', [
-                        'schedule_id' => $scheduleId,
-                        'user_id' => $schedule->user_id,
-                        'old_date' => $schedule->date->toDateString(),
-                        'new_date' => $newDate->toDateString(),
-                        'old_session' => $schedule->session,
-                        'new_session' => $newSession,
-                        'force' => $force,
-                    ]);
-
-                    // Send notification
-                    NotificationService::createSwapNotification(
-                        $schedule->user,
-                        'schedule_changed',
-                        [
-                            'schedule_id' => $scheduleId,
-                            'new_date' => $newDate->toDateString(),
-                            'new_session' => $newSession,
-                        ]
-                    );
-                }
-
-                return $updated;
-            });
-
-        } catch (\Exception $e) {
-            Log::error('Failed to move schedule', [
-                'schedule_id' => $scheduleId,
-                'new_date' => $newDate->toDateString(),
-                'new_session' => $newSession,
-                'error' => $e->getMessage()
+        // Validate user exists and is active
+        $user = User::find($data['user_id']);
+        if (!$user || $user->status !== 'active') {
+            throw ValidationException::withMessages([
+                'user_id' => 'User tidak valid atau tidak aktif.'
             ]);
+        }
+
+        // Check for conflicts
+        $conflict = $this->checkConflict($data['user_id'], $data['date'], $data['session']);
+        if ($conflict) {
+            throw ValidationException::withMessages([
+                'user_id' => 'User sudah memiliki assignment pada waktu yang sama.'
+            ]);
+        }
+
+        // Create assignment
+        DB::beginTransaction();
+        try {
+            $assignment = ScheduleAssignment::create([
+                'schedule_id' => $schedule->id,
+                'user_id' => $data['user_id'],
+                'date' => $data['date'],
+                'day' => strtolower(Carbon::parse($data['date'])->englishDayOfWeek),
+                'session' => $data['session'],
+                'time_start' => $this->getSessionTime($data['session'], 'start'),
+                'time_end' => $this->getSessionTime($data['session'], 'end'),
+                'status' => 'scheduled',
+                'notes' => $data['notes'] ?? null,
+            ]);
+
+            // Update schedule statistics
+            $schedule->calculateCoverage();
+
+            DB::commit();
+
+            Log::info('Assignment added', [
+                'assignment_id' => $assignment->id,
+                'schedule_id' => $schedule->id,
+                'user_id' => $data['user_id'],
+            ]);
+
+            return $assignment;
+        } catch (\Exception $e) {
+            DB::rollBack();
             throw $e;
         }
     }
-    public function generateSchedule(Schedule $schedule): array
+
+    /**
+     * Remove assignment from schedule
+     */
+    public function removeAssignment(ScheduleAssignment $assignment): bool
     {
+        $schedule = $assignment->schedule;
+
+        // Validate schedule is editable
+        if (!$schedule->canEdit()) {
+            throw new \Exception('Jadwal tidak dapat diubah karena sudah dipublikasikan.');
+        }
+
+        DB::beginTransaction();
         try {
-            DB::beginTransaction();
+            $assignment->delete();
 
-            // 1. Validate all users have submitted availability
-            if (!$this->allUsersSubmitted($schedule)) {
-                throw new \Exception('Not all users have submitted their availability');
-            }
-
-            // 2. Get all availabilities
-            $availabilities = $this->getAvailabilities($schedule);
-
-            // 3. Initialize assignment tracker
-            $userAssignments = [];
-            $scheduleSlots = $this->initializeSlots($schedule);
-
-            // 4. Get active users
-            $users = User::active()->get();
-            $usersPerSession = $this->calculateUsersPerSession($users->count());
-
-            // 5. Generate assignments
-            foreach (['monday', 'tuesday', 'wednesday', 'thursday'] as $day) {
-                foreach (['1', '2', '3'] as $session) {
-                    $eligibleUsers = $this->getEligibleUsers(
-                        $day,
-                        $session,
-                        $availabilities,
-                        $userAssignments
-                    );
-
-                    // Sort by least assignments
-                    $eligibleUsers = $eligibleUsers->sortBy(function($user) use ($userAssignments) {
-                        return count($userAssignments[$user->id] ?? []);
-                    });
-
-                    // Assign users to this slot
-                    $assigned = 0;
-                    foreach ($eligibleUsers as $user) {
-                        if ($assigned >= $usersPerSession) break;
-
-                        // Check no same-day conflict
-                        if ($this->hasSameDayAssignment($user->id, $day, $userAssignments)) {
-                            continue;
-                        }
-
-                        // Create assignment
-                        $assignment = $this->createAssignment($schedule, $user, $day, $session);
-
-                        // Track assignment
-                        if (!isset($userAssignments[$user->id])) {
-                            $userAssignments[$user->id] = [];
-                        }
-                        $userAssignments[$user->id][] = ['day' => $day, 'session' => $session];
-
-                        $assigned++;
-                    }
-                }
-            }
-
-            // 6. Validate all users have exactly 2 assignments
-            if (!$this->validateAssignments($userAssignments, $users->count())) {
-                throw new \Exception('Unable to generate balanced schedule. Manual adjustment needed.');
-            }
-
-            // 7. Update schedule status
-            $schedule->update([
-                'status' => 'draft',
-                'generated_by' => auth()->id(),
-                'generated_at' => now(),
-            ]);
+            // Update schedule statistics
+            $schedule->calculateCoverage();
 
             DB::commit();
 
-            return [
-                'success' => true,
-                'message' => 'Schedule generated successfully',
-                'assignments' => $userAssignments,
-            ];
+            Log::info('Assignment removed', [
+                'assignment_id' => $assignment->id,
+                'schedule_id' => $schedule->id,
+            ]);
 
+            return true;
         } catch (\Exception $e) {
             DB::rollBack();
-
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-            ];
+            throw $e;
         }
     }
 
     /**
-     * Check if all users have submitted availability
-     */
-    private function allUsersSubmitted(Schedule $schedule): bool
-    {
-        $totalUsers = User::active()->count();
-        $submittedCount = Availability::where('schedule_id', $schedule->id)
-            ->where('status', 'submitted')
-            ->count();
-
-        return $totalUsers === $submittedCount;
-    }
-
-    /**
-     * Get availabilities grouped by user
-     */
-    private function getAvailabilities(Schedule $schedule): Collection
-    {
-        return Availability::with(['details', 'user'])
-            ->where('schedule_id', $schedule->id)
-            ->where('status', 'submitted')
-            ->get();
-    }
-
-    /**
-     * Initialize empty schedule slots
-     */
-    private function initializeSlots(Schedule $schedule): array
-    {
-        $slots = [];
-        foreach (['monday', 'tuesday', 'wednesday', 'thursday'] as $day) {
-            $slots[$day] = [];
-            foreach (['1', '2', '3'] as $session) {
-                $slots[$day][$session] = [];
-            }
-        }
-        return $slots;
-    }
-
-    /**
-     * Calculate how many users per session
-     */
-    private function calculateUsersPerSession(int $totalUsers): int
-    {
-        // Each user gets 2 sessions per week
-        // 12 total sessions (4 days x 3 sessions)
-        return (int) ceil(($totalUsers * 2) / 12);
-    }
-
-    /**
-     * Get users eligible for specific day/session
-     */
-    private function getEligibleUsers(
-        string $day,
-        string $session,
-        Collection $availabilities,
-        array $userAssignments
-    ): Collection {
-        return $availabilities->filter(function($availability) use ($day, $session, $userAssignments) {
-            // Check if user already has 2 assignments
-            if (isset($userAssignments[$availability->user_id]) &&
-                count($userAssignments[$availability->user_id]) >= 2) {
-                return false;
-            }
-
-            // Check if user is available for this slot
-            $detail = $availability->details
-                ->where('day', $day)
-                ->where('session', $session)
-                ->where('is_available', true)
-                ->first();
-
-            return $detail !== null;
-        })->map(function($availability) {
-            return $availability->user;
-        });
-    }
-
-    /**
-     * Check if user already has assignment on same day
-     */
-    private function hasSameDayAssignment(int $userId, string $day, array $userAssignments): bool
-    {
-        if (!isset($userAssignments[$userId])) {
-            return false;
-        }
-
-        foreach ($userAssignments[$userId] as $assignment) {
-            if ($assignment['day'] === $day) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Create schedule assignment
-     */
-    private function createAssignment(
-        Schedule $schedule,
-        User $user,
-        string $day,
-        string $session
-    ): ScheduleAssignment {
-        $date = $this->getDateForDay($schedule->week_start_date, $day);
-        $times = $this->getSessionTimes($session);
-
-        return ScheduleAssignment::create([
-            'schedule_id' => $schedule->id,
-            'user_id' => $user->id,
-            'day' => $day,
-            'session' => $session,
-            'date' => $date,
-            'time_start' => $times['start'],
-            'time_end' => $times['end'],
-            'status' => 'scheduled',
-        ]);
-    }
-
-    /**
-     * Get actual date for day name
-     */
-    private function getDateForDay(Carbon $weekStart, string $day): Carbon
-    {
-        $days = [
-            'monday' => 0,
-            'tuesday' => 1,
-            'wednesday' => 2,
-            'thursday' => 3,
-        ];
-
-        return $weekStart->copy()->addDays($days[$day]);
-    }
-
-    /**
-     * Get session time range
-     */
-    private function getSessionTimes(string $session): array
-    {
-        $times = [
-            '1' => ['start' => '08:00', 'end' => '12:00'],
-            '2' => ['start' => '12:00', 'end' => '16:00'],
-            '3' => ['start' => '16:00', 'end' => '20:00'],
-        ];
-
-        return $times[$session];
-    }
-
-    /**
-     * Validate all users have exactly 2 assignments
-     */
-    private function validateAssignments(array $userAssignments, int $totalUsers): bool
-    {
-        // Check count matches
-        if (count($userAssignments) !== $totalUsers) {
-            return false;
-        }
-
-        // Check each user has exactly 2
-        foreach ($userAssignments as $assignments) {
-            if (count($assignments) !== 2) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Publish schedule and notify users
+     * Publish schedule
      */
     public function publishSchedule(Schedule $schedule): bool
     {
-        try {
-            DB::beginTransaction();
+        // Validate can publish
+        if (!$schedule->canPublish()) {
+            $conflicts = $schedule->detectConflicts();
+            
+            if (!empty($conflicts['critical'])) {
+                throw new \Exception('Jadwal tidak dapat dipublikasikan karena masih ada konflik kritis.');
+            }
 
+            if ($schedule->coverage_rate < 50) {
+                throw new \Exception('Jadwal tidak dapat dipublikasikan. Coverage minimal 50%.');
+            }
+        }
+
+        DB::beginTransaction();
+        try {
             $schedule->update([
                 'status' => 'published',
                 'published_at' => now(),
+                'published_by' => auth()->id(),
             ]);
 
-            // Notify all users
-            $this->notifyUsersAboutSchedule($schedule);
+            // Send notifications to assigned users
+            $this->sendScheduleNotifications($schedule);
 
             DB::commit();
-            return true;
 
+            Log::info('Schedule published', [
+                'schedule_id' => $schedule->id,
+                'published_by' => auth()->id(),
+            ]);
+
+            return true;
         } catch (\Exception $e) {
             DB::rollBack();
-            return false;
+            throw $e;
         }
     }
 
     /**
-     * Send notifications to all users about new schedule
+     * Calculate schedule statistics
      */
-    private function notifyUsersAboutSchedule(Schedule $schedule): void
+    public function calculateStatistics(Schedule $schedule): array
+    {
+        return $schedule->getStatistics();
+    }
+
+    /**
+     * Copy from previous week
+     */
+    public function copyFromPreviousWeek(Schedule $sourceSchedule, Schedule $targetSchedule): void
+    {
+        if (!$targetSchedule->canEdit()) {
+            throw new \Exception('Jadwal target tidak dapat diubah.');
+        }
+
+        DB::beginTransaction();
+        try {
+            $sourceAssignments = $sourceSchedule->assignments;
+            $daysDiff = $targetSchedule->week_start_date->diffInDays($sourceSchedule->week_start_date);
+
+            foreach ($sourceAssignments as $sourceAssignment) {
+                // Adjust date
+                $newDate = Carbon::parse($sourceAssignment->date)->addDays($daysDiff);
+
+                // Validate user still active
+                $user = User::find($sourceAssignment->user_id);
+                if (!$user || $user->status !== 'active') {
+                    Log::warning('Skipping assignment - user inactive', [
+                        'user_id' => $sourceAssignment->user_id,
+                        'date' => $newDate->toDateString(),
+                    ]);
+                    continue;
+                }
+
+                // Check for conflicts
+                if ($this->checkConflict($sourceAssignment->user_id, $newDate, $sourceAssignment->session)) {
+                    Log::warning('Skipping assignment - conflict detected', [
+                        'user_id' => $sourceAssignment->user_id,
+                        'date' => $newDate->toDateString(),
+                        'session' => $sourceAssignment->session,
+                    ]);
+                    continue;
+                }
+
+                // Create new assignment
+                ScheduleAssignment::create([
+                    'schedule_id' => $targetSchedule->id,
+                    'user_id' => $sourceAssignment->user_id,
+                    'date' => $newDate,
+                    'day' => strtolower($newDate->englishDayOfWeek),
+                    'session' => $sourceAssignment->session,
+                    'time_start' => $sourceAssignment->time_start,
+                    'time_end' => $sourceAssignment->time_end,
+                    'status' => 'scheduled',
+                ]);
+            }
+
+            // Update statistics
+            $targetSchedule->calculateCoverage();
+
+            DB::commit();
+
+            Log::info('Schedule copied', [
+                'source_schedule_id' => $sourceSchedule->id,
+                'target_schedule_id' => $targetSchedule->id,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Check for assignment conflict
+     */
+    private function checkConflict(int $userId, $date, int $session): bool
+    {
+        return ScheduleAssignment::where('user_id', $userId)
+            ->where('date', $date)
+            ->where('session', $session)
+            ->exists();
+    }
+
+    /**
+     * Get session time
+     */
+    private function getSessionTime(int $session, string $type): string
+    {
+        $times = [
+            1 => ['start' => '08:00:00', 'end' => '12:00:00'],
+            2 => ['start' => '13:00:00', 'end' => '17:00:00'],
+            3 => ['start' => '17:00:00', 'end' => '21:00:00'],
+        ];
+
+        return $times[$session][$type] ?? '00:00:00';
+    }
+
+    /**
+     * Send notifications to assigned users
+     */
+    private function sendScheduleNotifications(Schedule $schedule): void
     {
         $assignments = $schedule->assignments()->with('user')->get();
+        $groupedByUser = $assignments->groupBy('user_id');
 
-        foreach ($assignments->groupBy('user_id') as $userId => $userAssignments) {
+        foreach ($groupedByUser as $userId => $userAssignments) {
             $user = $userAssignments->first()->user;
+            
+            if (!$user) {
+                continue;
+            }
 
-            $message = "Jadwal jaga minggu {$schedule->week_start_date->format('d M')} - {$schedule->week_end_date->format('d M')} telah dipublikasi. ";
-            $message .= "Anda dijadwalkan pada: ";
+            $message = "Jadwal shift Anda untuk minggu {$schedule->week_start_date->format('d M')} - {$schedule->week_end_date->format('d M Y')} telah dipublikasikan. ";
+            $message .= "Anda mendapat {$userAssignments->count()} shift.";
 
-            $scheduleText = $userAssignments->map(function($assignment) {
-                return "{$assignment->day_label}, {$assignment->date->format('d M')} - Sesi {$assignment->session} ({$assignment->session_label})";
-            })->join(' dan ');
-
-            $message .= $scheduleText;
-
-            NotificationService::send($user, 'schedule_published', 'Jadwal Jaga Baru', $message);
+            Notification::create([
+                'user_id' => $userId,
+                'type' => 'schedule_published',
+                'title' => 'Jadwal Shift Dipublikasikan',
+                'message' => $message,
+                'data' => json_encode([
+                    'schedule_id' => $schedule->id,
+                    'assignments_count' => $userAssignments->count(),
+                ]),
+                'read_at' => null,
+            ]);
         }
     }
 }

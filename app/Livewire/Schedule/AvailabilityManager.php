@@ -53,9 +53,10 @@ class AvailabilityManager extends Component
 
     public function mount()
     {
+        $this->status = 'draft'; // Initialize status first
         $this->initializeWeek();
-        $this->loadCurrentAvailability();
-        $this->initializeAvailability();
+        $this->initializeAvailability(); // Initialize array structure first
+        $this->loadCurrentAvailability(); // Then load existing data
     }
 
     private function initializeWeek()
@@ -68,9 +69,13 @@ class AvailabilityManager extends Component
 
     private function initializeAvailability()
     {
-        if (empty($this->availability)) {
-            foreach ($this->days as $dayKey => $dayName) {
-                foreach ($this->sessions as $sessionKey => $sessionName) {
+        // Always initialize the structure to ensure all keys exist
+        foreach ($this->days as $dayKey => $dayName) {
+            if (!isset($this->availability[$dayKey])) {
+                $this->availability[$dayKey] = [];
+            }
+            foreach ($this->sessions as $sessionKey => $sessionName) {
+                if (!isset($this->availability[$dayKey][$sessionKey])) {
                     $this->availability[$dayKey][$sessionKey] = false;
                 }
             }
@@ -92,11 +97,9 @@ class AvailabilityManager extends Component
             $this->status = $existingAvailability->status;
             $this->notes = $existingAvailability->notes ?? '';
             
-            // Load availability details
+            // Load availability details - array structure already initialized
             foreach ($existingAvailability->details as $detail) {
-                if (isset($this->availability[$detail->day])) {
-                    $this->availability[$detail->day][$detail->session] = $detail->is_available;
-                }
+                $this->availability[$detail->day][$detail->session] = $detail->is_available;
             }
         }
     }
@@ -105,8 +108,8 @@ class AvailabilityManager extends Component
     {
         $this->initializeWeek();
         $this->resetAvailability();
-        $this->loadCurrentAvailability();
-        $this->initializeAvailability();
+        $this->initializeAvailability(); // Initialize structure first
+        $this->loadCurrentAvailability(); // Then load data
     }
 
     public function resetAvailability()
@@ -292,6 +295,13 @@ class AvailabilityManager extends Component
     public function render()
     {
         return view('livewire.schedule.availability-manager', [
+            'status' => $this->status,
+            'selectedWeekOffset' => $this->selectedWeekOffset,
+            'weekRange' => $this->weekRange,
+            'availability' => $this->availability,
+            'notes' => $this->notes,
+            'sessions' => $this->sessions,
+            'days' => $this->days,
             'totalSessions' => $this->getTotalAvailableSessions(),
             'totalHours' => $this->getTotalAvailableHours(),
             'availableDays' => $this->getAvailableDaysCount(),

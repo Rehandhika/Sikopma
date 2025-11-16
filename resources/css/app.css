@@ -4,3 +4,25 @@
 [x-cloak] { 
     display: none !important; 
 }
+
+/* Button Styles */
+.btn {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+}
+
+.btn-primary {
+    @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+}
+
+.btn-secondary {
+    @apply bg-gray-200 text-gray-700 hover:bg-gray-300 focus:ring-gray-500;
+}
+
+.btn-white {
+    @apply bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-gray-500;
+}
+
+/* Input Styles */
+.input {
+    @apply block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+}

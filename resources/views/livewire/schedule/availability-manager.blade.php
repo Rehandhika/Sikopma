@@ -180,7 +180,12 @@
                             <th class="text-center py-3 px-4 font-medium text-gray-700">
                                 <div class="flex flex-col items-center">
                                     <span>Sesi {{ $sessionKey }}</span>
-                                    <span class="text-xs text-gray-500">{{ getSessionTime($sessionKey) }}</span>
+                                    <span class="text-xs text-gray-500">
+                                        @if($sessionKey == 1) 08:00 - 12:00
+                                        @elseif($sessionKey == 2) 13:00 - 17:00
+                                        @elseif($sessionKey == 3) 17:00 - 21:00
+                                        @endif
+                                    </span>
                                 </div>
                             </th>
                         @endforeach
@@ -201,20 +206,20 @@
                                             wire:click="toggleAvailability('{{ $dayKey }}', {{ $sessionKey }})"
                                             type="button"
                                             class="w-6 h-6 rounded-full border-2 transition-colors
-                                                {{ $availability[$dayKey][$sessionKey] 
+                                                {{ isset($availability[$dayKey][$sessionKey]) && $availability[$dayKey][$sessionKey] 
                                                     ? 'bg-green-500 border-green-500 hover:bg-green-600' 
                                                     : 'bg-white border-gray-300 hover:border-gray-400' }}"
                                         >
-                                            @if($availability[$dayKey][$sessionKey])
+                                            @if(isset($availability[$dayKey][$sessionKey]) && $availability[$dayKey][$sessionKey])
                                                 <i class="fas fa-check text-white text-xs"></i>
                                             @endif
                                         </button>
                                     @else
                                         <div class="w-6 h-6 rounded-full border-2 mx-auto
-                                            {{ $availability[$dayKey][$sessionKey] 
+                                            {{ isset($availability[$dayKey][$sessionKey]) && $availability[$dayKey][$sessionKey] 
                                                 ? 'bg-green-500 border-green-500' 
                                                 : 'bg-gray-100 border-gray-300' }}">
-                                            @if($availability[$dayKey][$sessionKey])
+                                            @if(isset($availability[$dayKey][$sessionKey]) && $availability[$dayKey][$sessionKey])
                                                 <i class="fas fa-check text-white text-xs flex items-center justify-center h-full"></i>
                                             @endif
                                         </div>

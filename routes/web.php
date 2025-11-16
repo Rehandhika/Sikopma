@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\SimpleLoginController;
+use App\Http\Controllers\LogoutController;
 use App\Livewire\Dashboard\Index as DashboardIndex;
 
 /*
@@ -37,7 +37,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', DashboardIndex::class)->name('dashboard');
     
     // Logout
-    Route::post('/logout', [SimpleLoginController::class, 'logout'])->name('logout');
+    Route::post('/logout', [LogoutController::class, 'logout'])->name('logout');
     
     // Attendance
     Route::prefix('attendance')->name('attendance.')->group(function () {
@@ -49,6 +49,7 @@ Route::middleware(['auth'])->group(function () {
     // Schedule
     Route::prefix('schedule')->name('schedule.')->group(function () {
         Route::get('/', \App\Livewire\Schedule\Index::class)->name('index');
+        Route::get('/create', \App\Livewire\Schedule\CreateSchedule::class)->name('create');
         Route::get('/my-schedule', \App\Livewire\Schedule\MySchedule::class)->name('my-schedule');
         Route::get('/availability', \App\Livewire\Schedule\AvailabilityManager::class)->name('availability');
         Route::get('/calendar', \App\Livewire\Schedule\ScheduleCalendar::class)->name('calendar');
