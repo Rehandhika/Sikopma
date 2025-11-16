@@ -108,7 +108,7 @@
             </div>
             <div class="border-l-4 border-blue-500 pl-4">
                 <p class="text-sm text-gray-600">Penjualan</p>
-                <p class="text-2xl font-bold text-gray-900">{{ formatRupiah($adminStats['todaySales']) }}</p>
+                <p class="text-2xl font-bold text-gray-900">{{ format_currency($adminStats['todaySales']) }}</p>
                 <p class="text-xs text-gray-500">{{ $adminStats['todayTransactions'] }} transaksi</p>
             </div>
             <div class="border-l-4 border-yellow-500 pl-4">

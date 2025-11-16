@@ -4,12 +4,16 @@ use Illuminate\Support\Facades\Route;
 use App\Livewire\Auth\Login;
 use App\Livewire\Dashboard\Index as DashboardIndex;
 use App\Livewire\Kopma\Index as KopmaIndex;
+use App\Livewire\Schedule\AvailabilityManager;
+use App\Livewire\Schedule\ScheduleGenerator;
+use App\Livewire\Schedule\ScheduleCalendar;
+use App\Livewire\Schedule\MySchedule;
+use App\Livewire\Schedule\ScheduleIndex;
 
 // Attendance
 use App\Livewire\Attendance\{Index as AttendanceIndex, History as AttendanceHistory, CheckInOut};
 
 // Schedule
-use App\Livewire\Schedule\{Index as ScheduleIndex, MySchedule, ScheduleCalendar, ScheduleGenerator, AvailabilityInput};
 
 // Cashier
 use App\Livewire\Cashier\{Pos, SalesList, TransactionForm};
@@ -39,7 +43,6 @@ use App\Livewire\Report\{AttendanceReport, SalesReport, PenaltyReport};
 use App\Livewire\Notification\MyNotifications;
 use App\Livewire\User\UserManagement;
 use App\Livewire\Settings\SystemSettings;
-use App\Livewire\Profile\EditProfile;
 
 // Public routes
 Route::get('/', function () {
@@ -67,26 +70,36 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/kopma', KopmaIndex::class)->name('kopma.index');
 
     // Attendance Module
-    Route::prefix('attendance')->name('attendance.')->group(function () {
+    Route::prefix('attendance')->name('attendance.')->middleware(['throttle-sensitive'])->group(function () {
         Route::get('/', AttendanceIndex::class)->name('index');
-        Route::get('/check-in-out', CheckInOut::class)->name('check-in-out');
+        Route::get('/check-in-out', CheckInOut::class)->name('check-in-out')->middleware('throttle:10,1'); // 10 requests per minute
         Route::get('/history', AttendanceHistory::class)->name('history');
     });
 
     // Schedule Module
     Route::prefix('schedule')->name('schedule.')->group(function () {
-        Route::get('/', ScheduleIndex::class)->name('index');
-        Route::get('/my-schedule', MySchedule::class)->name('my-schedule');
-        Route::get('/calendar', ScheduleCalendar::class)->name('calendar');
-        Route::get('/availability', AvailabilityInput::class)->name('availability');
+        Route::get('/', function () {
+            return app(ScheduleIndex::class).__invoke();
+        })->name('index');
+        Route::get('/my-schedule', function () {
+            return app(MySchedule::class).__invoke();
+        })->name('my-schedule');
+        Route::get('/calendar', function () {
+            return app(ScheduleCalendar::class).__invoke();
+        })->name('calendar');
+        Route::get('/availability', function () {
+            return app(AvailabilityManager::class).__invoke();
+        })->name('availability');
         
         Route::middleware(['role:Super Admin|Ketua|Wakil Ketua'])->group(function () {
-            Route::get('/generator', ScheduleGenerator::class)->name('generator');
+            Route::get('/generator', function () {
+                return app(ScheduleGenerator::class).__invoke();
+            })->name('generator');
         });
     });
 
     // Cashier/POS Module (Super Admin has full access)
-    Route::prefix('cashier')->name('cashier.')->group(function () {
+    Route::prefix('cashier')->name('cashier.')->middleware(['role:Super Admin|Ketua|Wakil Ketua|BPH|Anggota'])->group(function () {
         Route::get('/', Pos::class)->name('index');
         Route::get('/pos', Pos::class)->name('pos');
         Route::get('/sales', SalesList::class)->name('sales');
@@ -94,7 +107,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Product Module (Super Admin has full access)
-    Route::prefix('products')->name('products.')->group(function () {
+    Route::prefix('products')->name('products.')->middleware(['role:Super Admin|Ketua|Wakil Ketua|BPH'])->group(function () {
         Route::get('/', ProductIndex::class)->name('index');
         Route::get('/list', ProductList::class)->name('list');
         Route::get('/create', ProductList::class)->name('create');
@@ -102,13 +115,13 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Stock Module (Super Admin has full access)
-    Route::prefix('stock')->name('stock.')->group(function () {
+    Route::prefix('stock')->name('stock.')->middleware(['role:Super Admin|Ketua|Wakil Ketua|BPH'])->group(function () {
         Route::get('/', \App\Livewire\Stock\Index::class)->name('index');
         Route::get('/adjustment', StockAdjustment::class)->name('adjustment');
     });
 
     // Purchase Module (Super Admin has full access)
-    Route::prefix('purchase')->name('purchase.')->group(function () {
+    Route::prefix('purchase')->name('purchase.')->middleware(['role:Super Admin|Ketua|Wakil Ketua|BPH'])->group(function () {
         Route::get('/', \App\Livewire\Purchase\Index::class)->name('index');
         Route::get('/list', PurchaseList::class)->name('list');
         Route::get('/create', \App\Livewire\Purchase\Index::class)->name('create');
@@ -116,13 +129,16 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{id}/receive', \App\Livewire\Purchase\Index::class)->name('receive');
     });
 
-    // Swap Module (Super Admin has full access)
+    // Swap Module
     Route::prefix('swap')->name('swap.')->group(function () {
         Route::get('/', \App\Livewire\Swap\Index::class)->name('index');
         Route::get('/create', SwapCreateRequest::class)->name('create');
         Route::get('/my-requests', SwapMyRequests::class)->name('my-requests');
-        Route::get('/approval', \App\Livewire\Swap\Approval::class)->name('approval');
-        Route::get('/pending', SwapPendingApprovals::class)->name('pending');
+        // Approval routes require admin roles per RBAC spec
+        Route::middleware(['role:Super Admin|Ketua|Wakil Ketua|BPH'])->group(function () {
+            Route::get('/approval', \App\Livewire\Swap\Approval::class)->name('approval');
+            Route::get('/pending', SwapPendingApprovals::class)->name('pending');
+        });
     });
 
     // Leave Module (Super Admin has full access)

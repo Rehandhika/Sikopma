@@ -20,30 +20,31 @@ class Approval extends Component
         $this->selectedSwap = SwapRequest::with([
             'requester', 
             'target', 
-            'originalSchedule', 
-            'targetSchedule'
+            'requesterAssignment', 
+            'targetAssignment'
         ])->find($id);
         $this->showModal = true;
     }
 
     public function approve($id)
     {
-        $swap = SwapRequest::find($id);
+        $swap = SwapRequest::with(['requesterAssignment', 'targetAssignment'])->find($id);
         
-        if ($swap && $swap->status === 'accepted') {
+        if ($swap && $swap->status === 'target_approved') {
             DB::transaction(function () use ($swap) {
                 // Swap the schedules
-                $originalUserId = $swap->originalSchedule->user_id;
-                $targetUserId = $swap->targetSchedule->user_id;
+                $originalUserId = $swap->requesterAssignment->user_id;
+                $targetUserId = $swap->targetAssignment->user_id;
 
-                $swap->originalSchedule->update(['user_id' => $targetUserId]);
-                $swap->targetSchedule->update(['user_id' => $originalUserId]);
+                $swap->requesterAssignment->update(['user_id' => $targetUserId]);
+                $swap->targetAssignment->update(['user_id' => $originalUserId]);
 
                 $swap->update([
-                    'status' => 'approved',
-                    'approved_by' => auth()->id(),
-                    'approved_at' => now(),
-                    'approval_notes' => $this->approvalNotes,
+                    'status' => 'admin_approved',
+                    'admin_responded_by' => auth()->id(),
+                    'admin_responded_at' => now(),
+                    'admin_response' => $this->approvalNotes,
+                    'completed_at' => now(),
                 ]);
             });
 
@@ -56,12 +57,12 @@ class Approval extends Component
     {
         $swap = SwapRequest::find($id);
         
-        if ($swap && $swap->status === 'accepted') {
+        if ($swap && $swap->status === 'target_approved') {
             $swap->update([
-                'status' => 'rejected',
-                'approved_by' => auth()->id(),
-                'approved_at' => now(),
-                'approval_notes' => $this->approvalNotes,
+                'status' => 'admin_rejected',
+                'admin_responded_by' => auth()->id(),
+                'admin_responded_at' => now(),
+                'admin_response' => $this->approvalNotes,
             ]);
 
             $this->dispatch('alert', type: 'success', message: 'Tukar shift ditolak');
@@ -72,15 +73,15 @@ class Approval extends Component
     public function render()
     {
         $swaps = SwapRequest::query()
-            ->where('status', 'accepted')
-            ->with(['requester', 'target', 'originalSchedule', 'targetSchedule'])
+            ->where('status', 'target_approved')
+            ->with(['requester', 'target', 'requesterAssignment', 'targetAssignment'])
             ->orderBy('created_at', 'desc')
             ->paginate(15);
 
         $stats = [
-            'pending' => SwapRequest::where('status', 'accepted')->count(),
-            'approved_today' => SwapRequest::where('status', 'approved')
-                ->whereDate('approved_at', today())
+            'pending' => SwapRequest::where('status', 'target_approved')->count(),
+            'approved_today' => SwapRequest::where('status', 'admin_approved')
+                ->whereDate('admin_responded_at', today())
                 ->count(),
         ];
 

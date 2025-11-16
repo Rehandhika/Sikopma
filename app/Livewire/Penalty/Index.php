@@ -17,20 +17,28 @@ class Index extends Component
         $penalties = Penalty::query()
             ->where('user_id', auth()->id())
             ->when($this->statusFilter, fn($q) => $q->where('status', $this->statusFilter))
-            ->with('penaltyType')
+            ->with('penaltyType:id,name,code,points')
             ->orderBy('date', 'desc')
             ->paginate(15);
 
+        // Optimize summary with single query
+        $summaryData = Penalty::where('user_id', auth()->id())
+            ->selectRaw('COUNT(*) as count')
+            ->selectRaw('SUM(CASE WHEN status = "active" THEN points ELSE 0 END) as total_points')
+            ->selectRaw('SUM(CASE WHEN status = "active" THEN 1 ELSE 0 END) as active')
+            ->selectRaw('SUM(CASE WHEN status = "appealed" THEN 1 ELSE 0 END) as appealed')
+            ->selectRaw('SUM(CASE WHEN status = "dismissed" THEN 1 ELSE 0 END) as dismissed')
+            ->selectRaw('SUM(CASE WHEN status = "expired" THEN 1 ELSE 0 END) as expired')
+            ->first();
+
         $summary = [
-            'total_points' => Penalty::where('user_id', auth()->id())
-                ->where('status', 'active')
-                ->sum('points'),
-            'count' => Penalty::where('user_id', auth()->id())->count(),
+            'total_points' => $summaryData->total_points ?? 0,
+            'count' => $summaryData->count ?? 0,
             'by_status' => [
-                'active' => Penalty::where('user_id', auth()->id())->where('status', 'active')->count(),
-                'appealed' => Penalty::where('user_id', auth()->id())->where('status', 'appealed')->count(),
-                'dismissed' => Penalty::where('user_id', auth()->id())->where('status', 'dismissed')->count(),
-                'expired' => Penalty::where('user_id', auth()->id())->where('status', 'expired')->count(),
+                'active' => $summaryData->active ?? 0,
+                'appealed' => $summaryData->appealed ?? 0,
+                'dismissed' => $summaryData->dismissed ?? 0,
+                'expired' => $summaryData->expired ?? 0,
             ],
         ];
 

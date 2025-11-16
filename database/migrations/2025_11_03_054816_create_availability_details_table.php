@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('availability_details', function (Blueprint $table) {
             $table->id();
             $table->foreignId('availability_id')->constrained()->onDelete('cascade');
-            $table->enum('day', ['monday', 'tuesday', 'wednesday', 'thursday']);
+            $table->enum('day', ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']);
             $table->enum('session', ['1', '2', '3']);
             $table->boolean('is_available')->default(false);
             $table->timestamps();

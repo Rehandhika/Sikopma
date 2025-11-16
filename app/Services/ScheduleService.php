@@ -6,15 +6,87 @@ use App\Models\Schedule;
 use App\Models\Availability;
 use App\Models\ScheduleAssignment;
 use App\Models\User;
+use App\Repositories\ScheduleRepository;
+use App\Exceptions\BusinessException;
+use App\Exceptions\ScheduleConflictException;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ScheduleService
 {
+    protected ScheduleRepository $repository;
+
+    public function __construct(ScheduleRepository $repository = null)
+    {
+        $this->repository = $repository ?: new ScheduleRepository();
+    }
+
     /**
-     * Generate schedule for a given week
+     * Move schedule to new date/time
      */
+    public function moveSchedule(int $scheduleId, Carbon $newDate, int $newSession, bool $force = false): bool
+    {
+        try {
+            return DB::transaction(function () use ($scheduleId, $newDate, $newSession, $force) {
+                $schedule = ScheduleAssignment::findOrFail($scheduleId);
+                
+                // Check for conflicts
+                if (!$force && $this->repository->hasConflict($schedule->user_id, $newDate, $newSession)) {
+                    throw new ScheduleConflictException('Schedule conflict detected');
+                }
+
+                // If force move, remove existing schedule
+                if ($force) {
+                    ScheduleAssignment::where('user_id', $schedule->user_id)
+                        ->where('date', $newDate)
+                        ->where('session', $newSession)
+                        ->delete();
+                }
+
+                // Update the schedule
+                $updated = $this->repository->update($scheduleId, [
+                    'date' => $newDate,
+                    'session' => $newSession,
+                ]);
+
+                if ($updated) {
+                    Log::info('Schedule moved', [
+                        'schedule_id' => $scheduleId,
+                        'user_id' => $schedule->user_id,
+                        'old_date' => $schedule->date->toDateString(),
+                        'new_date' => $newDate->toDateString(),
+                        'old_session' => $schedule->session,
+                        'new_session' => $newSession,
+                        'force' => $force,
+                    ]);
+
+                    // Send notification
+                    NotificationService::createSwapNotification(
+                        $schedule->user,
+                        'schedule_changed',
+                        [
+                            'schedule_id' => $scheduleId,
+                            'new_date' => $newDate->toDateString(),
+                            'new_session' => $newSession,
+                        ]
+                    );
+                }
+
+                return $updated;
+            });
+
+        } catch (\Exception $e) {
+            Log::error('Failed to move schedule', [
+                'schedule_id' => $scheduleId,
+                'new_date' => $newDate->toDateString(),
+                'new_session' => $newSession,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
     public function generateSchedule(Schedule $schedule): array
     {
         try {

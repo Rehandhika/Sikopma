@@ -41,12 +41,12 @@ class StockAdjustment extends Model
     // Scopes
     public function scopeAdditions($query)
     {
-        return $query->where('type', 'addition');
+        return $query->where('type', 'in');
     }
 
     public function scopeReductions($query)
     {
-        return $query->where('type', 'reduction');
+        return $query->where('type', 'out');
     }
 
     public function scopeRecent($query)
@@ -54,14 +54,33 @@ class StockAdjustment extends Model
         return $query->orderBy('created_at', 'desc');
     }
 
+    public function scopeByProduct($query, int $productId)
+    {
+        return $query->where('product_id', $productId);
+    }
+
+    public function scopeByType($query, string $type)
+    {
+        return $query->where('type', $type);
+    }
+
     // Helpers
     public function isAddition(): bool
     {
-        return $this->type === 'addition';
+        return $this->type === 'in';
     }
 
     public function isReduction(): bool
     {
-        return $this->type === 'reduction';
+        return $this->type === 'out';
+    }
+
+    public function getTypeLabel(): string
+    {
+        return match($this->type) {
+            'in' => 'Masuk',
+            'out' => 'Keluar',
+            default => $this->type,
+        };
     }
 }

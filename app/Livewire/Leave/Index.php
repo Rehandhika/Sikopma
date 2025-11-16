@@ -27,16 +27,18 @@ class Index extends Component
         $leaves = LeaveRequest::query()
             ->where('user_id', auth()->id())
             ->when($this->statusFilter, fn($q) => $q->where('status', $this->statusFilter))
-            ->with('leaveType')
+            ->with(['reviewer:id,name', 'affectedSchedules'])
             ->orderBy('created_at', 'desc')
             ->paginate(15);
 
-        $summary = [
-            'total' => LeaveRequest::where('user_id', auth()->id())->count(),
-            'approved' => LeaveRequest::where('user_id', auth()->id())->where('status', 'approved')->count(),
-            'pending' => LeaveRequest::where('user_id', auth()->id())->where('status', 'pending')->count(),
-            'rejected' => LeaveRequest::where('user_id', auth()->id())->where('status', 'rejected')->count(),
-        ];
+        // Optimize summary with single query using selectRaw
+        $summary = LeaveRequest::where('user_id', auth()->id())
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN status = "approved" THEN 1 ELSE 0 END) as approved')
+            ->selectRaw('SUM(CASE WHEN status = "pending" THEN 1 ELSE 0 END) as pending')
+            ->selectRaw('SUM(CASE WHEN status = "rejected" THEN 1 ELSE 0 END) as rejected')
+            ->first()
+            ->toArray();
 
         return view('livewire.leave.index', [
             'leaves' => $leaves,

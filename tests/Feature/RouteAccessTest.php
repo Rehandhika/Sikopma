@@ -58,7 +58,7 @@ class RouteAccessTest extends TestCase
 
     public function test_member_cannot_access_admin_only_routes(): void
     {
-        $member = $this->makeUserWithRole('member');
+        $member = $this->makeUserWithRole('Anggota');
 
         $this->actingAs($member)
             ->get('/users/manage')->assertForbidden();

@@ -6,6 +6,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Title;
 use App\Models\Product;
+use App\Services\ProductService;
 use Illuminate\Support\Facades\Storage;
 
 #[Title('Manajemen Produk')]
@@ -41,15 +42,37 @@ class ProductList extends Component
         'status' => 'required|in:active,inactive',
     ];
 
+    /**
+     * Handle route-based modal opening for create/edit
+     */
+    public function mount($id = null)
+    {
+        // If visiting products.create, open create modal immediately
+        if (request()->routeIs('products.create')) {
+            $this->create();
+        }
+
+        // If visiting products.edit with ID, load product and open edit modal
+        if ($id && request()->routeIs('products.edit')) {
+            $this->edit($id);
+        }
+    }
+
     public function updatingSearch()
     {
         $this->resetPage();
     }
 
+    /**
+     * Open create modal
+     *
+     * @return void
+     */
     public function create()
     {
         $this->resetForm();
         $this->showModal = true;
+        $this->dispatch('modal-opened');
     }
 
     public function edit($id)
@@ -67,6 +90,11 @@ class ProductList extends Component
         $this->showModal = true;
     }
 
+    /**
+     * Save product (create or update)
+     *
+     * @return void
+     */
     public function save()
     {
         if ($this->editingId) {
@@ -74,48 +102,80 @@ class ProductList extends Component
         }
 
         $validated = $this->validate();
+        $productService = app(ProductService::class);
 
-        if ($this->editingId) {
-            $product = Product::findOrFail($this->editingId);
-            $product->update($validated);
-            session()->flash('success', 'Produk berhasil diperbarui');
-        } else {
-            Product::create($validated);
-            session()->flash('success', 'Produk berhasil ditambahkan');
+        try {
+            if ($this->editingId) {
+                $productService->update($this->editingId, $validated);
+                $this->dispatch('alert', type: 'success', message: 'Produk berhasil diperbarui');
+            } else {
+                // Generate SKU if not provided
+                if (empty($validated['sku'])) {
+                    $validated['sku'] = $productService->generateSKU($validated['name'], $validated['category'] ?? null);
+                }
+                $productService->create($validated);
+                $this->dispatch('alert', type: 'success', message: 'Produk berhasil ditambahkan');
+            }
+            $this->resetForm();
+
+            // If this component is accessed via create/edit routes, navigate back to list
+            if (request()->routeIs('products.create') || request()->routeIs('products.edit')) {
+                return $this->redirectRoute('products.list', navigate: true);
+            }
+        } catch (\Exception $e) {
+            $this->dispatch('alert', type: 'error', message: $e->getMessage());
         }
-
-        $this->resetForm();
     }
 
+    /**
+     * Delete product
+     *
+     * @param int $id
+     * @return void
+     */
     public function delete($id)
     {
-        $product = Product::findOrFail($id);
+        $productService = app(ProductService::class);
         
-        // Check if product has sales
-        if ($product->saleItems()->count() > 0) {
-            session()->flash('error', 'Tidak dapat menghapus produk yang sudah memiliki transaksi');
-            return;
+        try {
+            $productService->delete($id);
+            $this->dispatch('alert', type: 'success', message: 'Produk berhasil dihapus');
+        } catch (\Exception $e) {
+            $this->dispatch('alert', type: 'error', message: $e->getMessage());
         }
-        
-        $product->delete();
-        session()->flash('success', 'Produk berhasil dihapus');
     }
 
+    /**
+     * Toggle product status
+     *
+     * @param int $id
+     * @return void
+     */
     public function toggleStatus($id)
     {
         $product = Product::findOrFail($id);
-        $product->status = $product->status === 'active' ? 'inactive' : 'active';
-        $product->save();
+        $newStatus = $product->status === 'active' ? 'inactive' : 'active';
         
-        session()->flash('success', 'Status produk berhasil diubah');
+        $productService = app(ProductService::class);
+        $productService->update($id, ['status' => $newStatus]);
+        
+        $this->dispatch('alert', type: 'success', message: 'Status produk berhasil diubah');
     }
 
     private function resetForm()
     {
         $this->reset([
-            'editingId', 'name', 'sku', 'price', 'stock', 
-            'min_stock', 'category', 'description', 'status', 'showModal'
+            'editingId', 'name', 'sku', 'price', 'stock',
+            'min_stock', 'category', 'description', 'status'
         ]);
+
+        // Set sensible defaults for create form
+        $this->price = 0;
+        $this->stock = 0;
+        $this->min_stock = 5;
+        $this->status = 'active';
+        $this->showModal = false;
+
         $this->resetValidation();
     }
 

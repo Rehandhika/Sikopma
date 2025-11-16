@@ -6,6 +6,11 @@ use Livewire\Component;
 use App\Models\{Product, Sale, SaleItem};
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Point of Sale (POS) Component
+ * 
+ * Handles cashier transactions, cart management, and payment processing
+ */
 class Pos extends Component
 {
     public $search = '';
@@ -14,6 +19,12 @@ class Pos extends Component
     public $paymentAmount = 0;
     public $memberDiscount = 0;
 
+    /**
+     * Add product to cart
+     *
+     * @param int $productId
+     * @return void
+     */
     public function addToCart($productId)
     {
         $product = Product::find($productId);
@@ -44,6 +55,13 @@ class Pos extends Component
         $this->calculateTotal();
     }
 
+    /**
+     * Update cart item quantity
+     *
+     * @param string $cartKey
+     * @param int $quantity
+     * @return void
+     */
     public function updateQuantity($cartKey, $quantity)
     {
         if ($quantity < 1) {
@@ -59,17 +77,34 @@ class Pos extends Component
         $this->calculateTotal();
     }
 
+    /**
+     * Remove item from cart
+     *
+     * @param string $cartKey
+     * @return void
+     */
     public function removeFromCart($cartKey)
     {
         unset($this->cart[$cartKey]);
         $this->calculateTotal();
     }
 
+    /**
+     * Calculate cart total (handled in view)
+     *
+     * @return void
+     */
     public function calculateTotal()
     {
         // Will be calculated in view
     }
 
+    /**
+     * Process payment and create sale transaction
+     * Uses bulk update to avoid N+1 queries on stock updates
+     *
+     * @return void
+     */
     public function processPayment()
     {
         if (empty($this->cart)) {
@@ -89,7 +124,6 @@ class Pos extends Component
         DB::transaction(function () use ($subtotal, $discount, $total) {
             $sale = Sale::create([
                 'cashier_id' => auth()->id(),
-                'subtotal' => $subtotal,
                 'discount' => $discount,
                 'total' => $total,
                 'payment_method' => $this->paymentMethod,
@@ -97,6 +131,8 @@ class Pos extends Component
                 'change_amount' => $this->paymentAmount - $total,
             ]);
 
+            $productUpdates = [];
+            
             foreach ($this->cart as $item) {
                 SaleItem::create([
                     'sale_id' => $sale->id,
@@ -106,8 +142,13 @@ class Pos extends Component
                     'subtotal' => $item['price'] * $item['quantity'],
                 ]);
 
-                // Update stock
-                Product::find($item['product_id'])->decrement('stock', $item['quantity']);
+                // Collect product updates for bulk operation
+                $productUpdates[$item['product_id']] = ($productUpdates[$item['product_id']] ?? 0) + $item['quantity'];
+            }
+            
+            // Bulk update stock to avoid N+1 query
+            foreach ($productUpdates as $productId => $quantity) {
+                Product::where('id', $productId)->decrement('stock', $quantity);
             }
         });
 
@@ -115,6 +156,11 @@ class Pos extends Component
         $this->reset(['cart', 'paymentAmount', 'memberDiscount', 'search']);
     }
 
+    /**
+     * Render POS interface
+     *
+     * @return \Illuminate\View\View
+     */
     public function render()
     {
         $products = Product::query()

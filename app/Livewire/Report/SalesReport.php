@@ -37,21 +37,30 @@ class SalesReport extends Component
 
     public function getStatsProperty()
     {
-        $query = Sale::query()
-            ->whereBetween('date', [$this->dateFrom, $this->dateTo])
+        // Optimize with single query using selectRaw
+        $baseQuery = Sale::whereBetween('date', [$this->dateFrom, $this->dateTo])
             ->when($this->cashierFilter !== 'all', fn($q) => $q->where('cashier_id', $this->cashierFilter))
             ->when($this->paymentMethodFilter !== 'all', fn($q) => $q->where('payment_method', $this->paymentMethodFilter));
 
+        $stats = $baseQuery->selectRaw('COUNT(*) as total_sales')
+            ->selectRaw('SUM(total_amount) as total_revenue')
+            ->selectRaw('AVG(total_amount) as average_transaction')
+            ->first();
+
+        // Get payment method breakdown in single query
+        $paymentStats = Sale::whereBetween('date', [$this->dateFrom, $this->dateTo])
+            ->selectRaw('SUM(CASE WHEN payment_method = "cash" THEN 1 ELSE 0 END) as cash_transactions')
+            ->selectRaw('SUM(CASE WHEN payment_method = "transfer" THEN 1 ELSE 0 END) as transfer_transactions')
+            ->selectRaw('SUM(CASE WHEN payment_method = "qris" THEN 1 ELSE 0 END) as qris_transactions')
+            ->first();
+
         return [
-            'total_sales' => $query->count(),
-            'total_revenue' => $query->sum('total_amount'),
-            'average_transaction' => $query->avg('total_amount') ?? 0,
-            'cash_transactions' => Sale::whereBetween('date', [$this->dateFrom, $this->dateTo])
-                ->where('payment_method', 'cash')->count(),
-            'transfer_transactions' => Sale::whereBetween('date', [$this->dateFrom, $this->dateTo])
-                ->where('payment_method', 'transfer')->count(),
-            'qris_transactions' => Sale::whereBetween('date', [$this->dateFrom, $this->dateTo])
-                ->where('payment_method', 'qris')->count(),
+            'total_sales' => $stats->total_sales ?? 0,
+            'total_revenue' => $stats->total_revenue ?? 0,
+            'average_transaction' => $stats->average_transaction ?? 0,
+            'cash_transactions' => $paymentStats->cash_transactions ?? 0,
+            'transfer_transactions' => $paymentStats->transfer_transactions ?? 0,
+            'qris_transactions' => $paymentStats->qris_transactions ?? 0,
         ];
     }
 

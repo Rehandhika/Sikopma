@@ -6,6 +6,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Title;
 use App\Models\{Product, StockAdjustment as StockAdjustmentModel};
+use App\Services\ProductService;
 use Illuminate\Support\Facades\DB;
 
 #[Title('Penyesuaian Stok')]
@@ -20,15 +21,25 @@ class StockAdjustment extends Component
     // Form properties
     public $showModal = false;
     public $product_id = '';
-    public $type = 'addition';
+    public $type = 'in';
     public $quantity = 0;
     public $reason = '';
 
     protected $rules = [
         'product_id' => 'required|exists:products,id',
-        'type' => 'required|in:addition,reduction',
+        'type' => 'required|in:in,out',
         'quantity' => 'required|integer|min:1',
         'reason' => 'required|string|max:500',
+    ];
+
+    protected $messages = [
+        'product_id.required' => 'Produk wajib dipilih',
+        'product_id.exists' => 'Produk tidak valid',
+        'type.required' => 'Tipe penyesuaian wajib dipilih',
+        'quantity.required' => 'Jumlah wajib diisi',
+        'quantity.min' => 'Jumlah minimal 1',
+        'reason.required' => 'Alasan wajib diisi',
+        'reason.max' => 'Alasan maksimal 500 karakter',
     ];
 
     public function updatingSearch()
@@ -42,51 +53,30 @@ class StockAdjustment extends Component
         $this->showModal = true;
     }
 
+    /**
+     * Save stock adjustment
+     *
+     * @return void
+     */
     public function save()
     {
         $this->validate();
 
-        $product = Product::findOrFail($this->product_id);
-        
-        // Check if reduction is valid
-        if ($this->type === 'reduction' && $product->stock < $this->quantity) {
-            session()->flash('error', 'Stok tidak mencukupi untuk pengurangan');
-            return;
-        }
-
-        DB::beginTransaction();
+        $productService = app(ProductService::class);
         
         try {
-            $previousStock = $product->stock;
+            $productService->adjustStock(
+                $this->product_id,
+                $this->type,
+                $this->quantity,
+                $this->reason
+            );
             
-            // Update product stock
-            if ($this->type === 'addition') {
-                $product->increaseStock($this->quantity);
-            } else {
-                $product->decreaseStock($this->quantity);
-            }
-            
-            $newStock = $product->fresh()->stock;
-
-            // Create adjustment record
-            StockAdjustmentModel::create([
-                'user_id' => auth()->id(),
-                'product_id' => $this->product_id,
-                'type' => $this->type,
-                'quantity' => $this->quantity,
-                'previous_stock' => $previousStock,
-                'new_stock' => $newStock,
-                'reason' => $this->reason,
-            ]);
-
-            DB::commit();
-            
-            session()->flash('success', 'Penyesuaian stok berhasil disimpan');
+            $this->dispatch('alert', type: 'success', message: 'Penyesuaian stok berhasil disimpan');
             $this->resetForm();
             
         } catch (\Exception $e) {
-            DB::rollBack();
-            session()->flash('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            $this->dispatch('alert', type: 'error', message: $e->getMessage());
         }
     }
 

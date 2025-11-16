@@ -17,14 +17,18 @@ class Attendance extends Model
         'check_out',
         'work_hours',
         'status',
+        'location_lat',
+        'location_lng',
         'notes',
     ];
 
     protected $casts = [
         'date' => 'date',
-        'check_in' => 'datetime:H:i',
-        'check_out' => 'datetime:H:i',
+        'check_in' => 'datetime',
+        'check_out' => 'datetime',
         'work_hours' => 'decimal:2',
+        'location_lat' => 'decimal:8',
+        'location_lng' => 'decimal:8',
     ];
 
     public function user()

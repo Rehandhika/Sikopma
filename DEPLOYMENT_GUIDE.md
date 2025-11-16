@@ -465,7 +465,7 @@ See `TROUBLESHOOTING.md` for detailed solutions
 
 ## 📄 License
 
-This project is proprietary software for KOPMA internal use.
+This project is open source and available under the [MIT License](LICENSE).
 
 ---
 

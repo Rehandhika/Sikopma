@@ -15,6 +15,7 @@ class Availability extends Model
         'status',
         'submitted_at',
         'total_available_sessions',
+        'notes',
     ];
 
     protected $casts = [

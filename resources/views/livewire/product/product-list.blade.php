@@ -219,19 +219,24 @@
 
     {{-- Modal Form --}}
     @if($showModal)
-    <div class="fixed inset-0 bg-gray-900/75 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div class="p-6">
+    <div 
+        x-data
+        @keydown.escape.window="$wire.set('showModal', false)"
+        class="fixed inset-0 bg-gray-900/75 flex items-center justify-center z-50 p-0 md:p-4"
+        @click.self="$wire.set('showModal', false)"
+    >
+        <div class="bg-white rounded-none md:rounded-lg shadow-xl w-screen h-screen md:h-auto md:w-full md:max-w-2xl md:max-h-[90vh] overflow-y-auto">
+            <div class="p-4 md:p-6">
                 <h3 class="text-2xl font-bold text-gray-900 mb-6">
                     {{ $editingId ? 'Edit Produk' : 'Tambah Produk Baru' }}
                 </h3>
 
-                <form wire:submit="save">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <form wire:submit.prevent="save">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                         {{-- Name --}}
                         <div class="md:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Nama Produk *</label>
-                            <input wire:model="name" type="text" 
+                            <input wire:model="name" type="text" autofocus
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                             @error('name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                         </div>
@@ -304,14 +309,14 @@
                     </div>
 
                     {{-- Actions --}}
-                    <div class="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200">
+                    <div class="flex flex-col-reverse md:flex-row md:justify-end md:space-x-3 gap-3 mt-6 pt-6 border-t border-gray-200">
                         <button type="button" wire:click="$set('showModal', false)" 
-                            class="px-6 py-2 bg-gray-200 text-gray-800 font-medium rounded-lg hover:bg-gray-300 transition">
+                            class="px-6 py-3 md:py-2 bg-gray-200 text-gray-800 font-medium rounded-lg hover:bg-gray-300 transition w-full md:w-auto">
                             Batal
                         </button>
                         <button type="submit" 
                             wire:loading.attr="disabled"
-                            class="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition disabled:opacity-50">
+                            class="px-6 py-3 md:py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition disabled:opacity-50 w-full md:w-auto">
                             <span wire:loading.remove wire:target="save">{{ $editingId ? 'Update' : 'Simpan' }}</span>
                             <span wire:loading wire:target="save">Menyimpan...</span>
                         </button>

@@ -43,6 +43,11 @@ class Index extends Component
         $this->calculateWeekRange();
     }
 
+    public function __invoke()
+    {
+        return $this->render();
+    }
+
     public function render()
     {
         $schedules = ScheduleAssignment::query()

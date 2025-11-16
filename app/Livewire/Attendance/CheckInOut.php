@@ -15,6 +15,8 @@ class CheckInOut extends Component
     public $checkInTime;
     public $checkOutTime;
     public $notes = '';
+    public $latitude;
+    public $longitude;
 
     public function mount()
     {
@@ -59,6 +61,33 @@ class CheckInOut extends Component
             return;
         }
 
+        // Validate geolocation
+        $this->validate([
+            'latitude' => [
+                'required',
+                'numeric',
+                'between:-90,90',
+            ],
+            'longitude' => [
+                'required',
+                'numeric',
+                'between:-180,180',
+            ],
+        ], [
+            'latitude.required' => 'Lokasi diperlukan untuk check-in.',
+            'latitude.between' => 'Koordinat latitude tidak valid.',
+            'longitude.required' => 'Lokasi diperlukan untuk check-in.',
+            'longitude.between' => 'Koordinat longitude tidak valid.',
+        ]);
+
+        // Check if within geofence (if enabled)
+        if (config('sikopma.attendance.require_geolocation', true)) {
+            if (!is_within_geofence($this->latitude, $this->longitude)) {
+                session()->flash('error', 'Anda berada di luar area yang diizinkan untuk check-in.');
+                return;
+            }
+        }
+
         $now = now();
 
         $this->currentAttendance = Attendance::create([
@@ -66,6 +95,8 @@ class CheckInOut extends Component
             'schedule_assignment_id' => $this->currentSchedule->id,
             'date' => today(),
             'check_in' => $now,
+            'latitude' => $this->latitude,
+            'longitude' => $this->longitude,
             'notes' => $this->notes,
         ]);
 

@@ -74,6 +74,16 @@ class User extends Authenticatable
         return $this->hasMany(Penalty::class);
     }
 
+    public function penaltyHistory()
+    {
+        return $this->hasMany(PenaltyHistory::class);
+    }
+
+    public function purchases()
+    {
+        return $this->hasMany(Purchase::class);
+    }
+
     public function notifications()
     {
         return $this->hasMany(Notification::class);

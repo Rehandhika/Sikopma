@@ -95,6 +95,11 @@ class MySchedule extends Component
             ->get();
     }
 
+    public function __invoke()
+    {
+        return $this->render();
+    }
+
     public function render()
     {
         return view('livewire.schedule.my-schedule', [
