@@ -50,6 +50,14 @@ class Index extends Component
 
     public function render()
     {
+        // Ensure dates are initialized
+        if (!$this->currentDate) {
+            $this->currentDate = Carbon::now();
+        }
+        if (!$this->weekStart || !$this->weekEnd) {
+            $this->calculateWeekRange();
+        }
+
         $schedules = ScheduleAssignment::query()
             ->whereBetween('date', [$this->weekStart, $this->weekEnd])
             ->with(['user', 'schedule'])

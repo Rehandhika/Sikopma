@@ -14,11 +14,6 @@
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
-
-    <!-- Additional Styles -->
-    <style>
-        [x-cloak] { display: none !important; }
-    </style>
 </head>
 <body class="bg-gray-50 font-sans antialiased">
     <div class="min-h-screen flex" x-data="{ sidebarOpen: false }">

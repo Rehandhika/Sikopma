@@ -219,7 +219,7 @@
         </div>
         
         <div class="p-4">
-            <div class="relative bg-black rounded-lg overflow-hidden" style="aspect-ratio: 4/3;">
+            <div class="relative bg-black rounded-lg overflow-hidden aspect-video">
                 <video id="camera-stream" class="w-full h-full object-cover" autoplay></video>
                 <canvas id="photo-canvas" class="hidden"></canvas>
                 

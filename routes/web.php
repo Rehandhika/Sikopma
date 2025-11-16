@@ -23,8 +23,7 @@ Route::get('/', function () {
 */
 
 Route::middleware('guest')->group(function () {
-    Route::get('/login', [SimpleLoginController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [SimpleLoginController::class, 'login'])->name('login.post');
+    Route::get('/login', \App\Livewire\Auth\LoginForm::class)->name('login');
 });
 
 /*
