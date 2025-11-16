@@ -16,6 +16,7 @@
 - [Features](#features)
 - [Technology Stack](#technology-stack)
 - [Quick Start](#quick-start)
+- [Authentication System](#authentication-system)
 - [Documentation](#documentation)
 - [Project Structure](#project-structure)
 - [Development](#development)
@@ -186,8 +187,47 @@ npm run dev
 
 After seeding, you can login with:
 
-- **Super Admin**: `admin@sikopma.test` / `password`
-- **Member**: `member@sikopma.test` / `password`
+- **Super Admin**: NIM `00000000` / Password `password`
+- **Test User**: NIM `12345678` / Password `password123`
+
+---
+
+## 🔐 Authentication System
+
+SIKOPMA uses a secure, traditional Laravel authentication system with the following features:
+
+### Current Implementation
+- **Controller**: `SimpleLoginController` (Traditional Laravel)
+- **Session**: Database driver with complete middleware stack
+- **Security**: CSRF protection, rate limiting, status validation
+- **Login History**: Tracks all login attempts with IP and user agent
+
+### Key Features
+- ✅ Rate limiting (5 attempts per minute)
+- ✅ Login history tracking
+- ✅ Status validation (only active users can login)
+- ✅ Session security (regeneration after login)
+- ✅ Auto-logout for inactive/suspended users
+
+### Important Note - Laravel 11 Session Middleware
+
+In Laravel 11, the web middleware group must be explicitly defined in `bootstrap/app.php`:
+
+```php
+$middleware->group('web', [
+    \Illuminate\Cookie\Middleware\EncryptCookies::class,
+    \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+    \Illuminate\Session\Middleware\StartSession::class,  // ← CRITICAL
+    \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+    \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
+    \Illuminate\Routing\Middleware\SubstituteBindings::class,
+]);
+```
+
+### Documentation
+- **[AUTH_SYSTEM_GUIDE.md](AUTH_SYSTEM_GUIDE.md)** - Complete authentication system documentation
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Common issues and solutions
+- **[CHANGELOG.md](CHANGELOG.md)** - Recent changes and updates
 
 ---
 
@@ -197,6 +237,15 @@ After seeding, you can login with:
 
 **[📘 Master Development Guide](MASTER_DEVELOPMENT_GUIDE.md)**  
 Complete reference for building SIKOPMA features with consistency and quality.
+
+### 🔐 Authentication & Security
+- **[AUTH_SYSTEM_GUIDE.md](AUTH_SYSTEM_GUIDE.md)** - Authentication system overview
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Debugging and common issues
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and changes
+
+### 🎨 UI/UX Documentation
+- **[UI_IMPROVEMENTS.md](UI_IMPROVEMENTS.md)** - UI/UX improvements and design system
+- **[FINAL_UI_UPDATE_SUMMARY.md](FINAL_UI_UPDATE_SUMMARY.md)** - Latest UI updates summary
 
 ### Essential Guides
 
