@@ -4,37 +4,47 @@ namespace App\Livewire\Auth;
 
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
 
 class Login extends Component
 {
     public $nim = '';
     public $password = '';
     public $remember = false;
-
-    protected $rules = [
-        'nim' => 'required|string',
-        'password' => 'required|string',
-    ];
+    public $errorMessage = '';
 
     public function login()
     {
-        $this->validate();
+        // Reset error
+        $this->errorMessage = '';
 
-        if (!Auth::attempt(['nim' => $this->nim, 'password' => $this->password], $this->remember)) {
-            throw ValidationException::withMessages([
-                'nim' => 'NIM atau password salah.',
-            ]);
+        // Simple validation
+        if (empty($this->nim)) {
+            $this->errorMessage = 'NIM wajib diisi.';
+            return;
         }
 
-        session()->regenerate();
+        if (empty($this->password)) {
+            $this->errorMessage = 'Password wajib diisi.';
+            return;
+        }
 
-        return redirect()->intended(route('dashboard'));
+        // Simple attempt - NO STATUS CHECK FIRST
+        if (Auth::attempt(['nim' => $this->nim, 'password' => $this->password], $this->remember)) {
+            // Success - regenerate session
+            session()->regenerate();
+            
+            // Redirect
+            return redirect()->route('dashboard');
+        }
+
+        // Failed
+        $this->errorMessage = 'NIM atau password salah.';
     }
 
     public function render()
     {
         return view('livewire.auth.login')
-            ->layout('layouts.guest');
+            ->layout('layouts.guest')
+            ->title('Login - SIKOPMA');
     }
 }

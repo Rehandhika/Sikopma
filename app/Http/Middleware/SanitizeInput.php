@@ -4,7 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class SanitizeInput
 {
@@ -13,10 +13,20 @@ class SanitizeInput
      */
     public function handle(Request $request, Closure $next)
     {
+        // Skip sanitization for login forms to prevent credential issues
+        if ($request->route() && in_array($request->route()->getName(), ['login', 'logout'])) {
+            return $next($request);
+        }
+
+        // Skip sanitization for Livewire requests (component payloads break when altered)
+        if ($request->header('X-Livewire') || Str::startsWith($request->path(), 'livewire')) {
+            return $next($request);
+        }
+        
         // Get all input data
         $input = $request->all();
         
-        // Sanitize string inputs
+        // Sanitize string inputs (but preserve passwords exactly)
         $sanitized = $this->sanitizeArray($input);
         
         // Replace request input with sanitized data
@@ -34,6 +44,10 @@ class SanitizeInput
             if (is_array($value)) {
                 $array[$key] = $this->sanitizeArray($value);
             } elseif (is_string($value)) {
+                // Skip sanitizing password fields
+                if (in_array($key, ['password', 'password_confirmation', 'current_password'])) {
+                    continue;
+                }
                 $array[$key] = $this->sanitizeString($value);
             }
         }

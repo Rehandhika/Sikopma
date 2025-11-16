@@ -18,9 +18,6 @@ export default defineConfig({
         rollupOptions: {
             output: {
                 manualChunks: {
-                    vendor: [
-                        'alpinejs',
-                    ],
                     charts: [
                         'chart.js',
                     ],

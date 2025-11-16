@@ -1,72 +1,50 @@
-<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
-        <div>
-            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                Masuk ke SIKOPMA
-            </h2>
-            <p class="mt-2 text-center text-sm text-gray-600">
-                Sistem Informasi Koperasi Mahasiswa
-            </p>
+<div style="max-width: 400px; margin: 100px auto; padding: 20px; border: 1px solid #ccc; border-radius: 5px;">
+    <h2 style="text-align: center; margin-bottom: 20px;">Login SIKOPMA</h2>
+    
+    @if($errorMessage)
+        <div style="color: red; margin-bottom: 15px; padding: 10px; background: #ffe6e6; border: 1px solid red;">
+            {{ $errorMessage }}
         </div>
-        <form class="mt-8 space-y-6" wire:submit.prevent="login">
-            <div class="rounded-md shadow-sm -space-y-px">
-                <div>
-                    <label for="nim" class="sr-only">NIM</label>
-                    <input
-                        id="nim"
-                        name="nim"
-                        type="text"
-                        autocomplete="username"
-                        required
-                        class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                        placeholder="NIM"
-                        wire:model="nim"
-                    >
-                </div>
-                <div>
-                    <label for="password" class="sr-only">Password</label>
-                    <input
-                        id="password"
-                        name="password"
-                        type="password"
-                        autocomplete="current-password"
-                        required
-                        class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                        placeholder="Password"
-                        wire:model="password"
-                    >
-                </div>
-            </div>
+    @endif
 
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <input
-                        id="remember-me"
-                        name="remember-me"
-                        type="checkbox"
-                        class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                        wire:model="remember"
-                    >
-                    <label for="remember-me" class="ml-2 block text-sm text-gray-900">
-                        Ingat saya
-                    </label>
-                </div>
-            </div>
+    <form wire:submit.prevent="login">
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px;">NIM:</label>
+            <input 
+                type="text" 
+                wire:model="nim" 
+                style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 3px;"
+                placeholder="Masukkan NIM"
+            >
+        </div>
 
-            <div>
-                <button
-                    type="submit"
-                    class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    wire:loading.attr="disabled"
-                >
-                    <span wire:loading.remove>Masuk</span>
-                    <span wire:loading>Masuk...</span>
-                </button>
-            </div>
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px;">Password:</label>
+            <input 
+                type="password" 
+                wire:model="password" 
+                style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 3px;"
+                placeholder="Masukkan password"
+            >
+        </div>
 
-            @error('nim')
-                <p class="text-red-500 text-sm">{{ $message }}</p>
-            @enderror
-        </form>
+        <div style="margin-bottom: 20px;">
+            <label>
+                <input type="checkbox" wire:model="remember"> Ingat saya
+            </label>
+        </div>
+
+        <button 
+            type="submit" 
+            style="width: 100%; padding: 10px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;"
+        >
+            Masuk
+        </button>
+    </form>
+    
+    <div style="margin-top: 20px; padding: 10px; background: #f0f0f0; font-size: 12px;">
+        <strong>Test Account:</strong><br>
+        NIM: 00000000<br>
+        Password: password
     </div>
 </div>

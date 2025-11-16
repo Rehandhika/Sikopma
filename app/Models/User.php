@@ -89,6 +89,11 @@ class User extends Authenticatable
         return $this->hasMany(Notification::class);
     }
 
+    public function loginHistories()
+    {
+        return $this->hasMany(LoginHistory::class);
+    }
+
     // Scopes
     public function scopeActive($query)
     {
@@ -114,5 +119,48 @@ class User extends Authenticatable
     public function getFullNameAttribute(): string
     {
         return $this->name;
+    }
+
+    /**
+     * Check if user can login
+     */
+    public function canLogin(): bool
+    {
+        return $this->isActive() && !$this->trashed();
+    }
+
+    /**
+     * Get user's primary role
+     */
+    public function getPrimaryRole(): ?string
+    {
+        return $this->getRoleNames()->first();
+    }
+
+    /**
+     * Check if user has any of the given roles
+     */
+    public function hasAnyRole(array $roles): bool
+    {
+        return $this->roles()->whereIn('name', $roles)->exists();
+    }
+
+    /**
+     * Get user's dashboard route based on role
+     */
+    public function getDashboardRoute(): string
+    {
+        $role = $this->getPrimaryRole();
+        
+        // You can customize dashboard routes based on roles
+        return match($role) {
+            'super_admin' => 'dashboard',
+            'ketua' => 'dashboard',
+            'wakil_ketua' => 'dashboard',
+            'bendahara' => 'dashboard',
+            'sekretaris' => 'dashboard',
+            'anggota' => 'dashboard',
+            default => 'dashboard',
+        };
     }
 }

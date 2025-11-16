@@ -6,19 +6,32 @@
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
                         <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                            <span class="text-white font-bold text-2xl">{{ substr(auth()->user()->name, 0, 1) }}</span>
+                            @if(auth()->check())
+                                <span class="text-white font-bold text-2xl">{{ substr(auth()->user()->name, 0, 1) }}</span>
+                            @else
+                                <span class="text-white font-bold text-2xl">?</span>
+                            @endif
                         </div>
                     </div>
                     <div class="ml-5">
-                        <h2 class="text-2xl font-bold">
-                            Selamat datang, {{ auth()->user()->name }}!
-                        </h2>
-                        <p class="text-indigo-100 mt-1">
-                            NIM: {{ auth()->user()->nim }} • 
-                            @foreach(auth()->user()->roles as $role)
-                                <span class="capitalize">{{ $role->name }}</span>{{ !$loop->last ? ', ' : '' }}
-                            @endforeach
-                        </p>
+                        @if(auth()->check())
+                            <h2 class="text-2xl font-bold">
+                                Selamat datang, {{ auth()->user()->name }}!
+                            </h2>
+                            <p class="text-indigo-100 mt-1">
+                                NIM: {{ auth()->user()->nim }} • 
+                                @foreach(auth()->user()->roles as $role)
+                                    <span class="capitalize">{{ $role->name }}</span>{{ !$loop->last ? ', ' : '' }}
+                                @endforeach
+                            </p>
+                        @else
+                            <h2 class="text-2xl font-bold">
+                                Selamat datang di SIKOPMA
+                            </h2>
+                            <p class="text-indigo-100 mt-1">
+                                Silakan login untuk melihat statistik pribadi.
+                            </p>
+                        @endif
                     </div>
                 </div>
                 <div class="text-right">

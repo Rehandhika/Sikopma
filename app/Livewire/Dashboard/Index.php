@@ -3,28 +3,76 @@
 namespace App\Livewire\Dashboard;
 
 use Livewire\Component;
-use App\Models\{ScheduleAssignment, Penalty, Notification, Attendance, User, Sale, Product};
+use App\Models\{
+    ScheduleAssignment, 
+    Penalty, 
+    Notification, 
+    Attendance, 
+    User, 
+    Sale, 
+    Product,
+    LeaveRequest,
+    SwapRequest
+};
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class Index extends Component
 {
     /**
-     * Render the dashboard with cached statistics
+     * Render the dashboard with statistics
      *
      * @return \Illuminate\View\View
      */
     public function render()
     {
         $user = auth()->user();
-        $isAdmin = $user->hasAnyRole(['Super Admin', 'Ketua', 'Wakil Ketua', 'BPH']);
 
-        // User Stats (cached per user for 10 minutes)
-        $userStats = cache()->remember(
-            "dashboard.user_stats.{$user->id}." . today()->format('Y-m-d'),
-            now()->addMinutes(config('sikopma.cache.user_stats', 10)),
-            function () use ($user) {
-                return [
+        // Initialize default values
+        $isAdmin = false;
+        
+        // Complete admin stats with ALL required keys
+        $adminStats = [
+            'todayAttendance' => [
+                'present' => 0,
+                'total' => 0
+            ],
+            'todaySales' => 0,
+            'todayTransactions' => 0,
+            'activeMembers' => 0,
+            'pendingRequests' => 0,
+            'lowStockProducts' => 0,      // ← Added
+            'pendingLeaves' => 0,          // ← Added
+            'pendingSwaps' => 0,           // ← Added
+        ];
+        
+        // Complete user stats
+        $userStats = [
+            'todaySchedule' => null,
+            'upcomingSchedules' => collect(),
+            'monthlyAttendance' => [
+                'present' => 0,
+                'late' => 0,
+                'total' => 0,
+            ],
+            'penalties' => [
+                'points' => 0,
+                'count' => 0,
+            ],
+            'notifications' => collect(),
+        ];
+
+        // Only load real stats when user is authenticated
+        if ($user) {
+            // Check if user is admin
+            $isAdmin = method_exists($user, 'hasAnyRole')
+                ? $user->hasAnyRole(['Super Admin', 'Ketua', 'Wakil Ketua', 'BPH'])
+                : false;
+
+            // Load User Stats
+            try {
+                $userStats = [
                     'todaySchedule' => ScheduleAssignment::where('user_id', $user->id)
                         ->where('date', today())
                         ->where('status', 'scheduled')
@@ -56,53 +104,52 @@ class Index extends Component
                     'penalties' => [
                         'points' => Penalty::where('user_id', $user->id)
                             ->where('status', 'active')
-                            ->sum('points'),
+                            ->sum('points') ?? 0,
                         'count' => Penalty::where('user_id', $user->id)
                             ->where('status', 'active')
                             ->count(),
                     ],
+                    
+                    'notifications' => Notification::where('user_id', $user->id)
+                        ->whereNull('read_at')
+                        ->orderBy('created_at', 'desc')
+                        ->limit(5)
+                        ->get(),
                 ];
+            } catch (\Exception $e) {
+                Log::error('Dashboard user stats error: ' . $e->getMessage());
             }
-        );
 
-        // Notifications (not cached - need real-time)
-        $userStats['notifications'] = Notification::where('user_id', $user->id)
-            ->whereNull('read_at')
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get();
-
-        // Admin Stats (cached for 5 minutes)
-        $adminStats = null;
-        if ($isAdmin) {
-            $adminStats = cache()->remember(
-                'dashboard.admin_stats.' . today()->format('Y-m-d-H'),
-                now()->addMinutes(config('sikopma.cache.dashboard_stats', 5)),
-                function () {
-                    return [
+            // Load Admin Stats (if admin)
+            if ($isAdmin) {
+                try {
+                    $adminStats = [
                         'todayAttendance' => [
-                            'present' => Attendance::whereDate('check_in', today())->where('status', 'present')->count(),
-                            'late' => Attendance::whereDate('check_in', today())->where('status', 'late')->count(),
-                            'total' => ScheduleAssignment::where('date', today())->count(),
+                            'present' => Attendance::whereDate('check_in', today())
+                                ->where('status', 'present')
+                                ->count(),
+                            'total' => ScheduleAssignment::where('date', today())
+                                ->count(),
                         ],
-                        
-                        'todaySales' => Sale::whereDate('created_at', today())->sum('total_amount'),
-                        'todayTransactions' => Sale::whereDate('created_at', today())->count(),
-                        
-                        'lowStockProducts' => Product::whereColumn('stock', '<=', 'min_stock')
-                            ->where('stock', '>', 0)
+                        'todaySales' => Sale::whereDate('created_at', today())
+                            ->sum('total_amount') ?? 0,
+                        'todayTransactions' => Sale::whereDate('created_at', today())
                             ->count(),
-                        
-                        'outOfStockProducts' => Product::where('stock', 0)->count(),
-                        
-                        'pendingLeaves' => \App\Models\LeaveRequest::where('status', 'pending')->count(),
-                        'pendingSwaps' => \App\Models\SwapRequest::where('status', 'target_approved')->count(),
-                        
-                        'activeUsers' => User::where('status', 'active')->count(),
-                        'totalUsers' => User::count(),
+                        'activeMembers' => User::where('status', 'active')
+                            ->count(),
+                        'pendingRequests' => 0, // Placeholder
+                        'lowStockProducts' => Product::where('stock', '<=', DB::raw('minimum_stock'))
+                            ->count(),
+                        'pendingLeaves' => LeaveRequest::where('status', 'pending')
+                            ->count(),
+                        'pendingSwaps' => SwapRequest::where('status', 'pending')
+                            ->count(),
                     ];
+                } catch (\Exception $e) {
+                    Log::error('Dashboard admin stats error: ' . $e->getMessage());
+                    // Keep default values on error
                 }
-            );
+            }
         }
 
         return view('livewire.dashboard.index', [
