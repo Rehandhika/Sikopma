@@ -22,9 +22,9 @@ class AvailabilityManager extends Component
     
     // Predefined sessions
     public $sessions = [
-        1 => 'Sesi 1 (Pagi: 08:00 - 12:00)',
-        2 => 'Sesi 2 (Siang: 13:00 - 17:00)',
-        3 => 'Sesi 3 (Sore: 17:00 - 21:00)',
+        1 => 'Sesi 1 (Pagi)',
+        2 => 'Sesi 2 (Siang)',
+        3 => 'Sesi 3 (Sore)',
     ];
     
     // Days of week
@@ -86,11 +86,22 @@ class AvailabilityManager extends Component
     {
         // Check if user has existing availability for this week
         $existingAvailability = Availability::where('user_id', auth()->id())
-            ->whereBetween('submitted_at', [
-                $this->weekStart->startOfDay(),
-                $this->weekEnd->endOfDay()
-            ])
+            ->where(function($query) {
+                $query->whereBetween('submitted_at', [
+                    $this->weekStart->copy()->startOfDay(),
+                    $this->weekEnd->copy()->endOfDay()
+                ])
+                ->orWhere(function($q) {
+                    // Also check for drafts created this week
+                    $q->where('status', 'draft')
+                      ->whereBetween('created_at', [
+                          $this->weekStart->copy()->startOfDay(),
+                          $this->weekEnd->copy()->endOfDay()
+                      ]);
+                });
+            })
             ->with('details')
+            ->latest()
             ->first();
 
         if ($existingAvailability) {
@@ -177,19 +188,29 @@ class AvailabilityManager extends Component
 
             // Delete existing availability for this week
             Availability::where('user_id', auth()->id())
-                ->whereBetween('submitted_at', [
-                    $this->weekStart->startOfDay(),
-                    $this->weekEnd->endOfDay()
-                ])
+                ->where(function($query) {
+                    $query->whereBetween('submitted_at', [
+                        $this->weekStart->copy()->startOfDay(),
+                        $this->weekEnd->copy()->endOfDay()
+                    ])
+                    ->orWhere(function($q) {
+                        $q->where('status', 'draft')
+                          ->whereBetween('created_at', [
+                              $this->weekStart->copy()->startOfDay(),
+                              $this->weekEnd->copy()->endOfDay()
+                          ]);
+                    });
+                })
                 ->delete();
 
             // Create new availability record
             $availability = Availability::create([
                 'user_id' => auth()->id(),
-                'schedule_id' => null, // Can be linked to specific schedule if needed
+                'schedule_id' => null,
                 'status' => $this->status,
-                'submitted_at' => now(),
+                'submitted_at' => $this->status === 'submitted' ? now() : null,
                 'total_available_sessions' => $this->getTotalAvailableSessions(),
+                'notes' => $this->notes,
             ]);
 
             // Create availability details
@@ -199,7 +220,7 @@ class AvailabilityManager extends Component
                     $details[] = [
                         'availability_id' => $availability->id,
                         'day' => $day,
-                        'session' => $session,
+                        'session' => (string) $session,
                         'is_available' => $isAvailable,
                         'created_at' => now(),
                         'updated_at' => now(),

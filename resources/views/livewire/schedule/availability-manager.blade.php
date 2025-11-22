@@ -44,7 +44,7 @@
             <button 
                 wire:click="$set('selectedWeekOffset', $selectedWeekOffset - 1)"
                 class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                {{ $selectedWeekOffset <= -4 ? 'disabled' : '' }}
+                @if($selectedWeekOffset <= -4) disabled @endif
             >
                 <i class="fas fa-chevron-left"></i>
             </button>
@@ -53,7 +53,7 @@
                 <select 
                     wire:model.live="selectedWeekOffset"
                     class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    {{ !$canEdit ? 'disabled' : '' }}
+                    @if(!$canEdit) disabled @endif
                 >
                     <option value="0">Minggu Ini</option>
                     <option value="1">Minggu Depan</option>
@@ -67,7 +67,7 @@
             <button 
                 wire:click="$set('selectedWeekOffset', $selectedWeekOffset + 1)"
                 class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                {{ $selectedWeekOffset >= 4 ? 'disabled' : '' }}
+                @if($selectedWeekOffset >= 4) disabled @endif
             >
                 <i class="fas fa-chevron-right"></i>
             </button>
@@ -267,7 +267,7 @@
             placeholder="Tambahkan catatan atau preferensi khusus..."
             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
             rows="3"
-            {{ !$canEdit ? 'disabled' : '' }}
+            @if(!$canEdit) disabled @endif
         ></textarea>
         <div class="mt-2 text-right">
             <span class="text-sm text-gray-500">{{ strlen($notes) }}/500 karakter</span>
@@ -314,7 +314,7 @@
                         type="button"
                         class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         wire:loading.attr="disabled"
-                        {{ $totalSessions === 0 ? 'disabled' : '' }}
+                        @if($totalSessions === 0) disabled @endif
                     >
                         <span wire:loading.remove>
                             <i class="fas fa-paper-plane mr-2"></i>

@@ -20,7 +20,7 @@
                 <select wire:model.live="categoryFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                     <option value="">Semua Kategori</option>
                     @foreach($categories as $category)
-                        <option value="{{ $category->id }}">{{ $category->name }}</option>
+                        <option value="{{ $category }}">{{ $category }}</option>
                     @endforeach
                 </select>
             </div>
@@ -69,7 +69,7 @@
                                 <div class="text-gray-500">{{ $product->barcode }}</div>
                             </div>
                         </td>
-                        <td>{{ $product->category?->name ?? '-' }}</td>
+                        <td>{{ $product->category ?? '-' }}</td>
                         <td class="font-medium">Rp {{ number_format($product->price, 0, ',', '.') }}</td>
                         <td>
                             <div class="text-sm">

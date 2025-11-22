@@ -76,7 +76,9 @@ class Index extends Component
         }
 
         return view('livewire.schedule.index', [
-            'days' => $days
+            'days' => $days,
+            'weekStart' => $this->weekStart,
+            'weekEnd' => $this->weekEnd
         ])->layout('layouts.app')->title('Kalender Jadwal');
     }
 }

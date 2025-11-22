@@ -67,9 +67,7 @@ class AnalyticsService
                 'total_late' => $lateCount,
                 'total_absent' => $absentCount,
                 'total_scheduled' => $totalScheduled,
-                'average_late_minutes' => $lateCount > 0 
-                    ? round($attendances->where('status', 'late')->avg('late_minutes'), 1)
-                    : 0,
+                'average_late_minutes' => 0,
             ];
         });
     }
@@ -83,7 +81,7 @@ class AnalyticsService
         
         return Cache::remember($cacheKey, 300, function () use ($startDate, $endDate) {
             $sales = Sale::whereBetween('created_at', [$startDate, $endDate])
-                ->where('status', 'completed')
+
                 ->get();
 
             $totalRevenue = $sales->sum('total_amount');
@@ -107,7 +105,7 @@ class AnalyticsService
                 ->join('products', 'sale_items.product_id', '=', 'products.id')
                 ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
                 ->whereBetween('sales.created_at', [$startDate, $endDate])
-                ->where('sales.status', 'completed')
+
                 ->selectRaw('products.name, SUM(sale_items.quantity) as total_quantity, SUM(sale_items.subtotal) as total_revenue')
                 ->groupBy('products.id', 'products.name')
                 ->orderBy('total_revenue', 'desc')
@@ -177,7 +175,7 @@ class AnalyticsService
         
         return Cache::remember($cacheKey, 300, function () use ($startDate, $endDate) {
             $sales = Sale::whereBetween('created_at', [$startDate, $endDate])
-                ->where('status', 'completed')
+
                 ->get();
 
             $penalties = Penalty::whereBetween('created_at', [$startDate, $endDate])->get();
@@ -192,7 +190,7 @@ class AnalyticsService
                 : 0;
 
             // Payment method breakdown
-            $paymentBreakdown = $sales->groupBy('payment_method')->map(function ($methodSales) {
+            $paymentBreakdown = $sales->groupBy('payment_method')->map(function ($methodSales) use ($totalRevenue) {
                 return [
                     'count' => $methodSales->count(),
                     'amount' => $methodSales->sum('total_amount'),
@@ -233,8 +231,8 @@ class AnalyticsService
                     users.name,
                     COUNT(*) as total_attendances,
                     SUM(CASE WHEN attendances.status IN ("present", "late") THEN 1 ELSE 0 END) as present_count,
-                    SUM(CASE WHEN attendances.status = "late" THEN attendances.late_minutes ELSE 0 END) as total_late_minutes,
-                    AVG(CASE WHEN attendances.status = "late" THEN attendances.late_minutes ELSE NULL END) as avg_late_minutes
+                    0 as total_late_minutes,
+                    0 as avg_late_minutes
                 ')
                 ->groupBy('users.id', 'users.name')
                 ->orderBy('present_count', 'desc')
@@ -323,14 +321,14 @@ class AnalyticsService
     protected function calculateSalesGrowthRate(Carbon $startDate, Carbon $endDate): float
     {
         $currentPeriodRevenue = Sale::whereBetween('created_at', [$startDate, $endDate])
-            ->where('status', 'completed')
+
             ->sum('total_amount');
 
         $previousStartDate = $startDate->copy()->subDays($startDate->diffInDays($endDate));
         $previousEndDate = $startDate->copy()->subDay();
 
         $previousPeriodRevenue = Sale::whereBetween('created_at', [$previousStartDate, $previousEndDate])
-            ->where('status', 'completed')
+
             ->sum('total_amount');
 
         if ($previousPeriodRevenue == 0) {
@@ -383,7 +381,7 @@ class AnalyticsService
     protected function getTodaySalesMetrics(): array
     {
         $todaySales = Sale::whereDate('created_at', today())
-            ->where('status', 'completed')
+
             ->get();
 
         return [
@@ -416,12 +414,12 @@ class AnalyticsService
             
             case 'daily_revenue':
                 return Sale::whereDate('created_at', $date)
-                    ->where('status', 'completed')
+
                     ->sum('total_amount');
             
             case 'transaction_count':
                 return Sale::whereDate('created_at', $date)
-                    ->where('status', 'completed')
+
                     ->count();
             
             default:
@@ -471,7 +469,7 @@ class AnalyticsService
         // Simple linear regression prediction
         $last30Days = Attendance::whereDate('date', '>=', now()->subDays(30))
             ->selectRaw('DATE(date) as date, COUNT(*) as count')
-            ->groupBy('date')
+            ->groupBy(DB::raw('DATE(date)'))
             ->orderBy('date')
             ->get();
 
@@ -496,9 +494,9 @@ class AnalyticsService
     protected function predictSalesTrend(): array
     {
         $last30Days = Sale::whereDate('created_at', '>=', now()->subDays(30))
-            ->where('status', 'completed')
+
             ->selectRaw('DATE(created_at) as date, SUM(total_amount) as revenue')
-            ->groupBy('date')
+            ->groupBy(DB::raw('DATE(created_at)'))
             ->orderBy('date')
             ->get();
 
@@ -541,7 +539,7 @@ class AnalyticsService
     protected function predictRevenueTrend(): array
     {
         $monthlyRevenue = Sale::whereDate('created_at', '>=', now()->subMonths(6))
-            ->where('status', 'completed')
+
             ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, SUM(total_amount) as revenue')
             ->groupBy('year', 'month')
             ->orderBy('year')

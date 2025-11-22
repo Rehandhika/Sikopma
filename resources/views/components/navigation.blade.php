@@ -1,34 +1,60 @@
+@php
+// Navigation link base classes
+$linkBaseClasses = 'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2';
+$linkActiveClasses = 'bg-primary-50 text-primary-700';
+$linkInactiveClasses = 'text-gray-700 hover:bg-gray-100 hover:text-gray-900';
+
+// Submenu link classes
+$submenuLinkBaseClasses = 'block px-3 py-2 text-sm rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2';
+$submenuLinkActiveClasses = 'bg-primary-50 text-primary-700 font-medium';
+$submenuLinkInactiveClasses = 'text-gray-600 hover:bg-gray-100 hover:text-gray-900';
+
+// Dropdown button classes
+$dropdownButtonBaseClasses = 'w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2';
+@endphp
+
 {{-- Dashboard --}}
 <a href="{{ route('dashboard') }}" 
-   class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('dashboard') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100' }}">
-    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-    </svg>
-    Dashboard
+   class="{{ $linkBaseClasses }} {{ request()->routeIs('dashboard') ? $linkActiveClasses : $linkInactiveClasses }}"
+   aria-current="{{ request()->routeIs('dashboard') ? 'page' : 'false' }}">
+    <x-ui.icon name="home" class="w-5 h-5 mr-3 flex-shrink-0" />
+    <span>Dashboard</span>
 </a>
 
 {{-- Attendance --}}
 <div x-data="{ open: {{ request()->routeIs('attendance.*') ? 'true' : 'false' }} }">
     <button @click="open = !open" 
-            class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('attendance.*') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100' }}">
-        <div class="flex items-center">
-            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
-            </svg>
-            Absensi
+            type="button"
+            class="{{ $dropdownButtonBaseClasses }} {{ request()->routeIs('attendance.*') ? $linkActiveClasses : $linkInactiveClasses }}"
+            aria-expanded="{{ request()->routeIs('attendance.*') ? 'true' : 'false' }}"
+            aria-controls="attendance-submenu">
+        <div class="flex items-center min-w-0">
+            <x-ui.icon name="clipboard-list" class="w-5 h-5 mr-3 flex-shrink-0" />
+            <span>Absensi</span>
         </div>
-        <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-        </svg>
+        <x-ui.icon name="chevron-down" class="w-4 h-4 ml-2 flex-shrink-0 transition-transform duration-200" ::class="{ 'rotate-180': open }" />
     </button>
-    <div x-show="open" x-collapse class="ml-8 mt-1 space-y-1">
-        <a href="{{ route('attendance.check-in-out') }}" class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('attendance.check-in-out') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
+    <div x-show="open" 
+         x-collapse 
+         id="attendance-submenu"
+         class="ml-8 mt-1 space-y-1"
+         role="menu">
+        <a href="{{ route('attendance.check-in-out') }}" 
+           class="{{ $submenuLinkBaseClasses }} {{ request()->routeIs('attendance.check-in-out') ? $submenuLinkActiveClasses : $submenuLinkInactiveClasses }}"
+           role="menuitem"
+           aria-current="{{ request()->routeIs('attendance.check-in-out') ? 'page' : 'false' }}">
             Check In/Out
         </a>
-        <a href="{{ route('attendance.index') }}" class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('attendance.index') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
+        <a href="{{ route('attendance.index') }}" 
+           class="{{ $submenuLinkBaseClasses }} {{ request()->routeIs('attendance.index') ? $submenuLinkActiveClasses : $submenuLinkInactiveClasses }}"
+           role="menuitem"
+           aria-current="{{ request()->routeIs('attendance.index') ? 'page' : 'false' }}">
             Daftar Absensi
         </a>
-        <a href="{{ route('attendance.history') }}" class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('attendance.history') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
+        <a href="{{ route('attendance.history') }}" 
+           class="{{ $submenuLinkBaseClasses }} {{ request()->routeIs('attendance.history') ? $submenuLinkActiveClasses : $submenuLinkInactiveClasses }}"
+           role="menuitem"
+           aria-current="{{ request()->routeIs('attendance.history') ? 'page' : 'false' }}">
             Riwayat
         </a>
     </div>
@@ -37,28 +63,43 @@
 {{-- Schedule --}}
 <div x-data="{ open: {{ request()->routeIs('schedule.*') ? 'true' : 'false' }} }">
     <button @click="open = !open" 
-            class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('schedule.*') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100' }}">
-        <div class="flex items-center">
-            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-            </svg>
-            Jadwal
+            type="button"
+            class="{{ $dropdownButtonBaseClasses }} {{ request()->routeIs('schedule.*') ? $linkActiveClasses : $linkInactiveClasses }}"
+            aria-expanded="{{ request()->routeIs('schedule.*') ? 'true' : 'false' }}"
+            aria-controls="schedule-submenu">
+        <div class="flex items-center min-w-0">
+            <x-ui.icon name="calendar" class="w-5 h-5 mr-3 flex-shrink-0" />
+            <span>Jadwal</span>
         </div>
-        <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-        </svg>
+        <x-ui.icon name="chevron-down" class="w-4 h-4 ml-2 flex-shrink-0 transition-transform duration-200" ::class="{ 'rotate-180': open }" />
     </button>
-    <div x-show="open" x-collapse class="ml-8 mt-1 space-y-1">
-        <a href="{{ route('schedule.index') }}" class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('schedule.index') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
+    <div x-show="open" 
+         x-collapse 
+         id="schedule-submenu"
+         class="ml-8 mt-1 space-y-1"
+         role="menu">
+        <a href="{{ route('schedule.index') }}" 
+           class="{{ $submenuLinkBaseClasses }} {{ request()->routeIs('schedule.index') ? $submenuLinkActiveClasses : $submenuLinkInactiveClasses }}"
+           role="menuitem"
+           aria-current="{{ request()->routeIs('schedule.index') ? 'page' : 'false' }}">
             Kalender Jadwal
         </a>
-        <a href="{{ route('schedule.my-schedule') }}" class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('schedule.my-schedule') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
+        <a href="{{ route('schedule.my-schedule') }}" 
+           class="{{ $submenuLinkBaseClasses }} {{ request()->routeIs('schedule.my-schedule') ? $submenuLinkActiveClasses : $submenuLinkInactiveClasses }}"
+           role="menuitem"
+           aria-current="{{ request()->routeIs('schedule.my-schedule') ? 'page' : 'false' }}">
             Jadwal Saya
         </a>
-        <a href="{{ route('schedule.availability') }}" class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('schedule.availability') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
+        <a href="{{ route('schedule.availability') }}" 
+           class="{{ $submenuLinkBaseClasses }} {{ request()->routeIs('schedule.availability') ? $submenuLinkActiveClasses : $submenuLinkInactiveClasses }}"
+           role="menuitem"
+           aria-current="{{ request()->routeIs('schedule.availability') ? 'page' : 'false' }}">
             Ketersediaan
         </a>
-        <a href="{{ route('schedule.create') }}" class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('schedule.create') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
+        <a href="{{ route('schedule.create') }}" 
+           class="{{ $submenuLinkBaseClasses }} {{ request()->routeIs('schedule.create') ? $submenuLinkActiveClasses : $submenuLinkInactiveClasses }}"
+           role="menuitem"
+           aria-current="{{ request()->routeIs('schedule.create') ? 'page' : 'false' }}">
             Tambah Jadwal
         </a>
     </div>
@@ -66,53 +107,62 @@
 
 {{-- Cashier / POS --}}
 <a href="{{ route('cashier.pos') }}" 
-   class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('cashier.*') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100' }}">
-    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
-    </svg>
-    Kasir / POS
+   class="{{ $linkBaseClasses }} {{ request()->routeIs('cashier.*') ? $linkActiveClasses : $linkInactiveClasses }}"
+   aria-current="{{ request()->routeIs('cashier.*') ? 'page' : 'false' }}">
+    <x-ui.icon name="currency-dollar" class="w-5 h-5 mr-3 flex-shrink-0" />
+    <span>Kasir / POS</span>
 </a>
 
 {{-- Products --}}
 <a href="{{ route('products.index') }}" 
-   class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('products.*') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100' }}">
-    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-    </svg>
-    Produk
+   class="{{ $linkBaseClasses }} {{ request()->routeIs('products.*') ? $linkActiveClasses : $linkInactiveClasses }}"
+   aria-current="{{ request()->routeIs('products.*') ? 'page' : 'false' }}">
+    <x-ui.icon name="shopping-cart" class="w-5 h-5 mr-3 flex-shrink-0" />
+    <span>Produk</span>
 </a>
 
 {{-- Stock --}}
 <a href="{{ route('stock.index') }}" 
-   class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('stock.*') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100' }}">
-    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
-    </svg>
-    Stok
+   class="{{ $linkBaseClasses }} {{ request()->routeIs('stock.*') ? $linkActiveClasses : $linkInactiveClasses }}"
+   aria-current="{{ request()->routeIs('stock.*') ? 'page' : 'false' }}">
+    <x-ui.icon name="inbox" class="w-5 h-5 mr-3 flex-shrink-0" />
+    <span>Stok</span>
 </a>
 
 {{-- Leave Requests --}}
 <div x-data="{ open: {{ request()->routeIs('leave.*') ? 'true' : 'false' }} }">
     <button @click="open = !open" 
-            class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('leave.*') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100' }}">
-        <div class="flex items-center">
-            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-            </svg>
-            Izin/Cuti
+            type="button"
+            class="{{ $dropdownButtonBaseClasses }} {{ request()->routeIs('leave.*') ? $linkActiveClasses : $linkInactiveClasses }}"
+            aria-expanded="{{ request()->routeIs('leave.*') ? 'true' : 'false' }}"
+            aria-controls="leave-submenu">
+        <div class="flex items-center min-w-0">
+            <x-ui.icon name="document-text" class="w-5 h-5 mr-3 flex-shrink-0" />
+            <span>Izin/Cuti</span>
         </div>
-        <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-        </svg>
+        <x-ui.icon name="chevron-down" class="w-4 h-4 ml-2 flex-shrink-0 transition-transform duration-200" ::class="{ 'rotate-180': open }" />
     </button>
-    <div x-show="open" x-collapse class="ml-8 mt-1 space-y-1">
-        <a href="{{ route('leave.my-requests') }}" class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('leave.my-requests') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
+    <div x-show="open" 
+         x-collapse 
+         id="leave-submenu"
+         class="ml-8 mt-1 space-y-1"
+         role="menu">
+        <a href="{{ route('leave.my-requests') }}" 
+           class="{{ $submenuLinkBaseClasses }} {{ request()->routeIs('leave.my-requests') ? $submenuLinkActiveClasses : $submenuLinkInactiveClasses }}"
+           role="menuitem"
+           aria-current="{{ request()->routeIs('leave.my-requests') ? 'page' : 'false' }}">
             Pengajuan Saya
         </a>
-        <a href="{{ route('leave.create') }}" class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('leave.create') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
+        <a href="{{ route('leave.create') }}" 
+           class="{{ $submenuLinkBaseClasses }} {{ request()->routeIs('leave.create') ? $submenuLinkActiveClasses : $submenuLinkInactiveClasses }}"
+           role="menuitem"
+           aria-current="{{ request()->routeIs('leave.create') ? 'page' : 'false' }}">
             Ajukan Izin
         </a>
-        <a href="{{ route('leave.approvals') }}" class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('leave.approvals') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
+        <a href="{{ route('leave.approvals') }}" 
+           class="{{ $submenuLinkBaseClasses }} {{ request()->routeIs('leave.approvals') ? $submenuLinkActiveClasses : $submenuLinkInactiveClasses }}"
+           role="menuitem"
+           aria-current="{{ request()->routeIs('leave.approvals') ? 'page' : 'false' }}">
             Persetujuan
         </a>
     </div>
@@ -120,44 +170,54 @@
 
 {{-- Swap Requests --}}
 <a href="{{ route('swap.index') }}" 
-   class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('swap.*') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100' }}">
-    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
-    </svg>
-    Tukar Jadwal
+   class="{{ $linkBaseClasses }} {{ request()->routeIs('swap.*') ? $linkActiveClasses : $linkInactiveClasses }}"
+   aria-current="{{ request()->routeIs('swap.*') ? 'page' : 'false' }}">
+    <x-ui.icon name="arrow-right" class="w-5 h-5 mr-3 flex-shrink-0" />
+    <span>Tukar Jadwal</span>
 </a>
 
 {{-- Penalties --}}
 <a href="{{ route('penalties.index') }}" 
-   class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('penalties.*') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100' }}">
-    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-    </svg>
-    Sanksi
+   class="{{ $linkBaseClasses }} {{ request()->routeIs('penalties.*') ? $linkActiveClasses : $linkInactiveClasses }}"
+   aria-current="{{ request()->routeIs('penalties.*') ? 'page' : 'false' }}">
+    <x-ui.icon name="exclamation-triangle" class="w-5 h-5 mr-3 flex-shrink-0" />
+    <span>Sanksi</span>
 </a>
 
 {{-- Reports --}}
 <div x-data="{ open: {{ request()->routeIs('reports.*') ? 'true' : 'false' }} }">
     <button @click="open = !open" 
-            class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('reports.*') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100' }}">
-        <div class="flex items-center">
-            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-            </svg>
-            Laporan
+            type="button"
+            class="{{ $dropdownButtonBaseClasses }} {{ request()->routeIs('reports.*') ? $linkActiveClasses : $linkInactiveClasses }}"
+            aria-expanded="{{ request()->routeIs('reports.*') ? 'true' : 'false' }}"
+            aria-controls="reports-submenu">
+        <div class="flex items-center min-w-0">
+            <x-ui.icon name="document" class="w-5 h-5 mr-3 flex-shrink-0" />
+            <span>Laporan</span>
         </div>
-        <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-        </svg>
+        <x-ui.icon name="chevron-down" class="w-4 h-4 ml-2 flex-shrink-0 transition-transform duration-200" ::class="{ 'rotate-180': open }" />
     </button>
-    <div x-show="open" x-collapse class="ml-8 mt-1 space-y-1">
-        <a href="{{ route('reports.attendance') }}" class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('reports.attendance') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
+    <div x-show="open" 
+         x-collapse 
+         id="reports-submenu"
+         class="ml-8 mt-1 space-y-1"
+         role="menu">
+        <a href="{{ route('reports.attendance') }}" 
+           class="{{ $submenuLinkBaseClasses }} {{ request()->routeIs('reports.attendance') ? $submenuLinkActiveClasses : $submenuLinkInactiveClasses }}"
+           role="menuitem"
+           aria-current="{{ request()->routeIs('reports.attendance') ? 'page' : 'false' }}">
             Laporan Absensi
         </a>
-        <a href="{{ route('reports.sales') }}" class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('reports.sales') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
+        <a href="{{ route('reports.sales') }}" 
+           class="{{ $submenuLinkBaseClasses }} {{ request()->routeIs('reports.sales') ? $submenuLinkActiveClasses : $submenuLinkInactiveClasses }}"
+           role="menuitem"
+           aria-current="{{ request()->routeIs('reports.sales') ? 'page' : 'false' }}">
             Laporan Penjualan
         </a>
-        <a href="{{ route('reports.penalties') }}" class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('reports.penalties') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
+        <a href="{{ route('reports.penalties') }}" 
+           class="{{ $submenuLinkBaseClasses }} {{ request()->routeIs('reports.penalties') ? $submenuLinkActiveClasses : $submenuLinkInactiveClasses }}"
+           role="menuitem"
+           aria-current="{{ request()->routeIs('reports.penalties') ? 'page' : 'false' }}">
             Laporan Sanksi
         </a>
     </div>
@@ -165,49 +225,43 @@
 
 {{-- Analytics --}}
 <a href="{{ route('analytics.dashboard') }}" 
-   class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('analytics.*') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100' }}">
-    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-    </svg>
-    Analytics
+   class="{{ $linkBaseClasses }} {{ request()->routeIs('analytics.*') ? $linkActiveClasses : $linkInactiveClasses }}"
+   aria-current="{{ request()->routeIs('analytics.*') ? 'page' : 'false' }}">
+    <x-ui.icon name="chart-bar" class="w-5 h-5 mr-3 flex-shrink-0" />
+    <span>Analytics</span>
 </a>
 
 {{-- Divider --}}
-<div class="border-t border-gray-200 my-2"></div>
+<div class="border-t border-gray-200 my-2" role="separator"></div>
 
 {{-- Users Management --}}
 <a href="{{ route('users.index') }}" 
-   class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('users.*') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100' }}">
-    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-    </svg>
-    Manajemen User
+   class="{{ $linkBaseClasses }} {{ request()->routeIs('users.*') ? $linkActiveClasses : $linkInactiveClasses }}"
+   aria-current="{{ request()->routeIs('users.*') ? 'page' : 'false' }}">
+    <x-ui.icon name="user-group" class="w-5 h-5 mr-3 flex-shrink-0" />
+    <span>Manajemen User</span>
 </a>
 
 {{-- Roles & Permissions --}}
 <a href="{{ route('roles.index') }}" 
-   class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('roles.*') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100' }}">
-    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-    </svg>
-    Role & Permission
+   class="{{ $linkBaseClasses }} {{ request()->routeIs('roles.*') ? $linkActiveClasses : $linkInactiveClasses }}"
+   aria-current="{{ request()->routeIs('roles.*') ? 'page' : 'false' }}">
+    <x-ui.icon name="check-circle" class="w-5 h-5 mr-3 flex-shrink-0" />
+    <span>Role & Permission</span>
 </a>
 
 {{-- Settings --}}
 <a href="{{ route('settings.general') }}" 
-   class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('settings.*') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100' }}">
-    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-    </svg>
-    Pengaturan
+   class="{{ $linkBaseClasses }} {{ request()->routeIs('settings.*') ? $linkActiveClasses : $linkInactiveClasses }}"
+   aria-current="{{ request()->routeIs('settings.*') ? 'page' : 'false' }}">
+    <x-ui.icon name="cog" class="w-5 h-5 mr-3 flex-shrink-0" />
+    <span>Pengaturan</span>
 </a>
 
 {{-- Profile --}}
 <a href="{{ route('profile.edit') }}" 
-   class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('profile.*') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100' }}">
-    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-    </svg>
-    Profil Saya
+   class="{{ $linkBaseClasses }} {{ request()->routeIs('profile.*') ? $linkActiveClasses : $linkInactiveClasses }}"
+   aria-current="{{ request()->routeIs('profile.*') ? 'page' : 'false' }}">
+    <x-ui.icon name="user" class="w-5 h-5 mr-3 flex-shrink-0" />
+    <span>Profil Saya</span>
 </a>

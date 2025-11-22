@@ -55,6 +55,9 @@ class AvailabilityDetail extends Model
             'tuesday' => 'Selasa',
             'wednesday' => 'Rabu',
             'thursday' => 'Kamis',
+            'friday' => 'Jumat',
+            'saturday' => 'Sabtu',
+            'sunday' => 'Minggu',
             default => $this->day,
         };
     }
@@ -66,8 +69,8 @@ class AvailabilityDetail extends Model
     {
         return match($this->session) {
             '1' => '08:00 - 12:00',
-            '2' => '12:00 - 16:00',
-            '3' => '16:00 - 20:00',
+            '2' => '13:00 - 17:00',
+            '3' => '17:00 - 21:00',
             default => 'Unknown',
         };
     }
