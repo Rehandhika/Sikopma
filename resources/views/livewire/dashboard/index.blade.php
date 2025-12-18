@@ -37,6 +37,8 @@
                 <div class="text-right">
                     <p class="text-sm text-indigo-100">{{ now()->isoFormat('dddd') }}</p>
                     <p class="text-lg font-semibold">{{ now()->isoFormat('D MMMM Y') }}</p>
+                    <p class="text-2xl font-bold mt-1" id="current-time">{{ now()->format('H:i:s') }}</p>
+                    <p class="text-xs text-indigo-100">Waktu Portugal (WET/WEST)</p>
                 </div>
             </div>
         </div>
@@ -184,3 +186,28 @@
         </x-ui.card>
     @endif
 </div>
+
+@push('scripts')
+<script>
+    // Update clock every second with Portugal timezone
+    function updateClock() {
+        const now = new Date();
+        
+        // Convert to Portugal timezone (Europe/Lisbon)
+        const portugalTime = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Lisbon' }));
+        
+        const hours = String(portugalTime.getHours()).padStart(2, '0');
+        const minutes = String(portugalTime.getMinutes()).padStart(2, '0');
+        const seconds = String(portugalTime.getSeconds()).padStart(2, '0');
+        
+        const timeElement = document.getElementById('current-time');
+        if (timeElement) {
+            timeElement.textContent = `${hours}:${minutes}:${seconds}`;
+        }
+    }
+    
+    // Update immediately and then every second
+    updateClock();
+    setInterval(updateClock, 1000);
+</script>
+@endpush
