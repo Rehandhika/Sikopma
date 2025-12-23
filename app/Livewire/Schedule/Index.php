@@ -4,9 +4,10 @@ namespace App\Livewire\Schedule;
 
 use Livewire\Component;
 use Livewire\WithPagination;
-use Livewire\Attributes\{Title, Layout};
-use App\Models\Schedule;
-use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\{Title, Layout, Computed};
+use App\Models\{Schedule, User, Availability};
+use Illuminate\Support\Facades\{DB, Cache};
+use Carbon\Carbon;
 
 #[Title('Manajemen Jadwal')]
 #[Layout('layouts.app')]
@@ -18,6 +19,11 @@ class Index extends Component
     public string $filterMonth = '';
     public string $filterYear = '';
     public string $search = '';
+    
+    // Member availability
+    public bool $showMemberModal = false;
+    public ?array $selectedMemberAvailability = null;
+    public ?string $selectedMemberName = null;
 
     protected $queryString = [
         'filterStatus' => ['except' => ''],
@@ -44,6 +50,106 @@ class Index extends Component
     public function updatingFilterYear()
     {
         $this->resetPage();
+    }
+
+    #[Computed]
+    public function currentWeekStart(): Carbon
+    {
+        return now()->startOfWeek(Carbon::MONDAY);
+    }
+
+    #[Computed]
+    public function currentWeekEnd(): Carbon
+    {
+        return now()->endOfWeek(Carbon::SUNDAY);
+    }
+
+    #[Computed]
+    public function membersWithAvailability(): array
+    {
+        $weekStart = $this->currentWeekStart;
+        
+        return Cache::remember(
+            "members_availability_{$weekStart->format('Y-m-d')}",
+            60, // 1 minute cache
+            function () use ($weekStart) {
+                // Get all active users
+                $members = User::query()
+                    ->where('status', 'active')
+                    ->select('id', 'name', 'nim')
+                    ->orderBy('name')
+                    ->get();
+
+                // Get submitted availabilities for current week by week_start_date
+                $availabilities = Availability::query()
+                    ->where('status', 'submitted')
+                    ->where('week_start_date', $weekStart->format('Y-m-d'))
+                    ->with('details:id,availability_id,day,session,is_available')
+                    ->get()
+                    ->keyBy('user_id');
+
+                return $members->map(function ($member) use ($availabilities) {
+                    $availability = $availabilities->get($member->id);
+                    return [
+                        'id' => $member->id,
+                        'name' => $member->name,
+                        'nim' => $member->nim,
+                        'has_submitted' => $availability !== null,
+                        'total_sessions' => $availability?->total_available_sessions ?? 0,
+                        'submitted_at' => $availability?->submitted_at?->format('d M H:i'),
+                    ];
+                })->toArray();
+            }
+        );
+    }
+
+    #[Computed]
+    public function availabilityStats(): array
+    {
+        $members = $this->membersWithAvailability;
+        $total = count($members);
+        $submitted = collect($members)->where('has_submitted', true)->count();
+        
+        return [
+            'total' => $total,
+            'submitted' => $submitted,
+            'pending' => $total - $submitted,
+            'percentage' => $total > 0 ? round(($submitted / $total) * 100) : 0,
+        ];
+    }
+
+    public function viewMemberAvailability(int $userId): void
+    {
+        $weekStart = $this->currentWeekStart;
+        
+        $user = User::find($userId);
+        $availability = Availability::query()
+            ->where('user_id', $userId)
+            ->where('status', 'submitted')
+            ->where('week_start_date', $weekStart->format('Y-m-d'))
+            ->with('details')
+            ->first();
+
+        if (!$availability) {
+            $this->dispatch('alert', type: 'warning', message: 'Anggota belum mengisi ketersediaan.');
+            return;
+        }
+
+        $this->selectedMemberName = $user->name;
+        $this->selectedMemberAvailability = [];
+        
+        foreach ($availability->details as $detail) {
+            $this->selectedMemberAvailability[$detail->day][$detail->session] = $detail->is_available;
+        }
+        
+        $this->showMemberModal = true;
+    }
+
+    public function closeMemberModal(): void
+    {
+        $this->showMemberModal = false;
+        $this->selectedMemberAvailability = null;
+        $this->selectedMemberName = null;
     }
 
     public function publish(int $scheduleId): void

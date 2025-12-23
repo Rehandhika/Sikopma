@@ -12,6 +12,7 @@ class Availability extends Model
     protected $fillable = [
         'user_id',
         'schedule_id',
+        'week_start_date',
         'status',
         'submitted_at',
         'total_available_sessions',
@@ -19,6 +20,7 @@ class Availability extends Model
 
     protected $casts = [
         'submitted_at' => 'datetime',
+        'week_start_date' => 'date',
     ];
 
     // Relationships
