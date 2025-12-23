@@ -23,7 +23,7 @@ class UpdateSessionTimes extends Command
      *
      * @var string
      */
-    protected $description = 'Update session times to new schedule (07:30-10:20, 10:20-12:50, 13:30-16:00)';
+    protected $description = 'Update session times to new schedule (07:30-10:00, 10:20-12:50, 13:30-16:00)';
 
     /**
      * Execute the console command.
@@ -40,7 +40,7 @@ class UpdateSessionTimes extends Command
 
         // Show new times
         $this->info('New Session Times:');
-        $this->line('  Sesi 1: 07:30 - 10:20');
+        $this->line('  Sesi 1: 07:30 - 10:00');
         $this->line('  Sesi 2: 10:20 - 12:50');
         $this->line('  Sesi 3: 13:30 - 16:00');
         $this->newLine();
@@ -71,7 +71,7 @@ class UpdateSessionTimes extends Command
             
             $settings = [
                 'schedule.session_1_start' => '07:30',
-                'schedule.session_1_end' => '10:20',
+                'schedule.session_1_end' => '10:00',
                 'schedule.session_2_start' => '10:20',
                 'schedule.session_2_end' => '12:50',
                 'schedule.session_3_start' => '13:30',
@@ -94,7 +94,7 @@ class UpdateSessionTimes extends Command
             $this->info('Updating Schedule Assignments...');
 
             $sessionUpdates = [
-                1 => ['start' => '07:30:00', 'end' => '10:20:00'],
+                1 => ['start' => '07:30:00', 'end' => '10:00:00'],
                 2 => ['start' => '10:20:00', 'end' => '12:50:00'],
                 3 => ['start' => '13:30:00', 'end' => '16:00:00'],
             ];

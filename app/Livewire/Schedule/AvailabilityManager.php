@@ -3,353 +3,173 @@
 namespace App\Livewire\Schedule;
 
 use Livewire\Component;
-use App\Models\{User, Availability, AvailabilityDetail};
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
+use App\Models\{Availability, AvailabilityDetail};
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\{DB, Cache};
 
 class AvailabilityManager extends Component
 {
-    public $selectedWeekOffset = 0;
-    public $weekStart;
-    public $weekEnd;
-    public $weekRange;
-    
-    // Availability data per day and session
-    public $availability = [];
-    public $notes = '';
-    public $status = 'draft';
-    
-    // Predefined sessions
-    public $sessions = [
-        1 => 'Sesi 1 (Pagi)',
-        2 => 'Sesi 2 (Siang)',
-        3 => 'Sesi 3 (Sore)',
-    ];
-    
-    // Days of week
-    public $days = [
-        'monday' => 'Senin',
-        'tuesday' => 'Selasa',
-        'wednesday' => 'Rabu',
-        'thursday' => 'Kamis',
-        'friday' => 'Jumat',
-        'saturday' => 'Sabtu',
-        'sunday' => 'Minggu',
-    ];
+    public int $weekOffset = 0;
+    public array $availability = [];
+    public string $status = 'draft';
 
-    protected $rules = [
-        'availability' => 'required|array|min:1',
-        'availability.*' => 'required|array',
-        'availability.*.*' => 'boolean',
-        'notes' => 'nullable|string|max:500',
-        'status' => 'required|in:draft,submitted',
-    ];
+    private const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday'];
+    private const DAY_LABELS = ['monday' => 'Sen', 'tuesday' => 'Sel', 'wednesday' => 'Rab', 'thursday' => 'Kam'];
+    private const SESSIONS = [1 => '07:30-10:00', 2 => '10:20-12:50', 3 => '13:30-16:00'];
 
-    protected $messages = [
-        'availability.required' => 'Pilih minimal satu sesi yang tersedia.',
-        'availability.min' => 'Pilih minimal satu sesi yang tersedia.',
-    ];
-
-    public function mount()
+    public function mount(): void
     {
-        $this->status = 'draft'; // Initialize status first
-        $this->initializeWeek();
-        $this->initializeAvailability(); // Initialize array structure first
-        $this->loadCurrentAvailability(); // Then load existing data
+        $this->initGrid();
+        $this->loadData();
     }
 
-    private function initializeWeek()
+    #[Computed]
+    public function weekStart(): Carbon
     {
-        $this->weekStart = now()->startOfWeek(Carbon::MONDAY)->addWeeks($this->selectedWeekOffset);
-        $this->weekEnd = now()->endOfWeek(Carbon::SUNDAY)->addWeeks($this->selectedWeekOffset);
-        $this->weekRange = $this->weekStart->locale('id')->format('d F') . ' - ' . 
-                          $this->weekEnd->locale('id')->format('d F Y');
+        return now()->startOfWeek(Carbon::MONDAY)->addWeeks($this->weekOffset);
     }
 
-    private function initializeAvailability()
+    #[Computed]
+    public function weekEnd(): Carbon
     {
-        // Always initialize the structure to ensure all keys exist
-        foreach ($this->days as $dayKey => $dayName) {
-            if (!isset($this->availability[$dayKey])) {
-                $this->availability[$dayKey] = [];
-            }
-            foreach ($this->sessions as $sessionKey => $sessionName) {
-                if (!isset($this->availability[$dayKey][$sessionKey])) {
-                    $this->availability[$dayKey][$sessionKey] = false;
-                }
-            }
-        }
+        return $this->weekStart->copy()->endOfWeek(Carbon::SUNDAY);
     }
 
-    private function loadCurrentAvailability()
+    #[Computed]
+    public function weekLabel(): string
     {
-        // Check if user has existing availability for this week
-        $existingAvailability = Availability::where('user_id', auth()->id())
-            ->where(function($query) {
-                $query->whereBetween('submitted_at', [
-                    $this->weekStart->copy()->startOfDay(),
-                    $this->weekEnd->copy()->endOfDay()
-                ])
-                ->orWhere(function($q) {
-                    // Also check for drafts created this week
-                    $q->where('status', 'draft')
-                      ->whereBetween('created_at', [
-                          $this->weekStart->copy()->startOfDay(),
-                          $this->weekEnd->copy()->endOfDay()
-                      ]);
-                });
-            })
-            ->with('details')
-            ->latest()
-            ->first();
-
-        if ($existingAvailability) {
-            $this->status = $existingAvailability->status;
-            $this->notes = $existingAvailability->notes ?? '';
-            
-            // Load availability details - array structure already initialized
-            foreach ($existingAvailability->details as $detail) {
-                $this->availability[$detail->day][$detail->session] = $detail->is_available;
-            }
-        }
+        return $this->weekStart->format('d M') . ' - ' . $this->weekEnd->format('d M Y');
     }
 
-    public function updatedSelectedWeekOffset()
+    #[Computed]
+    public function canEdit(): bool
     {
-        $this->initializeWeek();
-        $this->resetAvailability();
-        $this->initializeAvailability(); // Initialize structure first
-        $this->loadCurrentAvailability(); // Then load data
+        return $this->weekOffset >= 0 && $this->status !== 'submitted';
     }
 
-    public function resetAvailability()
+    #[Computed]
+    public function days(): array
     {
-        $this->availability = [];
-        $this->notes = '';
-        $this->status = 'draft';
+        return self::DAY_LABELS;
     }
 
-    public function toggleAvailability($day, $session)
+    #[Computed]
+    public function sessions(): array
     {
-        $this->availability[$day][$session] = !$this->availability[$day][$session];
+        return self::SESSIONS;
     }
 
-    public function setDayAvailability($day, $isAvailable)
+    public function updatedWeekOffset(): void
     {
-        foreach ($this->sessions as $sessionKey => $sessionName) {
-            $this->availability[$day][$sessionKey] = $isAvailable;
-        }
-    }
-
-    public function setSessionAvailability($session, $isAvailable)
-    {
-        foreach ($this->days as $dayKey => $dayName) {
-            $this->availability[$dayKey][$session] = $isAvailable;
-        }
-    }
-
-    public function selectAll()
-    {
-        foreach ($this->days as $dayKey => $dayName) {
-            foreach ($this->sessions as $sessionKey => $sessionName) {
-                $this->availability[$dayKey][$sessionKey] = true;
-            }
-        }
-    }
-
-    public function clearAll()
-    {
-        foreach ($this->days as $dayKey => $dayName) {
-            foreach ($this->sessions as $sessionKey => $sessionName) {
-                $this->availability[$dayKey][$sessionKey] = false;
-            }
-        }
-    }
-
-    public function saveAsDraft()
-    {
-        $this->status = 'draft';
-        $this->saveAvailability();
-    }
-
-    public function submitAvailability()
-    {
-        $this->status = 'submitted';
-        $this->saveAvailability();
-    }
-
-    public function saveAvailability()
-    {
-        $this->validate();
-
-        try {
-            DB::beginTransaction();
-
-            // Delete existing availability for this week
-            Availability::where('user_id', auth()->id())
-                ->where(function($query) {
-                    $query->whereBetween('submitted_at', [
-                        $this->weekStart->copy()->startOfDay(),
-                        $this->weekEnd->copy()->endOfDay()
-                    ])
-                    ->orWhere(function($q) {
-                        $q->where('status', 'draft')
-                          ->whereBetween('created_at', [
-                              $this->weekStart->copy()->startOfDay(),
-                              $this->weekEnd->copy()->endOfDay()
-                          ]);
-                    });
-                })
-                ->delete();
-
-            // Create new availability record
-            $availability = Availability::create([
-                'user_id' => auth()->id(),
-                'schedule_id' => null,
-                'status' => $this->status,
-                'submitted_at' => $this->status === 'submitted' ? now() : null,
-                'total_available_sessions' => $this->getTotalAvailableSessions(),
-                'notes' => $this->notes,
-            ]);
-
-            // Create availability details
-            $details = [];
-            foreach ($this->availability as $day => $sessions) {
-                foreach ($sessions as $session => $isAvailable) {
-                    $details[] = [
-                        'availability_id' => $availability->id,
-                        'day' => $day,
-                        'session' => (string) $session,
-                        'is_available' => $isAvailable,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ];
-                }
-            }
-
-            AvailabilityDetail::insert($details);
-
-            // Invalidate user availability cache
-            $this->invalidateUserAvailabilityCache(auth()->id(), $this->weekStart->format('Y-m-d'));
-
-            DB::commit();
-
-            $message = $this->status === 'submitted' 
-                ? 'Ketersediaan berhasil dikirim!' 
-                : 'Ketersediaan berhasil disimpan sebagai draft!';
-            
-            $this->dispatch('alert', type: 'success', message: $message);
-            $this->dispatch('availability-updated');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            $this->dispatch('alert', type: 'error', message: 'Gagal menyimpan ketersediaan: ' . $e->getMessage());
-        }
+        $this->initGrid();
+        $this->loadData();
+        
+        // Dispatch event to reset Alpine grid
+        $this->dispatch('availability-reset', $this->availability);
     }
 
     /**
-     * Invalidate user availability cache
+     * Save with data from Alpine.js
      */
-    protected function invalidateUserAvailabilityCache(int $userId, string $weekStart): void
+    public function saveWithData(array $gridData, string $status): void
     {
-        $cacheKey = "user_availability_{$userId}_{$weekStart}";
-        \Illuminate\Support\Facades\Cache::forget($cacheKey);
+        if (!$this->canEdit) return;
 
-        // Also invalidate schedule users cache for any schedules in this week
-        $schedules = \App\Models\Schedule::where('week_start_date', $weekStart)->get();
-        foreach ($schedules as $schedule) {
-            $scheduleUsersCacheKey = "schedule_users_{$schedule->id}_{$weekStart}";
-            \Illuminate\Support\Facades\Cache::forget($scheduleUsersCacheKey);
+        try {
+            DB::transaction(function () use ($gridData, $status) {
+                // Delete existing
+                Availability::where('user_id', auth()->id())
+                    ->whereBetween('created_at', [$this->weekStart, $this->weekEnd])
+                    ->delete();
+
+                // Count total sessions
+                $totalSessions = 0;
+                foreach ($gridData as $sessions) {
+                    foreach ($sessions as $isAvailable) {
+                        if ($isAvailable) $totalSessions++;
+                    }
+                }
+
+                // Create new
+                $avail = Availability::create([
+                    'user_id' => auth()->id(),
+                    'schedule_id' => null,
+                    'status' => $status,
+                    'submitted_at' => $status === 'submitted' ? now() : null,
+                    'total_available_sessions' => $totalSessions,
+                ]);
+
+                // Bulk insert details
+                $details = [];
+                $now = now();
+                foreach ($gridData as $day => $sessions) {
+                    foreach ($sessions as $session => $isAvailable) {
+                        $details[] = [
+                            'availability_id' => $avail->id,
+                            'day' => $day,
+                            'session' => (string) $session,
+                            'is_available' => (bool) $isAvailable,
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ];
+                    }
+                }
+                AvailabilityDetail::insert($details);
+
+                $this->status = $status;
+                $this->availability = $gridData;
+                
+                // Clear cache
+                Cache::forget("user_availability_" . auth()->id() . "_" . $this->weekStart->format('Y-m-d'));
+            });
+
+            $message = $status === 'submitted' ? 'Ketersediaan terkirim!' : 'Draft tersimpan!';
+            $this->dispatch('alert', type: 'success', message: $message);
+            
+        } catch (\Exception $e) {
+            $this->dispatch('alert', type: 'error', message: 'Gagal menyimpan: ' . $e->getMessage());
+            throw $e;
         }
-
-        \Illuminate\Support\Facades\Log::debug("User availability cache invalidated", [
-            'user_id' => $userId,
-            'week_start' => $weekStart,
-            'cache_key' => $cacheKey,
-        ]);
     }
 
-    public function getTotalAvailableSessions()
+    private function initGrid(): void
     {
-        $total = 0;
-        foreach ($this->availability as $day => $sessions) {
-            foreach ($sessions as $session => $isAvailable) {
-                if ($isAvailable) {
-                    $total++;
+        $this->availability = [];
+        foreach (self::DAYS as $day) {
+            $this->availability[$day] = [
+                '1' => false,
+                '2' => false,
+                '3' => false,
+            ];
+        }
+        $this->status = 'draft';
+    }
+
+    private function loadData(): void
+    {
+        $existing = Availability::query()
+            ->where('user_id', auth()->id())
+            ->whereBetween('created_at', [$this->weekStart, $this->weekEnd])
+            ->with('details:id,availability_id,day,session,is_available')
+            ->latest()
+            ->first();
+
+        if ($existing) {
+            $this->status = $existing->status;
+            foreach ($existing->details as $d) {
+                if (isset($this->availability[$d->day])) {
+                    $this->availability[$d->day][(string)$d->session] = (bool)$d->is_available;
                 }
             }
         }
-        return $total;
     }
-
-    public function getTotalAvailableHours()
-    {
-        $sessions = $this->getTotalAvailableSessions();
-        // Assuming each session is 4 hours
-        return $sessions * 4;
-    }
-
-    public function getAvailableDaysCount()
-    {
-        $days = 0;
-        foreach ($this->availability as $day => $sessions) {
-            if (array_filter($sessions)) {
-                $days++;
-            }
-        }
-        return $days;
-    }
-
-    public function isCurrentWeek()
-    {
-        return $this->selectedWeekOffset === 0;
-    }
-
-    public function canEdit()
-    {
-        // Allow editing if it's current week or future week, and status is draft
-        return $this->selectedWeekOffset >= 0 && $this->status === 'draft';
-    }
-
-    public function getDayName($day)
-    {
-        return $this->days[$day] ?? $day;
-    }
-
-    public function getSessionName($session)
-    {
-        return $this->sessions[$session] ?? "Sesi $session";
-    }
-
-    public function getSessionTime($session)
-    {
-        $times = [
-            1 => '08:00 - 12:00',
-            2 => '13:00 - 17:00',
-            3 => '17:00 - 21:00',
-        ];
-        
-        return $times[$session] ?? '';
-    }
-
-
 
     public function render()
     {
-        return view('livewire.schedule.availability-manager', [
-            'status' => $this->status,
-            'selectedWeekOffset' => $this->selectedWeekOffset,
-            'weekRange' => $this->weekRange,
-            'availability' => $this->availability,
-            'notes' => $this->notes,
-            'sessions' => $this->sessions,
-            'days' => $this->days,
-            'totalSessions' => $this->getTotalAvailableSessions(),
-            'totalHours' => $this->getTotalAvailableHours(),
-            'availableDays' => $this->getAvailableDaysCount(),
-            'canEdit' => $this->canEdit(),
-            'isCurrentWeek' => $this->isCurrentWeek(),
-        ])->layout('layouts.app')->title('Manajemen Ketersediaan');
+        return view('livewire.schedule.availability-manager')
+            ->layout('layouts.app')
+            ->title('Ketersediaan');
     }
 }

@@ -113,23 +113,23 @@ class EnhancedCheckInOut extends Component
     protected function getScheduleStartTime(): string
     {
         $sessionTimes = [
-            1 => '08:00',
-            2 => '12:00', 
-            3 => '16:00',
+            1 => '07:30',
+            2 => '10:20', 
+            3 => '13:30',
         ];
 
-        return $sessionTimes[$this->currentSchedule->session] ?? '08:00';
+        return $sessionTimes[$this->currentSchedule->session] ?? '07:30';
     }
 
     protected function getScheduleEndTime(): string
     {
         $sessionTimes = [
-            1 => '12:00',
-            2 => '16:00',
-            3 => '20:00',
+            1 => '10:00',
+            2 => '12:50',
+            3 => '16:00',
         ];
 
-        return $sessionTimes[$this->currentSchedule->session] ?? '12:00';
+        return $sessionTimes[$this->currentSchedule->session] ?? '10:00';
     }
 
     public function getCurrentLocation()

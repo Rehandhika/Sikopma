@@ -147,7 +147,7 @@
                 {{-- Close until tomorrow --}}
                 <button 
                     wire:click="closeUntilTomorrow"
-                    wire:confirm="Tutup koperasi hingga besok pagi (08:00)?"
+                    wire:confirm="Tutup koperasi hingga besok pagi (07:30)?"
                     class="flex flex-col items-center justify-center p-4 border-2 border-gray-200 rounded-lg hover:border-red-500 hover:bg-red-50 transition-all group"
                 >
                     <svg class="w-8 h-8 text-gray-400 group-hover:text-red-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -241,7 +241,7 @@
                         </svg>
                         <div class="text-sm text-blue-700">
                             <p class="font-medium mb-1">Tentang Override Buka</p>
-                            <p>Fitur ini memungkinkan koperasi buka di luar hari/jam operasional normal (Senin-Kamis, 08:00-16:00) jika ada pengurus yang melakukan check-in. Status tetap mengikuti kehadiran pengurus secara otomatis.</p>
+                            <p>Fitur ini memungkinkan koperasi buka di luar hari/jam operasional normal (Senin-Kamis, 07:30-16:00) jika ada pengurus yang melakukan check-in. Status tetap mengikuti kehadiran pengurus secara otomatis.</p>
                         </div>
                     </div>
                 </div>
@@ -393,7 +393,7 @@
                                 <li>Buka otomatis saat ada pengurus check-in pada hari dan jam operasional</li>
                                 <li>Tutup otomatis saat pengurus terakhir check-out</li>
                                 <li>Tutup otomatis di luar hari operasional (Jumat-Minggu)</li>
-                                <li>Tutup otomatis di luar jam operasional (sebelum 08:00 atau setelah 16:00)</li>
+                                <li>Tutup otomatis di luar jam operasional (sebelum 07:30 atau setelah 16:00)</li>
                             </ul>
                         </div>
                     </div>

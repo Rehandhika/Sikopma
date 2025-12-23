@@ -112,7 +112,7 @@ class ScheduleAuditTest extends AuditTestCase
      */
     protected function getSessionEndTime(int $session): string
     {
-        return ['10:20:00', '12:50:00', '16:00:00'][$session - 1] ?? '10:20:00';
+        return ['10:00:00', '12:50:00', '16:00:00'][$session - 1] ?? '10:00:00';
     }
 
     // ==========================================

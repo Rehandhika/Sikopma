@@ -101,7 +101,7 @@ class ScheduleEditService
             
             // Get session times from configuration or use defaults
             $sessionTimes = [
-                1 => ['07:30:00', '10:20:00'],
+                1 => ['07:30:00', '10:00:00'],
                 2 => ['10:20:00', '12:50:00'],
                 3 => ['13:30:00', '16:00:00'],
             ];
@@ -585,7 +585,7 @@ class ScheduleEditService
             
             // Get session times
             $sessionTimes = [
-                1 => ['07:30:00', '10:20:00'],
+                1 => ['07:30:00', '10:00:00'],
                 2 => ['10:20:00', '12:50:00'],
                 3 => ['13:30:00', '16:00:00'],
             ];
@@ -1070,7 +1070,7 @@ class ScheduleEditService
     ): array
     {
         $sessionTimes = [
-            1 => ['start' => '07:30', 'end' => '10:20', 'label' => 'Sesi 1'],
+            1 => ['start' => '07:30', 'end' => '10:00', 'label' => 'Sesi 1'],
             2 => ['start' => '10:20', 'end' => '12:50', 'label' => 'Sesi 2'],
             3 => ['start' => '13:30', 'end' => '16:00', 'label' => 'Sesi 3'],
         ];

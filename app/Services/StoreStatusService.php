@@ -449,10 +449,10 @@ class StoreStatusService
     protected function getDefaultOperatingHours(): array
     {
         return [
-            'monday' => ['open' => '08:00', 'close' => '16:00', 'is_open' => true],
-            'tuesday' => ['open' => '08:00', 'close' => '16:00', 'is_open' => true],
-            'wednesday' => ['open' => '08:00', 'close' => '16:00', 'is_open' => true],
-            'thursday' => ['open' => '08:00', 'close' => '16:00', 'is_open' => true],
+            'monday' => ['open' => '07:30', 'close' => '16:00', 'is_open' => true],
+            'tuesday' => ['open' => '07:30', 'close' => '16:00', 'is_open' => true],
+            'wednesday' => ['open' => '07:30', 'close' => '16:00', 'is_open' => true],
+            'thursday' => ['open' => '07:30', 'close' => '16:00', 'is_open' => true],
             'friday' => ['open' => null, 'close' => null, 'is_open' => false],
             'saturday' => ['open' => null, 'close' => null, 'is_open' => false],
             'sunday' => ['open' => null, 'close' => null, 'is_open' => false],

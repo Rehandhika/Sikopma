@@ -34,10 +34,10 @@ class About extends Component
     protected function getDefaultOperatingHours()
     {
         return [
-            'monday' => ['open' => '08:00', 'close' => '16:00', 'is_open' => true],
-            'tuesday' => ['open' => '08:00', 'close' => '16:00', 'is_open' => true],
-            'wednesday' => ['open' => '08:00', 'close' => '16:00', 'is_open' => true],
-            'thursday' => ['open' => '08:00', 'close' => '16:00', 'is_open' => true],
+            'monday' => ['open' => '07:30', 'close' => '16:00', 'is_open' => true],
+            'tuesday' => ['open' => '07:30', 'close' => '16:00', 'is_open' => true],
+            'wednesday' => ['open' => '07:30', 'close' => '16:00', 'is_open' => true],
+            'thursday' => ['open' => '07:30', 'close' => '16:00', 'is_open' => true],
             'friday' => ['open' => null, 'close' => null, 'is_open' => false],
             'saturday' => ['open' => null, 'close' => null, 'is_open' => false],
             'sunday' => ['open' => null, 'close' => null, 'is_open' => false],
@@ -78,10 +78,10 @@ class About extends Component
 
         // Static operating days array (could also be from config, but this is fast enough)
         $operatingDays = [
-            ['name' => 'Senin', 'open' => '08:00', 'close' => '16:00', 'is_open' => true],
-            ['name' => 'Selasa', 'open' => '08:00', 'close' => '16:00', 'is_open' => true],
-            ['name' => 'Rabu', 'open' => '08:00', 'close' => '16:00', 'is_open' => true],
-            ['name' => 'Kamis', 'open' => '08:00', 'close' => '16:00', 'is_open' => true],
+            ['name' => 'Senin', 'open' => '07:30', 'close' => '16:00', 'is_open' => true],
+            ['name' => 'Selasa', 'open' => '07:30', 'close' => '16:00', 'is_open' => true],
+            ['name' => 'Rabu', 'open' => '07:30', 'close' => '16:00', 'is_open' => true],
+            ['name' => 'Kamis', 'open' => '07:30', 'close' => '16:00', 'is_open' => true],
             ['name' => 'Jumat', 'open' => '-', 'close' => '-', 'is_open' => false],
             ['name' => 'Sabtu', 'open' => '-', 'close' => '-', 'is_open' => false],
             ['name' => 'Minggu', 'open' => '-', 'close' => '-', 'is_open' => false],

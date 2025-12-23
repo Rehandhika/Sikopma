@@ -117,6 +117,6 @@ class ScheduleSeeder extends Seeder
 
     private function getSessionEndTime(int $session): string
     {
-        return ['10:20', '12:50', '16:00'][$session - 1] ?? '10:20';
+        return ['10:00', '12:50', '16:00'][$session - 1] ?? '10:00';
     }
 }

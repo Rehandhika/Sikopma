@@ -211,9 +211,9 @@
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                             required>
                         <option value="">Pilih Sesi</option>
-                        <option value="1">Sesi 1 (08:00 - 12:00)</option>
-                        <option value="2">Sesi 2 (12:00 - 16:00)</option>
-                        <option value="3">Sesi 3 (16:00 - 20:00)</option>
+                        <option value="1">Sesi 1 (07:30 - 10:00)</option>
+                        <option value="2">Sesi 2 (10:20 - 12:50)</option>
+                        <option value="3">Sesi 3 (13:30 - 16:00)</option>
                     </select>
                 </div>
 

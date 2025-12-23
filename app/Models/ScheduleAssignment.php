@@ -121,7 +121,7 @@ class ScheduleAssignment extends Model
     public function getSessionLabelAttribute(): string
     {
         $labels = [
-            '1' => '07:30 - 10:20',
+            '1' => '07:30 - 10:00',
             '2' => '10:20 - 12:50',
             '3' => '13:30 - 16:00',
         ];

@@ -66,7 +66,7 @@ class SystemSettingSeeder extends Seeder
             ],
             [
                 'key' => 'schedule.session_1_end',
-                'value' => '10:20',
+                'value' => '10:00',
                 'type' => 'time',
                 'description' => 'Waktu selesai sesi 1',
             ],

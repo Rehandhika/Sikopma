@@ -102,9 +102,9 @@ class ScheduleExportService
     private function getSessionTime(int $session): string
     {
         $times = [
-            1 => '08:00 - 12:00',
-            2 => '13:00 - 17:00',
-            3 => '17:00 - 21:00',
+            1 => '07:30 - 10:00',
+            2 => '10:20 - 12:50',
+            3 => '13:30 - 16:00',
         ];
 
         return $times[$session] ?? '';
@@ -144,9 +144,9 @@ class ScheduleExportService
         $html .= '<table>';
         $html .= '<thead><tr>';
         $html .= '<th>Hari/Tanggal</th>';
-        $html .= '<th>Sesi 1<br>08:00-12:00</th>';
-        $html .= '<th>Sesi 2<br>13:00-17:00</th>';
-        $html .= '<th>Sesi 3<br>17:00-21:00</th>';
+        $html .= '<th>Sesi 1<br>07:30-10:00</th>';
+        $html .= '<th>Sesi 2<br>10:20-12:50</th>';
+        $html .= '<th>Sesi 3<br>13:30-16:00</th>';
         $html .= '</tr></thead>';
         $html .= '<tbody>';
         
@@ -200,7 +200,7 @@ class ScheduleExportService
         $csv = "Jadwal Shift Koperasi\n";
         $csv .= "Periode: " . $schedule->week_start_date->format('d M Y') . " - " . $schedule->week_end_date->format('d M Y') . "\n\n";
         
-        $csv .= "Hari/Tanggal,Sesi 1 (08:00-12:00),Sesi 2 (13:00-17:00),Sesi 3 (17:00-21:00)\n";
+        $csv .= "Hari/Tanggal,Sesi 1 (07:30-10:00),Sesi 2 (10:20-12:50),Sesi 3 (13:30-16:00)\n";
         
         foreach ($data['grid'] as $dateStr => $dayData) {
             $csv .= $dayData['day_name'] . ' ' . $dayData['date']->format('d M Y');

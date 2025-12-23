@@ -87,9 +87,9 @@ class AssignmentCell extends Component
     public function getSessionTime(): string
     {
         $times = [
-            1 => '08:00 - 12:00',
-            2 => '13:00 - 17:00',
-            3 => '17:00 - 21:00',
+            1 => '07:30 - 10:00',
+            2 => '10:20 - 12:50',
+            3 => '13:30 - 16:00',
         ];
         return $times[$this->session] ?? '';
     }

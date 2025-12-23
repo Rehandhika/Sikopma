@@ -30,7 +30,7 @@ return [
     'sessions' => [
         1 => [
             'start' => '07:30',
-            'end' => '10:20',
+            'end' => '10:00',
             'label' => 'Sesi 1 (Pagi)',
         ],
         2 => [

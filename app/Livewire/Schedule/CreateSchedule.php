@@ -501,20 +501,20 @@ class CreateSchedule extends Component
 
     private function getSessionStartTime(int $session): string
     {
-        return ['08:00', '13:00', '17:00'][$session - 1] ?? '08:00';
+        return ['07:30', '10:20', '13:30'][$session - 1] ?? '07:30';
     }
 
     private function getSessionEndTime(int $session): string
     {
-        return ['12:00', '17:00', '21:00'][$session - 1] ?? '12:00';
+        return ['10:00', '12:50', '16:00'][$session - 1] ?? '10:00';
     }
 
     public function getSessionTime(int $session): string
     {
         $times = [
-            1 => '08:00 - 12:00',
-            2 => '13:00 - 17:00',
-            3 => '17:00 - 21:00',
+            1 => '07:30 - 10:00',
+            2 => '10:20 - 12:50',
+            3 => '13:30 - 16:00',
         ];
         return $times[$session] ?? '';
     }

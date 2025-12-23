@@ -47,10 +47,10 @@ class StoreSettings extends Component
         } else {
             // Default operating hours
             $this->operatingHours = [
-                'monday' => ['open' => '08:00', 'close' => '16:00', 'is_open' => true],
-                'tuesday' => ['open' => '08:00', 'close' => '16:00', 'is_open' => true],
-                'wednesday' => ['open' => '08:00', 'close' => '16:00', 'is_open' => true],
-                'thursday' => ['open' => '08:00', 'close' => '16:00', 'is_open' => true],
+                'monday' => ['open' => '07:30', 'close' => '16:00', 'is_open' => true],
+                'tuesday' => ['open' => '07:30', 'close' => '16:00', 'is_open' => true],
+                'wednesday' => ['open' => '07:30', 'close' => '16:00', 'is_open' => true],
+                'thursday' => ['open' => '07:30', 'close' => '16:00', 'is_open' => true],
                 'friday' => ['open' => null, 'close' => null, 'is_open' => false],
                 'saturday' => ['open' => null, 'close' => null, 'is_open' => false],
                 'sunday' => ['open' => null, 'close' => null, 'is_open' => false],
@@ -83,7 +83,7 @@ class StoreSettings extends Component
         $this->storeStatusService->manualClose($reason, $tomorrow);
         $this->refreshStatus();
         
-        $this->dispatch('alert', type: 'success', message: 'Koperasi ditutup hingga besok pagi (08:00)');
+        $this->dispatch('alert', type: 'success', message: 'Koperasi ditutup hingga besok pagi (07:30)');
     }
 
     public function enableOpenOverride()

@@ -792,7 +792,7 @@ class EditSchedule extends Component
     public function getSessionTime(int $session): array
     {
         $sessionTimes = [
-            1 => ['start' => '07:30', 'end' => '10:20', 'label' => 'Sesi 1'],
+            1 => ['start' => '07:30', 'end' => '10:00', 'label' => 'Sesi 1'],
             2 => ['start' => '10:20', 'end' => '12:50', 'label' => 'Sesi 2'],
             3 => ['start' => '13:30', 'end' => '16:00', 'label' => 'Sesi 3'],
         ];

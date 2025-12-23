@@ -121,7 +121,7 @@
             <div class="bg-slate-900/40 border border-white/5 rounded-2xl p-5 lg:p-6 text-center">
                 <i class="fas fa-clock text-indigo-500 text-2xl mb-3"></i>
                 <h4 class="text-white font-medium mb-1">Jam Operasional</h4>
-                <p class="text-sm text-slate-400">Senin - Kamis, 08:00 - 16:00</p>
+                <p class="text-sm text-slate-400">Senin - Kamis, 07:30 - 16:00</p>
             </div>
             <div class="bg-slate-900/40 border border-white/5 rounded-2xl p-6 text-center">
                 <i class="fas fa-map-marker-alt text-indigo-500 text-2xl mb-3"></i>

@@ -386,7 +386,7 @@ abstract class AuditTestCase extends TestCase
             'session' => 1,
             'date' => $date->format('Y-m-d'),
             'time_start' => '07:30:00',
-            'time_end' => '10:20:00',
+            'time_end' => '10:00:00',
             'status' => 'scheduled',
         ];
 
