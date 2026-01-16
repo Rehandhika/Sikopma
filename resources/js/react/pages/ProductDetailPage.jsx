@@ -21,7 +21,7 @@ function StockBadge({ stock, minStock }) {
 
     if (s <= 0) {
         return (
-            <Badge className="bg-red-500/20 text-red-300 border-red-500/30">
+            <Badge className="bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/30">
                 Habis ({s})
             </Badge>
         )
@@ -29,14 +29,14 @@ function StockBadge({ stock, minStock }) {
 
     if (s <= ms) {
         return (
-            <Badge className="bg-orange-500/20 text-orange-300 border-orange-500/30">
+            <Badge className="bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-500/30">
                 Sisa {s}
             </Badge>
         )
     }
 
     return (
-        <Badge className="bg-green-500/20 text-green-300 border-green-500/30">
+        <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30">
             Tersedia ({s})
         </Badge>
     )
@@ -78,23 +78,23 @@ export default function ProductDetailPage({ slug }) {
     return (
         <PublicLayout>
             <div className="pb-20">
-                <div className="border-b border-white/5 bg-slate-900/30 backdrop-blur-sm py-4">
+                <div className="border-b border-border bg-background/70 backdrop-blur-sm py-4">
                     <div className="max-w-7xl mx-auto px-4">
                         <nav className="flex items-center gap-2 text-sm">
                             <Button
                                 asChild
                                 variant="ghost"
                                 size="sm"
-                                className="text-slate-400 hover:text-white"
+                                className="text-muted-foreground hover:text-foreground"
                             >
                                 <a href="/" aria-label="Kembali ke katalog">
                                     <ArrowLeft className="h-4 w-4" />
                                 </a>
                             </Button>
-                            <span className="text-slate-700">/</span>
-                            <span className="text-slate-500">Produk</span>
-                            <span className="text-slate-700">/</span>
-                            <span className="text-slate-200 font-medium truncate max-w-[240px]">
+                            <span className="text-muted-foreground/50">/</span>
+                            <span className="text-muted-foreground">Produk</span>
+                            <span className="text-muted-foreground/50">/</span>
+                            <span className="text-foreground font-medium truncate max-w-[240px]">
                                 {loading ? 'Memuat…' : product?.name ?? 'Produk'}
                             </span>
                         </nav>
@@ -104,9 +104,9 @@ export default function ProductDetailPage({ slug }) {
                 <div className="max-w-7xl mx-auto px-4 py-6 lg:py-10">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
                         <div className="lg:col-span-5 space-y-4 lg:space-y-6">
-                            <div className="aspect-square bg-slate-800 rounded-2xl lg:rounded-3xl overflow-hidden border border-white/10 relative group shadow-2xl shadow-black/50">
+                            <div className="aspect-square bg-muted rounded-2xl lg:rounded-3xl overflow-hidden border border-border relative group shadow-2xl shadow-black/20">
                                 {loading ? (
-                                    <div className="w-full h-full bg-white/5 animate-pulse" />
+                                    <div className="w-full h-full bg-muted/40 animate-pulse" />
                                 ) : product?.image_large_url ? (
                                     <img
                                         src={product.image_large_url}
@@ -115,7 +115,7 @@ export default function ProductDetailPage({ slug }) {
                                         decoding="async"
                                     />
                                 ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-slate-600">
+                                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                                         <Box className="h-14 w-14 opacity-40" />
                                     </div>
                                 )}
@@ -132,7 +132,7 @@ export default function ProductDetailPage({ slug }) {
                         </div>
 
                         <div className="lg:col-span-7">
-                            <Card className="bg-slate-900/60 backdrop-blur-xl border-white/10 rounded-2xl lg:rounded-3xl shadow-xl relative overflow-hidden">
+                            <Card className="bg-card/60 backdrop-blur-xl border-border rounded-2xl lg:rounded-3xl shadow-xl relative overflow-hidden">
                                 <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px] -z-10" />
 
                                 <CardHeader className="p-5 lg:p-8 pb-4">
@@ -140,7 +140,7 @@ export default function ProductDetailPage({ slug }) {
                                         {product?.category ? (
                                             <Badge
                                                 variant="secondary"
-                                                className="bg-white/5 text-indigo-300 border-white/10"
+                                                className="bg-accent text-primary border-border"
                                             >
                                                 {product.category}
                                             </Badge>
@@ -148,29 +148,29 @@ export default function ProductDetailPage({ slug }) {
                                             <span />
                                         )}
                                         {product?.sku ? (
-                                            <span className="text-xs font-mono text-slate-500">
+                                            <span className="text-xs font-mono text-muted-foreground">
                                                 SKU: {product.sku}
                                             </span>
                                         ) : null}
                                     </div>
 
-                                    <CardTitle className="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight">
+                                    <CardTitle className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground leading-tight">
                                         {loading ? 'Memuat…' : product?.name ?? 'Produk'}
                                     </CardTitle>
                                 </CardHeader>
 
                                 <CardContent className="p-5 lg:p-8 pt-0 space-y-6">
-                                    <div className="bg-slate-950/50 rounded-2xl p-5 lg:p-6 border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0">
+                                    <div className="bg-background/50 rounded-2xl p-5 lg:p-6 border border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0">
                                         <div>
-                                            <p className="text-sm text-slate-400 mb-1">Harga Satuan</p>
+                                            <p className="text-sm text-muted-foreground mb-1">Harga Satuan</p>
                                             <div className="text-3xl lg:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">
                                                 {loading ? '—' : `Rp ${formatRupiah(product?.price)}`}
                                             </div>
                                         </div>
-                                        <div className="text-left sm:text-right pt-4 sm:pt-0 border-t sm:border-t-0 border-white/5">
-                                            <p className="text-sm text-slate-400 mb-2">Status Stok</p>
+                                        <div className="text-left sm:text-right pt-4 sm:pt-0 border-t sm:border-t-0 border-border/60">
+                                            <p className="text-sm text-muted-foreground mb-2">Status Stok</p>
                                             {loading ? (
-                                                <Badge variant="outline" className="border-white/10 text-slate-300">
+                                                <Badge variant="outline" className="border-border text-muted-foreground">
                                                     Memuat…
                                                 </Badge>
                                             ) : (
@@ -183,7 +183,7 @@ export default function ProductDetailPage({ slug }) {
                                         <span className="text-indigo-400 mt-0.5">
                                             <BadgeCheck className="h-4 w-4" />
                                         </span>
-                                        <p className="text-sm text-indigo-200/80 leading-relaxed">
+                                        <p className="text-sm text-indigo-700 dark:text-indigo-200/90 leading-relaxed">
                                             Pembelian dilakukan secara langsung di Koperasi. Silakan kunjungi kami pada jam operasional.
                                         </p>
                                     </div>
@@ -191,17 +191,17 @@ export default function ProductDetailPage({ slug }) {
                                     <Button
                                         asChild
                                         variant="outline"
-                                        className="w-full h-12 rounded-xl bg-white/5 hover:bg-white/10 text-slate-200 border-white/10"
+                                        className="w-full h-12 rounded-xl bg-background/60 hover:bg-accent text-foreground border-border"
                                     >
                                         <a href="/">Kembali ke Katalog</a>
                                     </Button>
 
                                     {product?.description ? (
                                         <>
-                                            <Separator className="bg-white/10" />
+                                            <Separator className="bg-border" />
                                             <div className="space-y-2">
-                                                <h3 className="text-lg font-semibold text-white">Deskripsi</h3>
-                                                <p className="text-sm text-slate-300 leading-relaxed">
+                                                <h3 className="text-lg font-semibold text-foreground">Deskripsi</h3>
+                                                <p className="text-sm text-foreground/90 leading-relaxed">
                                                     {product.description}
                                                 </p>
                                             </div>
@@ -213,38 +213,38 @@ export default function ProductDetailPage({ slug }) {
                     </div>
 
                     <div className="mt-8 lg:mt-12 grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
-                        <Card className="bg-slate-900/40 border-white/5 rounded-2xl text-center">
+                        <Card className="bg-card/40 border-border/60 rounded-2xl text-center">
                             <CardContent className="p-6 space-y-2">
                                 <Clock className="h-6 w-6 text-indigo-400 mx-auto" />
-                                <div className="text-white font-medium">Jam Operasional</div>
-                                <div className="text-sm text-slate-400">
+                                <div className="text-foreground font-medium">Jam Operasional</div>
+                                <div className="text-sm text-muted-foreground">
                                     Lihat detail di halaman Tentang
                                 </div>
-                                <Button asChild variant="ghost" className="text-indigo-300">
+                                <Button asChild variant="ghost" className="text-primary">
                                     <a href="/about">Buka Tentang</a>
                                 </Button>
                             </CardContent>
                         </Card>
 
-                        <Card className="bg-slate-900/40 border-white/5 rounded-2xl text-center">
+                        <Card className="bg-card/40 border-border/60 rounded-2xl text-center">
                             <CardContent className="p-6 space-y-2">
                                 <MapPin className="h-6 w-6 text-indigo-400 mx-auto" />
-                                <div className="text-white font-medium">Lokasi</div>
-                                <div className="text-sm text-slate-400">
+                                <div className="text-foreground font-medium">Lokasi</div>
+                                <div className="text-sm text-muted-foreground">
                                     {address ?? 'Alamat belum tersedia'}
                                 </div>
                             </CardContent>
                         </Card>
 
-                        <Card className="bg-slate-900/40 border-white/5 rounded-2xl text-center">
+                        <Card className="bg-card/40 border-border/60 rounded-2xl text-center">
                             <CardContent className="p-6 space-y-2">
                                 <Headset className="h-6 w-6 text-indigo-400 mx-auto" />
-                                <div className="text-white font-medium">Bantuan</div>
-                                <div className="text-sm text-slate-400">
+                                <div className="text-foreground font-medium">Bantuan</div>
+                                <div className="text-sm text-muted-foreground">
                                     {whatsapp ? `WhatsApp: ${whatsapp}` : 'Hubungi admin'}
                                 </div>
                                 {waDigits ? (
-                                    <Button asChild variant="ghost" className="text-indigo-300">
+                                    <Button asChild variant="ghost" className="text-primary">
                                         <a href={`https://wa.me/${waDigits}`} target="_blank" rel="noreferrer">
                                             Chat WhatsApp
                                         </a>
@@ -258,4 +258,3 @@ export default function ProductDetailPage({ slug }) {
         </PublicLayout>
     )
 }
-

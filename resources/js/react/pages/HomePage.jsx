@@ -11,13 +11,6 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card'
-import {
-    Carousel,
-    CarouselContent,
-    CarouselItem,
-    CarouselNext,
-    CarouselPrevious,
-} from '@/components/ui/carousel'
 import { Input } from '@/components/ui/input'
 import {
     Pagination,
@@ -36,6 +29,7 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 
+import BannerCarousel from '@/react/components/BannerCarousel'
 import PublicLayout from '@/react/components/PublicLayout'
 import useDebouncedValue from '@/react/hooks/useDebouncedValue'
 import { api } from '@/react/lib/api'
@@ -86,63 +80,31 @@ function BannerSection() {
 
     if (!banners.length) return null
 
+    const slides = banners.map((banner) => ({
+        id: banner.id,
+        title: banner.title || null,
+        alt: banner.title || 'Banner promosi SIKOPMA',
+        href: null,
+        images: {
+            default: banner.images?.default ?? '',
+            '1920': banner.images?.['1920'],
+            '768': banner.images?.['768'],
+            '480': banner.images?.['480'],
+        },
+    }))
+
     return (
-        <div className="w-full relative group">
-            <div className="absolute inset-0 bg-gradient-to-b from-slate-950/0 to-slate-950 pointer-events-none z-10" />
+        <div className="w-full relative">
+            <div className="absolute inset-0 bg-gradient-to-b from-background/0 to-background pointer-events-none z-10" />
             <div className="max-w-7xl mx-auto px-4">
-                <Carousel opts={{ loop: banners.length > 1 }} className="w-full">
-                    <CarouselContent>
-                        {banners.map((banner) => (
-                            <CarouselItem key={banner.id}>
-                                <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/20">
-                                    <div className="aspect-[16/5] w-full">
-                                        <picture>
-                                            {banner.images?.['1920'] ? (
-                                                <source
-                                                    media="(min-width: 1024px)"
-                                                    srcSet={banner.images['1920']}
-                                                />
-                                            ) : null}
-                                            {banner.images?.['768'] ? (
-                                                <source
-                                                    media="(min-width: 640px)"
-                                                    srcSet={banner.images['768']}
-                                                />
-                                            ) : null}
-                                            {banner.images?.['480'] ? (
-                                                <source media="(max-width: 639px)" srcSet={banner.images['480']} />
-                                            ) : null}
-                                            <img
-                                                src={banner.images?.default ?? ''}
-                                                alt={banner.title || 'Banner promosi SIKOPMA'}
-                                                className="w-full h-full object-cover"
-                                                loading="lazy"
-                                                decoding="async"
-                                                draggable={false}
-                                            />
-                                        </picture>
-                                    </div>
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-                                    {banner.title ? (
-                                        <div className="absolute bottom-0 left-0 right-0 p-4 md:p-8">
-                                            <div className="max-w-7xl mx-auto">
-                                                <h3 className="text-white text-lg md:text-2xl lg:text-3xl font-bold drop-shadow-lg">
-                                                    {banner.title}
-                                                </h3>
-                                            </div>
-                                        </div>
-                                    ) : null}
-                                </div>
-                            </CarouselItem>
-                        ))}
-                    </CarouselContent>
-                    {banners.length > 1 ? (
-                        <>
-                            <CarouselPrevious className="left-6 bg-white/90 hover:bg-white text-slate-900 border-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                            <CarouselNext className="right-6 bg-white/90 hover:bg-white text-slate-900 border-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </>
-                    ) : null}
-                </Carousel>
+                <BannerCarousel
+                    slides={slides}
+                    loop={slides.length > 1}
+                    autoplayIntervalMs={5000}
+                    transitionDuration={40}
+                    showArrows={slides.length > 1}
+                    showDots={slides.length > 1}
+                />
             </div>
         </div>
     )
@@ -204,26 +166,26 @@ function ProductsSection() {
         <div className="max-w-7xl mx-auto px-4 py-12 relative z-20">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight mb-2">
+                    <h1 className="text-3xl font-bold text-foreground tracking-tight mb-2">
                         Katalog Produk
                     </h1>
-                    <p className="text-slate-400">
+                    <p className="text-muted-foreground">
                         Temukan kebutuhan harianmu dengan harga terbaik.
                     </p>
                 </div>
             </div>
 
-            <div className="bg-slate-900/60 backdrop-blur-md border border-white/10 rounded-2xl p-4 mb-10 shadow-xl">
+            <div className="bg-card/60 backdrop-blur-md border border-border rounded-2xl p-4 mb-10 shadow-xl">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                     <div className="md:col-span-8 relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
                             <Search className="h-4 w-4" />
                         </div>
                         <Input
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Cari produk (nama, SKU)..."
-                            className="h-[52px] pl-10 bg-slate-950/50 border-white/10 text-white placeholder:text-slate-600 focus-visible:ring-indigo-500/40"
+                            className="h-[52px] pl-10 bg-background/60 border-border text-foreground placeholder:text-muted-foreground/70 focus-visible:ring-ring/40"
                         />
                     </div>
 
@@ -232,10 +194,10 @@ function ProductsSection() {
                             value={category ? category : 'all'}
                             onValueChange={(v) => setCategory(v === 'all' ? '' : v)}
                         >
-                            <SelectTrigger className="h-[52px] bg-slate-950/50 border-white/10 text-slate-200 focus:ring-indigo-500/40">
+                            <SelectTrigger className="h-[52px] bg-background/60 border-border text-foreground focus:ring-ring/40">
                                 <SelectValue placeholder="Semua Kategori" />
                             </SelectTrigger>
-                            <SelectContent className="bg-slate-900/95 border-white/10">
+                            <SelectContent className="bg-popover border-border">
                                 <SelectItem value="all">Semua Kategori</SelectItem>
                                 {categories.map((c) => (
                                     <SelectItem key={c} value={c}>
@@ -253,16 +215,16 @@ function ProductsSection() {
                     {Array.from({ length: 12 }).map((_, idx) => (
                         <Card
                             key={idx}
-                            className="overflow-hidden bg-slate-900/40 border-white/5 shadow-none"
+                            className="overflow-hidden bg-card/40 border-border/60 shadow-none"
                         >
                             <div className="aspect-square">
                                 <Skeleton className="h-full w-full rounded-none" />
                             </div>
                             <CardContent className="p-5 space-y-3">
-                                <Skeleton className="h-3 w-20 bg-white/10" />
-                                <Skeleton className="h-4 w-full bg-white/10" />
-                                <Skeleton className="h-4 w-3/4 bg-white/10" />
-                                <Skeleton className="h-6 w-1/2 bg-white/10" />
+                                <Skeleton className="h-3 w-20" />
+                                <Skeleton className="h-4 w-full" />
+                                <Skeleton className="h-4 w-3/4" />
+                                <Skeleton className="h-6 w-1/2" />
                             </CardContent>
                         </Card>
                     ))}
@@ -279,9 +241,9 @@ function ProductsSection() {
                             return (
                                 <Card
                                     key={p.id}
-                                    className="group relative overflow-hidden bg-slate-900/40 border-white/5 shadow-none transition-all duration-300 hover:bg-slate-800/60 hover:border-indigo-500/30 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] hover:-translate-y-1"
+                                    className="group relative overflow-hidden bg-card/50 border-border/60 shadow-none transition-all duration-300 hover:bg-card/70 hover:border-indigo-500/30 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] hover:-translate-y-1"
                                 >
-                                    <div className="aspect-square relative overflow-hidden bg-slate-800">
+                                    <div className="aspect-square relative overflow-hidden bg-muted">
                                         {p.image_medium_url ? (
                                             <img
                                                 src={p.image_medium_url}
@@ -291,7 +253,7 @@ function ProductsSection() {
                                                 decoding="async"
                                             />
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-slate-600 bg-slate-800/50">
+                                            <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-muted/60">
                                                 <div className="text-4xl opacity-50">□</div>
                                             </div>
                                         )}
@@ -323,26 +285,26 @@ function ProductsSection() {
                                                 {p.category}
                                             </CardDescription>
                                         ) : null}
-                                        <CardTitle className="text-sm md:text-base font-medium text-slate-100 line-clamp-2 min-h-[2.5rem] group-hover:text-indigo-300 transition-colors">
+                                        <CardTitle className="text-sm md:text-base font-medium text-card-foreground line-clamp-2 min-h-[2.5rem] group-hover:text-primary transition-colors">
                                             {p.name}
                                         </CardTitle>
                                     </CardHeader>
 
                                     <CardContent className="px-5 pb-5 pt-0">
                                         <div className="flex items-center space-x-2 mb-3 text-xs">
-                                            <span className="text-slate-500">
+                                            <span className="text-muted-foreground">
                                                 Stok:{' '}
-                                                <span className="text-slate-300 font-medium">
+                                                <span className="text-foreground font-medium">
                                                     {stock}
                                                 </span>
                                             </span>
                                         </div>
                                         <div className="flex items-end justify-between">
                                             <div className="flex flex-col">
-                                                <span className="text-xs text-slate-500 mb-1">
+                                                <span className="text-xs text-muted-foreground mb-1">
                                                     Harga
                                                 </span>
-                                                <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 group-hover:from-indigo-400 group-hover:to-cyan-400 transition-all duration-300">
+                                                <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-foreground to-muted-foreground group-hover:from-indigo-500 group-hover:to-cyan-500 transition-all duration-300">
                                                     Rp {formatRupiah(p.price)}
                                                 </span>
                                             </div>
@@ -350,7 +312,7 @@ function ProductsSection() {
                                                 asChild
                                                 size="icon"
                                                 variant="outline"
-                                                className="h-9 w-9 rounded-full bg-white/5 hover:bg-indigo-600 text-slate-400 hover:text-white border-white/10"
+                                                className="h-9 w-9 rounded-full bg-background/60 hover:bg-primary text-muted-foreground hover:text-primary-foreground border-border"
                                             >
                                                 <a href={`/products/${p.slug}`} aria-label={`Lihat ${p.name}`}>
                                                     <ArrowRight className="h-4 w-4" />
@@ -365,7 +327,7 @@ function ProductsSection() {
                         })}
                     </div>
 
-                    <div className="mt-8 px-4 py-3 bg-slate-900/50 rounded-xl border border-white/5">
+                    <div className="mt-8 px-4 py-3 bg-card/50 rounded-xl border border-border/60">
                         <Pagination>
                             <PaginationContent>
                                 <PaginationItem>
@@ -376,7 +338,7 @@ function ProductsSection() {
                                             setPage((p) => Math.max(1, p - 1))
                                         }}
                                         className={[
-                                            'text-slate-200',
+                                            'text-foreground',
                                             currentPage <= 1 ? 'pointer-events-none opacity-50' : '',
                                         ].join(' ')}
                                     />
@@ -385,7 +347,7 @@ function ProductsSection() {
                                 {buildPageList(currentPage, lastPage).map((p, idx) => (
                                     <PaginationItem key={`${p}-${idx}`}>
                                         {p === '…' ? (
-                                            <span className="px-2 text-slate-500">…</span>
+                                            <span className="px-2 text-muted-foreground">…</span>
                                         ) : (
                                             <PaginationLink
                                                 href="#"
@@ -395,10 +357,10 @@ function ProductsSection() {
                                                     setPage(p)
                                                 }}
                                                 className={[
-                                                    'border-white/10',
+                                                    'border-border',
                                                     p === currentPage
-                                                        ? 'bg-white/5 text-white'
-                                                        : 'text-slate-300',
+                                                        ? 'bg-accent text-accent-foreground'
+                                                        : 'text-muted-foreground',
                                                 ].join(' ')}
                                             >
                                                 {p}
@@ -415,7 +377,7 @@ function ProductsSection() {
                                             setPage((p) => Math.min(lastPage, p + 1))
                                         }}
                                         className={[
-                                            'text-slate-200',
+                                            'text-foreground',
                                             currentPage >= lastPage ? 'pointer-events-none opacity-50' : '',
                                         ].join(' ')}
                                     />
@@ -425,12 +387,12 @@ function ProductsSection() {
                     </div>
                 </>
             ) : (
-                <div className="bg-slate-900/40 rounded-3xl border border-dashed border-slate-700 p-20 text-center backdrop-blur-sm">
-                    <div className="w-20 h-20 bg-slate-800/50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-600">
+                <div className="bg-card/40 rounded-3xl border border-dashed border-border p-20 text-center backdrop-blur-sm">
+                    <div className="w-20 h-20 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-6 text-muted-foreground">
                         <Search className="h-8 w-8" />
                     </div>
-                    <h3 className="text-xl font-semibold text-white mb-2">Tidak Ada Produk</h3>
-                    <p className="text-slate-500">
+                    <h3 className="text-xl font-semibold text-foreground mb-2">Tidak Ada Produk</h3>
+                    <p className="text-muted-foreground">
                         Coba ubah kata kunci pencarian atau kategori.
                     </p>
                 </div>

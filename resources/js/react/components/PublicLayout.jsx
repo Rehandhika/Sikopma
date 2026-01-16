@@ -6,7 +6,7 @@ import PublicNavbar from '@/react/components/PublicNavbar'
 
 export default function PublicLayout({ children }) {
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-300 selection:bg-indigo-500/30 selection:text-indigo-200">
+        <div className="min-h-screen bg-background text-foreground selection:bg-primary/20 selection:text-foreground transition-colors duration-300 ease-out">
             <AmbientBackground />
             <div className="min-h-screen flex flex-col">
                 <PublicNavbar />
@@ -16,4 +16,3 @@ export default function PublicLayout({ children }) {
         </div>
     )
 }
-
