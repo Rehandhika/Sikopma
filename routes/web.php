@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LogoutController;
+use App\Http\Controllers\PublicApi\HomeController as PublicHomeApiController;
 use App\Livewire\Dashboard\Index as DashboardIndex;
 
 /*
@@ -11,16 +12,37 @@ use App\Livewire\Dashboard\Index as DashboardIndex;
 */
 
 // Public Catalog (Home)
-Route::get('/', \App\Livewire\Public\Catalog::class)->name('home');
+Route::get('/', function () {
+    return view('public.react', ['page' => 'home']);
+})->name('home');
 
 // Public Products
-Route::get('/products', \App\Livewire\Public\Catalog::class)->name('public.products');
+Route::get('/products', function () {
+    return view('public.react', ['page' => 'home']);
+})->name('public.products');
 
 // Public Product Detail
-Route::get('/products/{slug}', \App\Livewire\Public\ProductDetail::class)->name('public.products.show');
+Route::get('/products/{slug}', function (string $slug) {
+    return view('public.react', ['page' => 'product', 'slug' => $slug]);
+})->name('public.products.show');
 
 // Public About page
-Route::get('/about', \App\Livewire\Public\About::class)->name('public.about');
+Route::get('/about', function () {
+    return view('public.react', ['page' => 'about']);
+})->name('public.about');
+
+// Public JSON API (for React public pages)
+Route::prefix('api/public')
+    ->middleware('throttle-api')
+    ->name('api.public.')
+    ->group(function () {
+        Route::get('/about', [PublicHomeApiController::class, 'about'])->name('about');
+        Route::get('/banners', [PublicHomeApiController::class, 'banners'])->name('banners');
+        Route::get('/categories', [PublicHomeApiController::class, 'categories'])->name('categories');
+        Route::get('/products', [PublicHomeApiController::class, 'products'])->name('products');
+        Route::get('/products/{slug}', [PublicHomeApiController::class, 'product'])->name('products.show');
+        Route::get('/store-status', [PublicHomeApiController::class, 'storeStatus'])->name('store-status');
+    });
 
 // Temporary test route for public layout
 Route::get('/public-test', function () {
