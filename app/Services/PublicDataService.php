@@ -112,7 +112,7 @@ class PublicDataService
             $category
         );
 
-        return Cache::remember($cacheKey, 300, function () use ($search, $category, $perPage) {
+        return Cache::remember($cacheKey, 300, function () use ($search, $category, $perPage, $page) {
             return Product::query()
                 ->select([
                     'id',
@@ -141,7 +141,7 @@ class PublicDataService
                     $query->where('category', $category);
                 })
                 ->ordered()
-                ->paginate($perPage);
+                ->paginate($perPage, ['*'], 'page', $page);
         });
     }
 

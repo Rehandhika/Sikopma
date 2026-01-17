@@ -1,15 +1,10 @@
 import React from 'react'
-import { ArrowRight, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import {
     Card,
     CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import {
@@ -269,11 +264,12 @@ function ProductsSection({ initialCategories, initialProducts }) {
                             const isLow = !isOut && stock <= minStock
 
                             return (
-                                <Card
+                                <a
                                     key={p.id}
-                                    className="group relative overflow-hidden bg-card/50 border-border/60 shadow-none transition-all duration-300 hover:bg-card/70 hover:border-indigo-500/30 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] hover:-translate-y-1"
+                                    href={`/products/${p.slug}`}
+                                    className="group relative overflow-hidden bg-card/50 border border-border/60 rounded-xl shadow-none transition-all duration-300 hover:bg-card/70 hover:border-indigo-500/30 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] hover:-translate-y-1 block cursor-pointer"
                                 >
-                                    <div className="aspect-square relative overflow-hidden bg-muted">
+                                    <div className="aspect-square relative overflow-hidden bg-muted rounded-t-xl">
                                         {p.image_medium_url ? (
                                             <img
                                                 src={p.image_thumbnail_url || p.image_medium_url}
@@ -311,18 +307,18 @@ function ProductsSection({ initialCategories, initialProducts }) {
                                         </div>
                                     </div>
 
-                                    <CardHeader className="p-5 pb-3">
+                                    <div className="p-5 pb-3">
                                         {p.category ? (
-                                            <CardDescription className="text-[10px] text-indigo-400 uppercase tracking-widest font-semibold">
+                                            <p className="text-[10px] text-indigo-400 uppercase tracking-widest font-semibold mb-1">
                                                 {p.category}
-                                            </CardDescription>
+                                            </p>
                                         ) : null}
-                                        <CardTitle className="text-sm md:text-base font-medium text-card-foreground line-clamp-2 min-h-[2.5rem] group-hover:text-primary transition-colors">
+                                        <h3 className="text-sm md:text-base font-medium text-card-foreground line-clamp-2 min-h-[2.5rem] group-hover:text-primary transition-colors">
                                             {p.name}
-                                        </CardTitle>
-                                    </CardHeader>
+                                        </h3>
+                                    </div>
 
-                                    <CardContent className="px-5 pb-5 pt-0">
+                                    <div className="px-5 pb-5 pt-0">
                                         <div className="flex items-center space-x-2 mb-3 text-xs">
                                             <span className="text-muted-foreground">
                                                 Stok:{' '}
@@ -331,30 +327,16 @@ function ProductsSection({ initialCategories, initialProducts }) {
                                                 </span>
                                             </span>
                                         </div>
-                                        <div className="flex items-end justify-between">
-                                            <div className="flex flex-col">
-                                                <span className="text-xs text-muted-foreground mb-1">
-                                                    Harga
-                                                </span>
-                                                <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-foreground to-muted-foreground group-hover:from-indigo-500 group-hover:to-cyan-500 transition-all duration-300">
-                                                    Rp {formatRupiah(p.price)}
-                                                </span>
-                                            </div>
-                                            <Button
-                                                asChild
-                                                size="icon"
-                                                variant="outline"
-                                                className="h-9 w-9 rounded-full bg-background/60 hover:bg-primary text-muted-foreground hover:text-primary-foreground border-border"
-                                            >
-                                                <a href={`/products/${p.slug}`} aria-label={`Lihat ${p.name}`}>
-                                                    <ArrowRight className="h-4 w-4" />
-                                                </a>
-                                            </Button>
+                                        <div className="flex flex-col">
+                                            <span className="text-xs text-muted-foreground mb-1">
+                                                Harga
+                                            </span>
+                                            <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-foreground to-muted-foreground group-hover:from-indigo-500 group-hover:to-cyan-500 transition-all duration-300">
+                                                Rp {formatRupiah(p.price)}
+                                            </span>
                                         </div>
-                                    </CardContent>
-
-                                    <CardFooter className="hidden" />
-                                </Card>
+                                    </div>
+                                </a>
                             )
                         })}
                     </div>

@@ -33,9 +33,11 @@ class Catalog extends Component
     public function render()
     {
         $page = $this->getPage();
-        $cacheKey = "products:public:page:{$page}:search:{$this->search}:category:{$this->category}";
+        $search = $this->search;
+        $category = $this->category;
+        $cacheKey = "products:public:page:{$page}:search:{$search}:category:{$category}";
         
-        $products = Cache::remember($cacheKey, 300, function () {
+        $products = Cache::remember($cacheKey, 300, function () use ($search, $category, $page) {
             return Product::query()
                 ->select([
                     'id', 'name', 'slug', 'price', 'stock', 'min_stock', 
@@ -43,18 +45,18 @@ class Catalog extends Component
                 ])
                 ->public()
                 ->active()
-                ->when($this->search, function ($query) {
-                    $query->where(function ($q) {
-                        $q->where('name', 'like', '%' . $this->search . '%')
-                          ->orWhere('description', 'like', '%' . $this->search . '%')
-                          ->orWhere('sku', 'like', '%' . $this->search . '%');
+                ->when($search, function ($query) use ($search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('name', 'like', '%' . $search . '%')
+                          ->orWhere('description', 'like', '%' . $search . '%')
+                          ->orWhere('sku', 'like', '%' . $search . '%');
                     });
                 })
-                ->when($this->category, function ($query) {
-                    $query->where('category', $this->category);
+                ->when($category, function ($query) use ($category) {
+                    $query->where('category', $category);
                 })
                 ->ordered()
-                ->paginate(12);
+                ->paginate(12, ['*'], 'page', $page);
         });
 
         $categories = Cache::remember('products:categories', 300, function () {
