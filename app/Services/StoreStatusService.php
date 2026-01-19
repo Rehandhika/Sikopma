@@ -11,6 +11,29 @@ use Illuminate\Support\Facades\Log;
 
 class StoreStatusService
 {
+    protected DateTimeSettingsService $dateTimeService;
+
+    public function __construct(DateTimeSettingsService $dateTimeService)
+    {
+        $this->dateTimeService = $dateTimeService;
+    }
+
+    /**
+     * Get current time using system timezone
+     */
+    protected function now(): Carbon
+    {
+        return $this->dateTimeService->now();
+    }
+
+    /**
+     * Get today's date using system timezone
+     */
+    protected function today(): Carbon
+    {
+        return $this->now()->startOfDay();
+    }
+
     /**
      * Update store status based on priority logic:
      * 1. Manual Mode (highest priority)
@@ -61,7 +84,7 @@ class StoreStatusService
         }
 
         // Priority 3 & 4: Auto Mode with optional Manual Open Override
-        $now = Carbon::now();
+        $now = $this->now();
         $dayOfWeek = strtolower($now->format('l'));
         
         // Check operating day (Monday-Thursday only)
@@ -80,8 +103,8 @@ class StoreStatusService
 
         // Check operating hours
         if ($todaySchedule && $todaySchedule['is_open']) {
-            $openTime = Carbon::parse($todaySchedule['open']);
-            $closeTime = Carbon::parse($todaySchedule['close']);
+            $openTime = Carbon::parse($todaySchedule['open'], $this->dateTimeService->getTimezone());
+            $closeTime = Carbon::parse($todaySchedule['close'], $this->dateTimeService->getTimezone());
             
             $isWithinHours = $now->between($openTime, $closeTime);
             
@@ -120,7 +143,7 @@ class StoreStatusService
     protected function getActiveAttendances(): Collection
     {
         return Attendance::query()
-            ->whereDate('date', Carbon::today())
+            ->whereDate('date', $this->today())
             ->whereNotNull('check_in')
             ->whereNull('check_out')
             ->with('user:id,name')
@@ -135,14 +158,14 @@ class StoreStatusService
         $setting->update([
             'is_open' => true,
             'status_reason' => $reason,
-            'last_status_change' => Carbon::now(),
+            'last_status_change' => $this->now(),
         ]);
 
         Cache::forget('store_status');
         
         Log::channel('store')->info('Store OPENED', [
             'reason' => $reason,
-            'timestamp' => Carbon::now()->toDateTimeString(),
+            'timestamp' => $this->now()->toDateTimeString(),
         ]);
 
         // Dispatch event for real-time updates
@@ -161,14 +184,14 @@ class StoreStatusService
         $setting->update([
             'is_open' => false,
             'status_reason' => $reason,
-            'last_status_change' => Carbon::now(),
+            'last_status_change' => $this->now(),
         ]);
 
         Cache::forget('store_status');
         
         Log::channel('store')->info('Store CLOSED', [
             'reason' => $reason,
-            'timestamp' => Carbon::now()->toDateTimeString(),
+            'timestamp' => $this->now()->toDateTimeString(),
         ]);
 
         // Dispatch event for real-time updates
@@ -248,12 +271,13 @@ class StoreStatusService
             return null;
         }
 
-        $now = Carbon::now();
+        $now = $this->now();
         $operatingHours = $setting->operating_hours ?? $this->getDefaultOperatingHours();
+        $locale = $this->dateTimeService->getLocale();
 
         // If temporarily closed, return when it expires
         if ($setting->manual_close_until && $setting->manual_close_until->isFuture()) {
-            return $setting->manual_close_until->locale('id')->isoFormat('dddd, D MMM YYYY [pukul] HH:mm');
+            return $setting->manual_close_until->locale($locale)->isoFormat('dddd, D MMM YYYY [pukul] HH:mm');
         }
 
         // If in manual mode, no predictable next open time
@@ -266,12 +290,12 @@ class StoreStatusService
 
         // If today is an operating day
         if ($todaySchedule && $todaySchedule['is_open']) {
-            $openTime = Carbon::parse($todaySchedule['open']);
-            $closeTime = Carbon::parse($todaySchedule['close']);
+            $openTime = Carbon::parse($todaySchedule['open'], $this->dateTimeService->getTimezone());
+            $closeTime = Carbon::parse($todaySchedule['close'], $this->dateTimeService->getTimezone());
 
             // If before opening time today
             if ($now->lt($openTime)) {
-                return $openTime->locale('id')->isoFormat('dddd, D MMM YYYY [pukul] HH:mm');
+                return $openTime->locale($locale)->isoFormat('dddd, D MMM YYYY [pukul] HH:mm');
             }
 
             // If after closing time today, find next operating day
@@ -288,8 +312,8 @@ class StoreStatusService
 
             if ($nextSchedule && $nextSchedule['is_open']) {
                 $nextDate = $now->copy()->addDays($i);
-                $nextOpenTime = Carbon::parse($nextSchedule['open'])->setDateFrom($nextDate);
-                return $nextOpenTime->locale('id')->isoFormat('dddd, D MMM YYYY [pukul] HH:mm');
+                $nextOpenTime = Carbon::parse($nextSchedule['open'], $this->dateTimeService->getTimezone())->setDateFrom($nextDate);
+                return $nextOpenTime->locale($locale)->isoFormat('dddd, D MMM YYYY [pukul] HH:mm');
             }
         }
 
@@ -327,14 +351,14 @@ class StoreStatusService
             'manual_close_reason' => $reason,
             'manual_close_until' => $until,
             'manual_set_by' => auth()->id(),
-            'manual_set_at' => Carbon::now(),
+            'manual_set_at' => $this->now(),
         ]);
 
         Log::channel('store')->info('Manual close activated', [
             'admin' => auth()->user()?->name ?? 'System',
             'reason' => $reason,
             'until' => $until?->toDateTimeString() ?? 'indefinite',
-            'timestamp' => Carbon::now()->toDateTimeString(),
+            'timestamp' => $this->now()->toDateTimeString(),
         ]);
 
         $this->forceUpdate();
@@ -361,12 +385,12 @@ class StoreStatusService
         $setting->update([
             'manual_open_override' => $enable,
             'manual_set_by' => auth()->id(),
-            'manual_set_at' => Carbon::now(),
+            'manual_set_at' => $this->now(),
         ]);
 
         Log::channel('store')->info('Manual open override ' . ($enable ? 'enabled' : 'disabled'), [
             'admin' => auth()->user()?->name ?? 'System',
-            'timestamp' => Carbon::now()->toDateTimeString(),
+            'timestamp' => $this->now()->toDateTimeString(),
         ]);
 
         $this->forceUpdate();
@@ -396,14 +420,14 @@ class StoreStatusService
             'manual_is_open' => $isOpen,
             'manual_close_reason' => $reason,
             'manual_set_by' => auth()->id(),
-            'manual_set_at' => Carbon::now(),
+            'manual_set_at' => $this->now(),
         ]);
 
         Log::channel('store')->info('Manual mode activated', [
             'admin' => auth()->user()?->name ?? 'System',
             'status' => $isOpen ? 'OPEN' : 'CLOSED',
             'reason' => $reason ?? 'No reason provided',
-            'timestamp' => Carbon::now()->toDateTimeString(),
+            'timestamp' => $this->now()->toDateTimeString(),
         ]);
 
         $this->forceUpdate();
@@ -432,12 +456,12 @@ class StoreStatusService
             'manual_close_until' => null,
             'manual_open_override' => false,
             'manual_set_by' => auth()->id(),
-            'manual_set_at' => Carbon::now(),
+            'manual_set_at' => $this->now(),
         ]);
 
         Log::channel('store')->info('Returned to auto mode', [
             'admin' => auth()->user()?->name ?? 'System',
-            'timestamp' => Carbon::now()->toDateTimeString(),
+            'timestamp' => $this->now()->toDateTimeString(),
         ]);
 
         $this->forceUpdate();

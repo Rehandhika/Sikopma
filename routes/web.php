@@ -35,6 +35,7 @@ Route::prefix('api/public')
         Route::get('/products', [PublicHomeApiController::class, 'products'])->name('products');
         Route::get('/products/{slug}', [PublicHomeApiController::class, 'product'])->name('products.show');
         Route::get('/store-status', [PublicHomeApiController::class, 'storeStatus'])->name('store-status');
+        Route::get('/datetime-settings', [PublicHomeApiController::class, 'dateTimeSettings'])->name('datetime-settings');
     });
 
 // Temporary test route for public layout

@@ -1,247 +1,156 @@
 <?php
 
-/**
- * Global Helper Functions for SIKOPMA
- * 
- * This file contains utility functions that can be used throughout the application.
- */
+use App\Services\DateTimeSettingsService;
+use Carbon\Carbon;
 
 if (!function_exists('format_currency')) {
     /**
      * Format number as Indonesian Rupiah currency
-     *
-     * @param float|int $amount
-     * @param bool $showSymbol
+     * 
+     * @param float|int|null $amount
+     * @param bool $withSymbol Include "Rp" symbol
+     * @param int $decimals Number of decimal places
      * @return string
      */
-    function format_currency($amount, bool $showSymbol = true): string
+    function format_currency($amount, bool $withSymbol = true, int $decimals = 0): string
     {
-        $formatted = number_format($amount, 0, ',', '.');
-        return $showSymbol ? 'Rp ' . $formatted : $formatted;
+        if ($amount === null) {
+            $amount = 0;
+        }
+        
+        $formatted = number_format((float) $amount, $decimals, ',', '.');
+        
+        return $withSymbol ? 'Rp ' . $formatted : $formatted;
+    }
+}
+
+if (!function_exists('format_rupiah')) {
+    /**
+     * Alias for format_currency
+     */
+    function format_rupiah($amount, bool $withSymbol = true, int $decimals = 0): string
+    {
+        return format_currency($amount, $withSymbol, $decimals);
     }
 }
 
 if (!function_exists('format_date')) {
     /**
-     * Format date to Indonesian format
-     *
-     * @param mixed $date
-     * @param string $format
-     * @return string
+     * Format date using system settings
      */
-    function format_date($date, string $format = 'd/m/Y'): string
+    function format_date($date): string
     {
-        if (!$date) {
-            return '-';
-        }
-        
-        if (is_string($date)) {
-            $date = \Carbon\Carbon::parse($date);
-        }
-        
-        return $date->format($format);
-    }
-}
-
-if (!function_exists('format_datetime')) {
-    /**
-     * Format datetime to Indonesian format
-     *
-     * @param mixed $datetime
-     * @return string
-     */
-    function format_datetime($datetime): string
-    {
-        return format_date($datetime, 'd/m/Y H:i');
+        return app(DateTimeSettingsService::class)->formatDate($date);
     }
 }
 
 if (!function_exists('format_time')) {
     /**
-     * Format time
-     *
-     * @param mixed $time
-     * @return string
+     * Format time using system settings
      */
     function format_time($time): string
     {
-        if (!$time) {
-            return '-';
-        }
-        
-        if (is_string($time)) {
-            $time = \Carbon\Carbon::parse($time);
-        }
-        
-        return $time->format('H:i');
+        return app(DateTimeSettingsService::class)->formatTime($time);
     }
 }
 
-if (!function_exists('get_session_label')) {
+if (!function_exists('format_datetime')) {
     /**
-     * Get session time label
-     *
-     * @param int $session
-     * @return string
+     * Format datetime using system settings
      */
-    function get_session_label(int $session): string
+    function format_datetime($datetime): string
     {
-        $sessions = config('sikopma.sessions');
-        return $sessions[$session] ?? '-';
+        return app(DateTimeSettingsService::class)->formatDateTime($datetime);
     }
 }
 
-if (!function_exists('calculate_late_minutes')) {
+if (!function_exists('format_date_human')) {
     /**
-     * Calculate minutes late based on check-in time and session
-     *
-     * @param \Carbon\Carbon $checkIn
-     * @param int $session
-     * @return int
+     * Format date in human readable format
      */
-    function calculate_late_minutes(\Carbon\Carbon $checkIn, int $session): int
+    function format_date_human($date): string
     {
-        $sessionTimes = config('sikopma.session_times');
-        
-        if (!isset($sessionTimes[$session])) {
-            return 0;
-        }
-        
-        $startTime = \Carbon\Carbon::parse($sessionTimes[$session]['start']);
-        $lateThreshold = config('sikopma.late_threshold_minutes', 15);
-        
-        if ($checkIn->greaterThan($startTime->addMinutes($lateThreshold))) {
-            return $checkIn->diffInMinutes($startTime);
-        }
-        
-        return 0;
+        return app(DateTimeSettingsService::class)->formatDateHuman($date);
     }
 }
 
-if (!function_exists('format_file_size')) {
+if (!function_exists('format_datetime_human')) {
     /**
-     * Format file size to human readable format
-     *
-     * @param int $bytes
-     * @return string
+     * Format datetime in human readable format
      */
-    function format_file_size(int $bytes): string
+    function format_datetime_human($datetime): string
     {
-        $units = ['B', 'KB', 'MB', 'GB'];
-        $i = 0;
-        
-        while ($bytes >= 1024 && $i < count($units) - 1) {
-            $bytes /= 1024;
-            $i++;
-        }
-        
-        return round($bytes, 2) . ' ' . $units[$i];
+        return app(DateTimeSettingsService::class)->formatDateTimeHuman($datetime);
     }
 }
 
-if (!function_exists('get_status_badge_class')) {
+if (!function_exists('diff_for_humans')) {
     /**
-     * Get Tailwind CSS badge class for status
-     *
-     * @param string $status
-     * @return string
+     * Get relative time (e.g., "2 jam yang lalu")
      */
-    function get_status_badge_class(string $status): string
+    function diff_for_humans($datetime): string
     {
-        return match (strtolower($status)) {
-            'active', 'present', 'approved', 'paid', 'completed' => 'bg-green-100 text-green-800',
-            'pending', 'partial' => 'bg-yellow-100 text-yellow-800',
-            'late' => 'bg-orange-100 text-orange-800',
-            'rejected', 'cancelled', 'failed', 'inactive' => 'bg-red-100 text-red-800',
-            'absent' => 'bg-gray-100 text-gray-800',
-            default => 'bg-blue-100 text-blue-800',
-        };
+        return app(DateTimeSettingsService::class)->diffForHumans($datetime);
     }
 }
 
-if (!function_exists('generate_invoice_number')) {
+if (!function_exists('system_now')) {
     /**
-     * Generate invoice number with prefix
-     *
-     * @param string $prefix
-     * @param string $modelClass
-     * @return string
+     * Get current time in system timezone
+     * Returns custom time if custom datetime is enabled
      */
-    function generate_invoice_number(string $prefix, string $modelClass): string
+    function system_now(): Carbon
     {
-        $date = now()->format('Ymd');
-        $lastRecord = $modelClass::whereDate('created_at', today())->latest('id')->first();
-        $sequence = $lastRecord ? (int) substr($lastRecord->invoice_number, -4) + 1 : 1;
-        
-        return $prefix . '-' . $date . '-' . str_pad($sequence, 4, '0', STR_PAD_LEFT);
+        return app(DateTimeSettingsService::class)->now();
     }
 }
 
-if (!function_exists('log_audit')) {
+if (!function_exists('real_now')) {
     /**
-     * Create audit log entry
-     *
-     * @param string $action
-     * @param \Illuminate\Database\Eloquent\Model $model
-     * @param array|null $oldValues
-     * @param array|null $newValues
-     * @return \App\Models\AuditLog
+     * Get real current time (ignores custom datetime setting)
      */
-    function log_audit(string $action, \Illuminate\Database\Eloquent\Model $model, ?array $oldValues = null, ?array $newValues = null): \App\Models\AuditLog
+    function real_now(): Carbon
     {
-        return \App\Models\AuditLog::log($action, $model, $oldValues, $newValues);
+        return app(DateTimeSettingsService::class)->realNow();
     }
 }
 
-if (!function_exists('notify_user')) {
+if (!function_exists('is_custom_datetime_enabled')) {
     /**
-     * Create notification for user
-     *
-     * @param int $userId
-     * @param string $title
-     * @param string $message
-     * @param string $type
-     * @return \App\Models\Notification
+     * Check if custom datetime mode is enabled
      */
-    function notify_user(int $userId, string $title, string $message, string $type = 'info'): \App\Models\Notification
+    function is_custom_datetime_enabled(): bool
     {
-        return \App\Models\Notification::create([
-            'user_id' => $userId,
-            'title' => $title,
-            'message' => $message,
-            'type' => $type,
-        ]);
+        return app(DateTimeSettingsService::class)->isCustomDateTimeEnabled();
     }
 }
 
-if (!function_exists('get_user_role_names')) {
+if (!function_exists('system_timezone')) {
     /**
-     * Get user's role names as comma-separated string
-     *
-     * @param \App\Models\User $user
-     * @return string
+     * Get current system timezone
      */
-    function get_user_role_names(\App\Models\User $user): string
+    function system_timezone(): string
     {
-        return $user->roles->pluck('name')->join(', ');
+        return app(DateTimeSettingsService::class)->getTimezone();
     }
 }
 
-if (!function_exists('can_access_admin_features')) {
+if (!function_exists('system_locale')) {
     /**
-     * Check if user can access admin features
-     *
-     * @param \App\Models\User|null $user
-     * @return bool
+     * Get current system locale
      */
-    function can_access_admin_features(?\App\Models\User $user = null): bool
+    function system_locale(): string
     {
-        $user = $user ?? auth()->user();
-        
-        if (!$user) {
-            return false;
-        }
-        
-        return $user->hasAnyRole(['Super Admin', 'Ketua', 'Wakil Ketua', 'BPH']);
+        return app(DateTimeSettingsService::class)->getLocale();
+    }
+}
+
+if (!function_exists('parse_date')) {
+    /**
+     * Parse a date string with system timezone
+     */
+    function parse_date(string $date): Carbon
+    {
+        return app(DateTimeSettingsService::class)->parse($date);
     }
 }

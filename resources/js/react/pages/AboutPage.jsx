@@ -2,10 +2,6 @@ import React from 'react'
 import {
     Building2,
     Clock,
-    Mail,
-    MapPin,
-    Phone,
-    MessageCircle,
     Info,
     PencilLine,
 } from 'lucide-react'
@@ -103,13 +99,6 @@ export default function AboutPage({ initialData }) {
     }, [seeded])
 
     const aboutText = normalizeContactValue(data?.about_text)
-    const phone = normalizeContactValue(data?.contact_phone)
-    const email = normalizeContactValue(data?.contact_email)
-    const whatsapp = normalizeContactValue(data?.contact_whatsapp)
-    const address = normalizeContactValue(data?.contact_address)
-    const hasAnyContact = Boolean(phone || email || whatsapp || address)
-
-    const waDigits = whatsapp ? whatsapp.replace(/[^\d]/g, '') : null
 
     return (
         <PublicLayout>
@@ -123,143 +112,38 @@ export default function AboutPage({ initialData }) {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-                    <Card className="bg-card/60 backdrop-blur-xl border-border rounded-3xl shadow-2xl">
-                        <CardHeader className="p-8 md:p-10 pb-6">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 text-indigo-400">
-                                    <Building2 className="h-6 w-6" />
-                                </div>
-                                <CardTitle className="text-2xl font-bold text-foreground">
-                                    Tentang Koperasi
-                                </CardTitle>
+                <Card className="bg-card/60 backdrop-blur-xl border-border rounded-3xl shadow-2xl mb-12">
+                    <CardHeader className="p-8 md:p-10 pb-6">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 text-indigo-400">
+                                <Building2 className="h-6 w-6" />
                             </div>
-                        </CardHeader>
-                        <CardContent className="px-8 md:px-10 pb-10">
-                            {loading ? (
-                                <div className="space-y-3">
-                                    <div className="h-4 bg-muted rounded" />
-                                    <div className="h-4 bg-muted rounded w-5/6" />
-                                    <div className="h-4 bg-muted rounded w-4/6" />
-                                </div>
-                            ) : aboutText ? (
-                                <p className="text-foreground/90 leading-relaxed whitespace-pre-line">
-                                    {aboutText}
+                            <CardTitle className="text-2xl font-bold text-foreground">
+                                Tentang Koperasi
+                            </CardTitle>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="px-8 md:px-10 pb-10">
+                        {loading ? (
+                            <div className="space-y-3">
+                                <div className="h-4 bg-muted rounded" />
+                                <div className="h-4 bg-muted rounded w-5/6" />
+                                <div className="h-4 bg-muted rounded w-4/6" />
+                            </div>
+                        ) : aboutText ? (
+                            <p className="text-foreground/90 leading-relaxed whitespace-pre-line">
+                                {aboutText}
+                            </p>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+                                <PencilLine className="h-10 w-10 text-muted-foreground/60 mb-4" />
+                                <p className="italic">
+                                    Informasi profil koperasi akan segera dilengkapi.
                                 </p>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
-                                    <PencilLine className="h-10 w-10 text-muted-foreground/60 mb-4" />
-                                    <p className="italic">
-                                        Informasi profil koperasi akan segera dilengkapi.
-                                    </p>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    <Card className="bg-card/60 backdrop-blur-xl border-border rounded-3xl shadow-2xl">
-                        <CardHeader className="p-8 md:p-10 pb-6">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-pink-500/10 flex items-center justify-center border border-pink-500/20 text-pink-400">
-                                    <Info className="h-6 w-6" />
-                                </div>
-                                <CardTitle className="text-2xl font-bold text-foreground">
-                                    Informasi Kontak
-                                </CardTitle>
                             </div>
-                        </CardHeader>
-                        <CardContent className="px-6 md:px-8 pb-10">
-                            {loading ? (
-                                <div className="space-y-4">
-                                    <div className="h-16 bg-muted/40 border border-border rounded-xl" />
-                                    <div className="h-16 bg-muted/40 border border-border rounded-xl" />
-                                    <div className="h-16 bg-muted/40 border border-border rounded-xl" />
-                                </div>
-                            ) : hasAnyContact ? (
-                                <div className="space-y-2">
-                                    {phone ? (
-                                        <a
-                                            href={`tel:${phone}`}
-                                            className="group flex items-start p-4 rounded-xl hover:bg-accent transition-colors border border-transparent hover:border-border"
-                                        >
-                                            <div className="mr-4 mt-1 w-8 h-8 flex items-center justify-center rounded-lg bg-muted text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-all">
-                                                <Phone className="h-4 w-4" />
-                                            </div>
-                                            <div>
-                                                <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold mb-1">
-                                                    Telepon
-                                                </p>
-                                                <p className="text-lg text-foreground transition-colors">
-                                                    {phone}
-                                                </p>
-                                            </div>
-                                        </a>
-                                    ) : null}
-
-                                    {email ? (
-                                        <a
-                                            href={`mailto:${email}`}
-                                            className="group flex items-start p-4 rounded-xl hover:bg-accent transition-colors border border-transparent hover:border-border"
-                                        >
-                                            <div className="mr-4 mt-1 w-8 h-8 flex items-center justify-center rounded-lg bg-muted text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-all">
-                                                <Mail className="h-4 w-4" />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold mb-1">
-                                                    Email
-                                                </p>
-                                                <p className="text-lg text-foreground transition-colors break-all">
-                                                    {email}
-                                                </p>
-                                            </div>
-                                        </a>
-                                    ) : null}
-
-                                    {whatsapp && waDigits ? (
-                                        <a
-                                            href={`https://wa.me/${waDigits}`}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="group flex items-start p-4 rounded-xl hover:bg-accent transition-colors border border-transparent hover:border-border"
-                                        >
-                                            <div className="mr-4 mt-1 w-8 h-8 flex items-center justify-center rounded-lg bg-muted text-muted-foreground group-hover:bg-emerald-600 group-hover:text-white transition-all">
-                                                <MessageCircle className="h-4 w-4" />
-                                            </div>
-                                            <div>
-                                                <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold mb-1">
-                                                    WhatsApp
-                                                </p>
-                                                <p className="text-lg text-foreground transition-colors">
-                                                    {whatsapp}
-                                                </p>
-                                            </div>
-                                        </a>
-                                    ) : null}
-
-                                    {address ? (
-                                        <div className="group flex items-start p-4 rounded-xl hover:bg-accent transition-colors border border-transparent hover:border-border">
-                                            <div className="mr-4 mt-1 w-8 h-8 flex items-center justify-center rounded-lg bg-muted text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-all">
-                                                <MapPin className="h-4 w-4" />
-                                            </div>
-                                            <div>
-                                                <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold mb-1">
-                                                    Alamat
-                                                </p>
-                                                <p className="text-lg text-foreground leading-relaxed">
-                                                    {address}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ) : null}
-                                </div>
-                            ) : (
-                                <div className="text-center py-10 text-muted-foreground italic">
-                                    Informasi kontak belum ditambahkan.
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
+                        )}
+                    </CardContent>
+                </Card>
 
                 <Card className="bg-card/60 backdrop-blur-xl border-border rounded-3xl shadow-2xl">
                     <CardHeader className="p-8 md:p-10 pb-6">

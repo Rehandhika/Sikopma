@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\PublicApi;
 
 use App\Http\Controllers\Controller;
+use App\Services\DateTimeSettingsService;
 use App\Services\PublicDataService;
 use App\Services\StoreStatusService;
 use Illuminate\Http\Request;
@@ -76,5 +77,12 @@ class HomeController extends Controller
         return $this->respondCachedJson($request, [
             'data' => $storeStatusService->getStatus(),
         ], 5, 10);
+    }
+
+    public function dateTimeSettings(Request $request, DateTimeSettingsService $dateTimeService): Response
+    {
+        return $this->respondCachedJson($request, [
+            'data' => $dateTimeService->getForFrontend(),
+        ], 60, 300);
     }
 }

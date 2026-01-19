@@ -1,11 +1,6 @@
 import React from 'react'
 import { Search } from 'lucide-react'
 
-import { Badge } from '@/components/ui/badge'
-import {
-    Card,
-    CardContent,
-} from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import {
     Pagination,
@@ -188,38 +183,38 @@ function ProductsSection({ initialCategories, initialProducts }) {
     const lastPage = Number(products?.last_page ?? 1)
 
     return (
-        <div className="max-w-7xl mx-auto px-4 py-12 relative z-20">
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-foreground tracking-tight mb-2">
-                        Katalog Produk
-                    </h1>
-                    <p className="text-muted-foreground">
-                        Temukan kebutuhan harianmu dengan harga terbaik.
-                    </p>
-                </div>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-6 sm:py-8 md:py-12 relative z-20">
+            {/* Header Section */}
+            <div className="flex flex-col gap-1 sm:gap-2 mb-6 sm:mb-8 md:mb-10">
+                <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
+                    Katalog Produk
+                </h1>
+                <p className="text-sm sm:text-base text-muted-foreground">
+                    Temukan kebutuhan harianmu dengan harga terbaik.
+                </p>
             </div>
 
-            <div className="bg-card/60 backdrop-blur-md border border-border rounded-2xl p-4 mb-10 shadow-xl">
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                    <div className="md:col-span-8 relative">
+            {/* Search & Filter Bar */}
+            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-6 sm:mb-8 md:mb-10">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                    <div className="flex-1 relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
                             <Search className="h-4 w-4" />
                         </div>
                         <Input
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Cari produk (nama, SKU)..."
-                            className="h-[52px] pl-10 bg-background/60 border-border text-foreground placeholder:text-muted-foreground/70 focus-visible:ring-ring/40"
+                            placeholder="Cari produk..."
+                            className="h-11 sm:h-12 pl-10 bg-background/60 border-border text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-ring/40 text-sm sm:text-base"
                         />
                     </div>
 
-                    <div className="md:col-span-4">
+                    <div className="sm:w-48 md:w-56">
                         <Select
                             value={category ? category : 'all'}
                             onValueChange={(v) => setCategory(v === 'all' ? '' : v)}
                         >
-                            <SelectTrigger className="h-[52px] bg-background/60 border-border text-foreground focus:ring-ring/40">
+                            <SelectTrigger className="h-11 sm:h-12 bg-background/60 border-border text-foreground focus:ring-ring/40 text-sm sm:text-base">
                                 <SelectValue placeholder="Semua Kategori" />
                             </SelectTrigger>
                             <SelectContent className="bg-popover border-border">
@@ -236,27 +231,27 @@ function ProductsSection({ initialCategories, initialProducts }) {
             </div>
 
             {loading ? (
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 mb-8 md:mb-12">
                     {Array.from({ length: 12 }).map((_, idx) => (
-                        <Card
+                        <div
                             key={idx}
-                            className="overflow-hidden bg-card/40 border-border/60 shadow-none"
+                            className="overflow-hidden bg-card/40 border border-border/40 rounded-2xl"
                         >
-                            <div className="aspect-square">
+                            <div className="aspect-[4/3] sm:aspect-square">
                                 <Skeleton className="h-full w-full rounded-none" />
                             </div>
-                            <CardContent className="p-5 space-y-3">
-                                <Skeleton className="h-3 w-20" />
-                                <Skeleton className="h-4 w-full" />
-                                <Skeleton className="h-4 w-3/4" />
-                                <Skeleton className="h-6 w-1/2" />
-                            </CardContent>
-                        </Card>
+                            <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
+                                <Skeleton className="h-2.5 sm:h-3 w-16 sm:w-20" />
+                                <Skeleton className="h-3.5 sm:h-4 w-full" />
+                                <Skeleton className="h-3.5 sm:h-4 w-3/4" />
+                                <Skeleton className="h-5 sm:h-6 w-1/2 mt-2" />
+                            </div>
+                        </div>
                     ))}
                 </div>
             ) : items.length ? (
                 <>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 mb-8 md:mb-12">
                         {items.map((p) => {
                             const stock = Number(p.stock ?? 0)
                             const minStock = Number(p.min_stock ?? 0)
@@ -267,73 +262,83 @@ function ProductsSection({ initialCategories, initialProducts }) {
                                 <a
                                     key={p.id}
                                     href={`/products/${p.slug}`}
-                                    className="group relative overflow-hidden bg-card/50 border border-border/60 rounded-xl shadow-none transition-all duration-300 hover:bg-card/70 hover:border-indigo-500/30 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] hover:-translate-y-1 block cursor-pointer"
+                                    className="group relative flex flex-col overflow-hidden bg-card/40 hover:bg-card/60 border border-border/40 hover:border-primary/30 rounded-2xl transition-all duration-300 ease-out hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 active:scale-[0.98]"
                                 >
-                                    <div className="aspect-square relative overflow-hidden bg-muted rounded-t-xl">
+                                    {/* Image Container */}
+                                    <div className="aspect-[4/3] sm:aspect-square relative overflow-hidden bg-muted/50">
                                         {p.image_medium_url ? (
                                             <img
                                                 src={p.image_thumbnail_url || p.image_medium_url}
                                                 alt={p.name}
-                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-90 group-hover:opacity-100"
+                                                className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                                                 loading="lazy"
                                                 fetchPriority="low"
-                                                sizes="(min-width: 1024px) 25vw, 50vw"
+                                                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
                                                 decoding="async"
                                             />
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-muted/60">
-                                                <div className="text-4xl opacity-50">□</div>
+                                            <div className="w-full h-full flex items-center justify-center text-muted-foreground/40 bg-muted/30">
+                                                <svg className="w-10 h-10 sm:w-12 sm:h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                                </svg>
                                             </div>
                                         )}
 
-                                        <div className="absolute top-3 right-3 flex flex-col gap-2 items-end">
-                                            {p.is_featured ? (
-                                                <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-500/30">
-                                                    Featured
-                                                </Badge>
-                                            ) : null}
-                                        </div>
+                                        {/* Badges Container */}
+                                        <div className="absolute inset-x-0 top-0 p-2 sm:p-3 flex justify-between items-start pointer-events-none">
+                                            {/* Featured Badge */}
+                                            <div>
+                                                {p.is_featured ? (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-semibold bg-amber-500/90 text-white rounded-full shadow-sm">
+                                                        <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                        </svg>
+                                                        <span className="hidden sm:inline">Featured</span>
+                                                    </span>
+                                                ) : null}
+                                            </div>
 
-                                        <div className="absolute bottom-3 left-3">
-                                            {isOut ? (
-                                                <Badge className="bg-red-500/90 text-white border-transparent">
-                                                    Habis
-                                                </Badge>
-                                            ) : isLow ? (
-                                                <Badge className="bg-orange-500/90 text-white border-transparent">
-                                                    Sisa {stock}
-                                                </Badge>
-                                            ) : null}
+                                            {/* Stock Badge */}
+                                            <div>
+                                                {isOut ? (
+                                                    <span className="inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-medium bg-red-500/90 text-white rounded-full shadow-sm">
+                                                        Habis
+                                                    </span>
+                                                ) : isLow ? (
+                                                    <span className="inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-medium bg-orange-500/90 text-white rounded-full shadow-sm">
+                                                        Sisa {stock}
+                                                    </span>
+                                                ) : null}
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div className="p-5 pb-3">
+                                    {/* Content Container */}
+                                    <div className="flex flex-col flex-1 p-3 sm:p-4">
+                                        {/* Category */}
                                         {p.category ? (
-                                            <p className="text-[10px] text-indigo-400 uppercase tracking-widest font-semibold mb-1">
+                                            <span className="text-[10px] sm:text-xs text-primary/70 font-medium uppercase tracking-wider mb-1 sm:mb-1.5 truncate">
                                                 {p.category}
-                                            </p>
+                                            </span>
                                         ) : null}
-                                        <h3 className="text-sm md:text-base font-medium text-card-foreground line-clamp-2 min-h-[2.5rem] group-hover:text-primary transition-colors">
+
+                                        {/* Product Name */}
+                                        <h3 className="text-xs sm:text-sm font-medium text-card-foreground line-clamp-2 leading-snug mb-2 sm:mb-3 group-hover:text-primary transition-colors duration-200 min-h-[2rem] sm:min-h-[2.5rem]">
                                             {p.name}
                                         </h3>
-                                    </div>
 
-                                    <div className="px-5 pb-5 pt-0">
-                                        <div className="flex items-center space-x-2 mb-3 text-xs">
-                                            <span className="text-muted-foreground">
-                                                Stok:{' '}
-                                                <span className="text-foreground font-medium">
-                                                    {stock}
+                                        {/* Price & Stock - Push to bottom */}
+                                        <div className="mt-auto pt-2 sm:pt-3 border-t border-border/30">
+                                            <div className="flex items-end justify-between gap-2">
+                                                <div className="flex flex-col min-w-0">
+                                                    <span className="text-base sm:text-lg font-bold text-foreground group-hover:text-primary transition-colors duration-200 truncate">
+                                                        Rp {formatRupiah(p.price)}
+                                                    </span>
+                                                </div>
+                                                <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">
+                                                    Stok: {stock}
                                                 </span>
-                                            </span>
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-xs text-muted-foreground mb-1">
-                                                Harga
-                                            </span>
-                                            <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-foreground to-muted-foreground group-hover:from-indigo-500 group-hover:to-cyan-500 transition-all duration-300">
-                                                Rp {formatRupiah(p.price)}
-                                            </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </a>
@@ -341,9 +346,10 @@ function ProductsSection({ initialCategories, initialProducts }) {
                         })}
                     </div>
 
-                    <div className="mt-8 px-4 py-3 bg-card/50 rounded-xl border border-border/60">
+                    {/* Pagination */}
+                    <div className="mt-6 sm:mt-8 p-3 sm:p-4 bg-card/40 rounded-xl border border-border/40">
                         <Pagination>
-                            <PaginationContent>
+                            <PaginationContent className="flex-wrap gap-1">
                                 <PaginationItem>
                                     <PaginationPrevious
                                         href="#"
@@ -352,16 +358,16 @@ function ProductsSection({ initialCategories, initialProducts }) {
                                             setPage((p) => Math.max(1, p - 1))
                                         }}
                                         className={[
-                                            'text-foreground',
+                                            'text-foreground h-9 sm:h-10 text-xs sm:text-sm',
                                             currentPage <= 1 ? 'pointer-events-none opacity-50' : '',
                                         ].join(' ')}
                                     />
                                 </PaginationItem>
 
                                 {buildPageList(currentPage, lastPage).map((p, idx) => (
-                                    <PaginationItem key={`${p}-${idx}`}>
+                                    <PaginationItem key={`${p}-${idx}`} className="hidden sm:block">
                                         {p === '…' ? (
-                                            <span className="px-2 text-muted-foreground">…</span>
+                                            <span className="px-2 text-muted-foreground text-sm">…</span>
                                         ) : (
                                             <PaginationLink
                                                 href="#"
@@ -371,10 +377,10 @@ function ProductsSection({ initialCategories, initialProducts }) {
                                                     setPage(p)
                                                 }}
                                                 className={[
-                                                    'border-border',
+                                                    'border-border h-9 sm:h-10 w-9 sm:w-10 text-xs sm:text-sm',
                                                     p === currentPage
-                                                        ? 'bg-accent text-accent-foreground'
-                                                        : 'text-muted-foreground',
+                                                        ? 'bg-primary text-primary-foreground'
+                                                        : 'text-muted-foreground hover:text-foreground',
                                                 ].join(' ')}
                                             >
                                                 {p}
@@ -382,6 +388,13 @@ function ProductsSection({ initialCategories, initialProducts }) {
                                         )}
                                     </PaginationItem>
                                 ))}
+
+                                {/* Mobile page indicator */}
+                                <PaginationItem className="sm:hidden">
+                                    <span className="px-3 py-2 text-sm text-muted-foreground">
+                                        {currentPage} / {lastPage}
+                                    </span>
+                                </PaginationItem>
 
                                 <PaginationItem>
                                     <PaginationNext
@@ -391,7 +404,7 @@ function ProductsSection({ initialCategories, initialProducts }) {
                                             setPage((p) => Math.min(lastPage, p + 1))
                                         }}
                                         className={[
-                                            'text-foreground',
+                                            'text-foreground h-9 sm:h-10 text-xs sm:text-sm',
                                             currentPage >= lastPage ? 'pointer-events-none opacity-50' : '',
                                         ].join(' ')}
                                     />
@@ -401,12 +414,13 @@ function ProductsSection({ initialCategories, initialProducts }) {
                     </div>
                 </>
             ) : (
-                <div className="bg-card/40 rounded-3xl border border-dashed border-border p-20 text-center backdrop-blur-sm">
-                    <div className="w-20 h-20 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-6 text-muted-foreground">
-                        <Search className="h-8 w-8" />
+                /* Empty State */
+                <div className="bg-card/30 rounded-2xl sm:rounded-3xl border border-dashed border-border/60 p-10 sm:p-16 md:p-20 text-center">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-muted/30 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 text-muted-foreground/50">
+                        <Search className="h-6 w-6 sm:h-8 sm:w-8" />
                     </div>
-                    <h3 className="text-xl font-semibold text-foreground mb-2">Tidak Ada Produk</h3>
-                    <p className="text-muted-foreground">
+                    <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-2">Tidak Ada Produk</h3>
+                    <p className="text-sm sm:text-base text-muted-foreground max-w-sm mx-auto">
                         Coba ubah kata kunci pencarian atau kategori.
                     </p>
                 </div>

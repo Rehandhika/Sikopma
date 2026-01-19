@@ -38,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\SanitizeInput::class,
+            \App\Http\Middleware\SetTimezone::class,
         ]);
 
         // Rate limiting for sensitive routes

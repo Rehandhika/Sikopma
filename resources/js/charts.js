@@ -115,3 +115,6 @@ window.createDoughnutChart = function(canvasId, data, options = {}) {
 };
 
 export { Chart };
+
+// Make Chart available globally
+window.Chart = Chart;

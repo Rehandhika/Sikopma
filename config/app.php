@@ -63,9 +63,12 @@ return [
     | will be used by the PHP date and date-time functions. The timezone
     | is set to "UTC" by default as it is suitable for most use cases.
     |
+    | Note: This is the fallback timezone. The actual timezone is managed
+    | dynamically via System Settings (DateTimeSettingsService).
+    |
     */
 
-    'timezone' => 'Europe/Lisbon',
+    'timezone' => 'Asia/Jakarta',
 
     /*
     |--------------------------------------------------------------------------
