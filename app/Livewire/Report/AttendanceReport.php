@@ -6,7 +6,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Computed;
-use App\Models\{Attendance, User};
+use App\Models\Attendance;
 use Illuminate\Support\Facades\DB;
 
 #[Title('Laporan Kehadiran')]
@@ -92,25 +92,39 @@ class AttendanceReport extends Component
         $this->resetPage();
     }
 
+    /**
+     * Single optimized query untuk statistik
+     */
     #[Computed]
     public function stats()
     {
-        return DB::table('attendances')
-            ->whereBetween('date', [$this->dateFrom, $this->dateTo])
-            ->when($this->userFilter !== 'all', fn($q) => $q->where('user_id', $this->userFilter))
-            ->selectRaw("
+        $userCondition = $this->userFilter !== 'all' ? "AND user_id = ?" : "";
+        $params = [$this->dateFrom, $this->dateTo];
+        
+        if ($this->userFilter !== 'all') {
+            $params[] = $this->userFilter;
+        }
+
+        $result = DB::select("
+            SELECT 
                 COUNT(*) as total,
                 SUM(status = 'present') as present,
                 SUM(status = 'late') as late,
                 SUM(status = 'absent') as absent
-            ")
-            ->first();
+            FROM attendances 
+            WHERE date BETWEEN ? AND ? {$userCondition}
+        ", $params);
+
+        return $result[0] ?? (object)['total' => 0, 'present' => 0, 'late' => 0, 'absent' => 0];
     }
 
+    /**
+     * Cache users list - jarang berubah
+     */
     #[Computed]
     public function users()
     {
-        return User::select('id', 'name')->orderBy('name')->get();
+        return DB::select("SELECT id, name FROM users WHERE deleted_at IS NULL ORDER BY name");
     }
 
     public function render()

@@ -6,7 +6,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Computed;
-use App\Models\{Penalty, User};
+use App\Models\Penalty;
 use Illuminate\Support\Facades\DB;
 
 #[Title('Laporan Penalti')]
@@ -92,27 +92,44 @@ class PenaltyReport extends Component
         $this->resetPage();
     }
 
+    /**
+     * Single optimized query untuk statistik
+     */
     #[Computed]
     public function stats()
     {
-        return DB::table('penalties')
-            ->whereBetween('date', [$this->dateFrom, $this->dateTo])
-            ->when($this->userFilter !== 'all', fn($q) => $q->where('user_id', $this->userFilter))
-            ->selectRaw("
+        $userCondition = $this->userFilter !== 'all' ? "AND user_id = ?" : "";
+        $params = [$this->dateFrom, $this->dateTo];
+        
+        if ($this->userFilter !== 'all') {
+            $params[] = $this->userFilter;
+        }
+
+        $result = DB::select("
+            SELECT 
                 COUNT(*) as total,
                 SUM(status = 'active') as active,
                 SUM(status = 'appealed') as appealed,
                 SUM(status = 'dismissed') as dismissed,
                 SUM(status = 'expired') as expired,
                 COALESCE(SUM(points), 0) as total_points
-            ")
-            ->first();
+            FROM penalties 
+            WHERE date BETWEEN ? AND ? {$userCondition}
+        ", $params);
+
+        return $result[0] ?? (object)[
+            'total' => 0, 'active' => 0, 'appealed' => 0, 
+            'dismissed' => 0, 'expired' => 0, 'total_points' => 0
+        ];
     }
 
+    /**
+     * Cache users list - jarang berubah
+     */
     #[Computed]
     public function users()
     {
-        return User::select('id', 'name')->orderBy('name')->get();
+        return DB::select("SELECT id, name FROM users WHERE deleted_at IS NULL ORDER BY name");
     }
 
     public function render()

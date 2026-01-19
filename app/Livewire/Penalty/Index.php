@@ -4,47 +4,63 @@ namespace App\Livewire\Penalty;
 
 use Livewire\Component;
 use Livewire\WithPagination;
+use Livewire\Attributes\Title;
+use Livewire\Attributes\Computed;
 use App\Models\Penalty;
+use Illuminate\Support\Facades\DB;
 
+#[Title('Penalti Saya')]
 class Index extends Component
 {
     use WithPagination;
 
-    public $statusFilter = '';
+    public string $statusFilter = '';
+
+    public function updatedStatusFilter()
+    {
+        $this->resetPage();
+    }
+
+    #[Computed]
+    public function summary()
+    {
+        $userId = auth()->id();
+        
+        $result = DB::select("
+            SELECT 
+                COUNT(*) as count,
+                COALESCE(SUM(CASE WHEN status = 'active' THEN points ELSE 0 END), 0) as total_points,
+                SUM(status = 'active') as active,
+                SUM(status = 'appealed') as appealed,
+                SUM(status = 'dismissed') as dismissed,
+                SUM(status = 'expired') as expired
+            FROM penalties 
+            WHERE user_id = ?
+        ", [$userId]);
+
+        $data = $result[0] ?? (object)['count' => 0, 'total_points' => 0, 'active' => 0, 'appealed' => 0, 'dismissed' => 0, 'expired' => 0];
+
+        return [
+            'total_points' => (int)$data->total_points,
+            'count' => (int)$data->count,
+            'active' => (int)$data->active,
+            'appealed' => (int)$data->appealed,
+            'dismissed' => (int)$data->dismissed,
+            'expired' => (int)$data->expired,
+        ];
+    }
 
     public function render()
     {
         $penalties = Penalty::query()
             ->where('user_id', auth()->id())
             ->when($this->statusFilter, fn($q) => $q->where('status', $this->statusFilter))
-            ->with('penaltyType:id,name,code,points')
-            ->orderBy('date', 'desc')
+            ->with('penaltyType:id,name,code')
+            ->select('id', 'penalty_type_id', 'date', 'points', 'description', 'status')
+            ->orderByDesc('date')
             ->paginate(15);
 
-        // Optimize summary with single query
-        $summaryData = Penalty::where('user_id', auth()->id())
-            ->selectRaw('COUNT(*) as count')
-            ->selectRaw('SUM(CASE WHEN status = "active" THEN points ELSE 0 END) as total_points')
-            ->selectRaw('SUM(CASE WHEN status = "active" THEN 1 ELSE 0 END) as active')
-            ->selectRaw('SUM(CASE WHEN status = "appealed" THEN 1 ELSE 0 END) as appealed')
-            ->selectRaw('SUM(CASE WHEN status = "dismissed" THEN 1 ELSE 0 END) as dismissed')
-            ->selectRaw('SUM(CASE WHEN status = "expired" THEN 1 ELSE 0 END) as expired')
-            ->first();
-
-        $summary = [
-            'total_points' => $summaryData->total_points ?? 0,
-            'count' => $summaryData->count ?? 0,
-            'by_status' => [
-                'active' => $summaryData->active ?? 0,
-                'appealed' => $summaryData->appealed ?? 0,
-                'dismissed' => $summaryData->dismissed ?? 0,
-                'expired' => $summaryData->expired ?? 0,
-            ],
-        ];
-
-        return view('livewire.penalty.index', [
-            'penalties' => $penalties,
-            'summary' => $summary,
-        ])->layout('layouts.app')->title('Penalti Saya');
+        return view('livewire.penalty.index', ['penalties' => $penalties])
+            ->layout('layouts.app');
     }
 }

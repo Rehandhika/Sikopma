@@ -42,25 +42,25 @@
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg p-3 sm:p-4 text-white">
             <p class="text-emerald-100 text-xs font-medium">Pendapatan</p>
-            <p class="text-lg sm:text-xl font-bold mt-1"><?php echo e(format_currency($this->stats->revenue)); ?></p>
-            <p class="text-emerald-200 text-xs mt-0.5"><?php echo e(number_format($this->stats->total)); ?> transaksi</p>
+            <p class="text-lg sm:text-xl font-bold mt-1"><?php echo e(format_currency($this->reportData->revenue)); ?></p>
+            <p class="text-emerald-200 text-xs mt-0.5"><?php echo e(number_format($this->reportData->total)); ?> transaksi</p>
         </div>
         
         <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-3 sm:p-4 text-white">
             <p class="text-blue-100 text-xs font-medium">Rata-rata</p>
-            <p class="text-lg sm:text-xl font-bold mt-1"><?php echo e(format_currency($this->stats->avg_amount)); ?></p>
+            <p class="text-lg sm:text-xl font-bold mt-1"><?php echo e(format_currency($this->reportData->avg_amount)); ?></p>
             <p class="text-blue-200 text-xs mt-0.5">per transaksi</p>
         </div>
         
         <div class="bg-gradient-to-br from-violet-500 to-violet-600 rounded-lg p-3 sm:p-4 text-white">
             <p class="text-violet-100 text-xs font-medium">Terbesar</p>
-            <p class="text-lg sm:text-xl font-bold mt-1"><?php echo e(format_currency($this->stats->max_amount)); ?></p>
+            <p class="text-lg sm:text-xl font-bold mt-1"><?php echo e(format_currency($this->reportData->max_amount)); ?></p>
             <p class="text-violet-200 text-xs mt-0.5">nilai tertinggi</p>
         </div>
         
         <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg p-3 sm:p-4 text-white">
             <p class="text-amber-100 text-xs font-medium">Transaksi</p>
-            <p class="text-lg sm:text-xl font-bold mt-1"><?php echo e(number_format($this->stats->total)); ?></p>
+            <p class="text-lg sm:text-xl font-bold mt-1"><?php echo e(number_format($this->reportData->total)); ?></p>
             <p class="text-amber-200 text-xs mt-0.5">total</p>
         </div>
     </div>
@@ -100,7 +100,7 @@
         
         <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
             <h3 class="font-semibold text-sm text-gray-900 dark:text-white mb-3">Produk Terlaris</h3>
-            <!--[if BLOCK]><![endif]--><?php if($this->topProducts->isNotEmpty()): ?>
+            <!--[if BLOCK]><![endif]--><?php if(count($this->topProducts) > 0): ?>
                 <div class="space-y-2">
                     <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $this->topProducts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $i => $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <div class="flex items-center gap-2 p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50">
