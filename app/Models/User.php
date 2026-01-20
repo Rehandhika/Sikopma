@@ -152,15 +152,55 @@ class User extends Authenticatable
     {
         $role = $this->getPrimaryRole();
         
-        // You can customize dashboard routes based on roles
+        // Dashboard routes based on Wirus Angkatan 66 roles
         return match($role) {
-            'super_admin' => 'dashboard',
-            'ketua' => 'dashboard',
-            'wakil_ketua' => 'dashboard',
-            'bendahara' => 'dashboard',
-            'sekretaris' => 'dashboard',
-            'anggota' => 'dashboard',
+            'Super Admin' => 'dashboard',
+            'Ketua' => 'dashboard',
+            'Wakil Ketua' => 'dashboard',
+            'Sekretaris' => 'dashboard',
+            'Bendahara Umum' => 'dashboard',
+            'Bendahara Kegiatan' => 'dashboard',
+            'Bendahara Toko' => 'dashboard',
+            'Koordinator Toko' => 'dashboard',
+            'Koordinator PSDA' => 'dashboard',
+            'Koordinator Humsar' => 'dashboard',
+            'Koordinator Produksi' => 'dashboard',
+            'Koordinator IT' => 'dashboard',
+            'Koordinator Desain' => 'dashboard',
+            'Anggota' => 'dashboard',
             default => 'dashboard',
         };
+    }
+
+    /**
+     * Check if user is a coordinator
+     */
+    public function isKoordinator(): bool
+    {
+        return str_starts_with($this->getPrimaryRole() ?? '', 'Koordinator');
+    }
+
+    /**
+     * Check if user is a treasurer (bendahara)
+     */
+    public function isBendahara(): bool
+    {
+        return str_starts_with($this->getPrimaryRole() ?? '', 'Bendahara');
+    }
+
+    /**
+     * Check if user is in leadership (pimpinan)
+     */
+    public function isPimpinan(): bool
+    {
+        return in_array($this->getPrimaryRole(), ['Ketua', 'Wakil Ketua', 'Super Admin']);
+    }
+
+    /**
+     * Check if user is secretary
+     */
+    public function isSekretaris(): bool
+    {
+        return $this->getPrimaryRole() === 'Sekretaris';
     }
 }

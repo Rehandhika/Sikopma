@@ -37,7 +37,7 @@
                         </label>
                         
                         {{-- Current Image Preview (for editing) --}}
-                        @if($editingBannerId && !$image)
+                        @if($editingBannerId && !$imagePreview)
                             @php
                                 $currentBanner = \App\Models\Banner::find($editingBannerId);
                             @endphp
@@ -66,15 +66,37 @@
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                         
+                        {{-- Loading indicator --}}
+                        <div wire:loading wire:target="image" class="mt-2">
+                            <div class="flex items-center gap-2 text-sm text-gray-600">
+                                <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                <span>Mengupload gambar...</span>
+                            </div>
+                        </div>
+                        
                         {{-- Image Preview --}}
-                        @if($image)
+                        @if($imagePreview)
                             <div class="mt-4">
                                 <p class="text-sm text-gray-600 mb-2">Preview:</p>
-                                <img 
-                                    src="{{ $image->temporaryUrl() }}" 
-                                    alt="Preview"
-                                    class="h-32 w-auto rounded border border-gray-200"
-                                >
+                                <div class="relative inline-block">
+                                    <img 
+                                        src="{{ $imagePreview }}" 
+                                        alt="Preview"
+                                        class="h-32 w-auto rounded border border-gray-200"
+                                    >
+                                    <button 
+                                        type="button"
+                                        wire:click="removeImage"
+                                        class="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                                        title="Hapus gambar"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                         @endif
                         

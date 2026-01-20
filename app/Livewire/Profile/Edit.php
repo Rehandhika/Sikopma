@@ -23,6 +23,7 @@ class Edit extends Component
     public $phone;
     public $address;
     public $photo;
+    public $photoPreview = null;
     public $current_photo;
     
     // Password fields
@@ -48,6 +49,17 @@ class Edit extends Component
         $this->phone = $this->user->phone;
         $this->address = $this->user->address;
         $this->current_photo = $this->user->photo;
+    }
+
+    public function updatedPhoto()
+    {
+        $this->validate([
+            'photo' => 'image|max:2048',
+        ]);
+        
+        if ($this->photo) {
+            $this->photoPreview = $this->photo->temporaryUrl();
+        }
     }
 
     public function updateProfile()
@@ -83,6 +95,7 @@ class Edit extends Component
 
             $this->dispatch('alert', type: 'success', message: 'Profil berhasil diperbarui');
             $this->photo = null;
+            $this->photoPreview = null;
         } catch (\Exception $e) {
             Log::error('Profile update failed', [
                 'user_id' => $this->user->id,

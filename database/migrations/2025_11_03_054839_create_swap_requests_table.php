@@ -11,6 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Skip if table already exists
+        if (Schema::hasTable('swap_requests')) {
+            return;
+        }
+        
         Schema::create('swap_requests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('requester_id')->constrained('users');

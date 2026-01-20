@@ -5,92 +5,171 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class UserSeeder extends Seeder
 {
+    /**
+     * Wirus Angkatan 66 - Data Anggota
+     * 
+     * Struktur Organisasi:
+     * - Ketua: Pimpinan tertinggi
+     * - Wakil Ketua: Pendamping ketua
+     * - Sekretaris I & II: Administrasi
+     * - Bendahara Umum: Keuangan utama
+     * - Bendahara Kegiatan: Keuangan kegiatan
+     * - Bendahara Toko: Keuangan toko
+     * - Koordinator Divisi: Kepala divisi masing-masing
+     * - Anggota: Member biasa
+     */
     public function run(): void
     {
-        // Super Admin
-        $superAdmin = User::firstOrCreate(
-            ['nim' => '00000000'],
-            [
-                'name' => 'Super Administrator',
-                'email' => 'admin@sikopma.test',
-                'password' => Hash::make('password'),
-                'status' => 'active',
-            ]
-        );
-        $superAdmin->assignRole('Super Admin');
+        // Clear existing users (optional - uncomment if needed for fresh start)
+        // User::query()->delete();
 
-        // Ketua
-        $ketua = User::firstOrCreate(
-            ['nim' => '11111111'],
+        $members = [
+            // =====================================================
+            // PIMPINAN INTI
+            // =====================================================
             [
-                'name' => 'Ketua KOPMA',
-                'email' => 'ketua@sikopma.test',
-                'password' => Hash::make('password'),
-                'status' => 'active',
-            ]
-        );
-        $ketua->assignRole('Ketua');
-
-        // Wakil Ketua
-        $wakilKetua = User::firstOrCreate(
-            ['nim' => '22222222'],
+                'name' => 'Diva Afdholia R.',
+                'nim' => '222413550',
+                'jabatan' => 'Ketua',
+                'role' => 'Ketua',
+                'email' => 'diva.afdholia@sikopma.test',
+            ],
             [
-                'name' => 'Wakil Ketua KOPMA',
-                'email' => 'wakil@sikopma.test',
-                'password' => Hash::make('password'),
-                'status' => 'active',
-            ]
-        );
-        $wakilKetua->assignRole('Wakil Ketua');
+                'name' => 'Fikri Adi Nugraha',
+                'nim' => '222413577',
+                'jabatan' => 'Wakil Ketua',
+                'role' => 'Wakil Ketua',
+                'email' => 'fikri.adi@sikopma.test',
+            ],
 
-        // BPH Members
-        $bphMembers = [
-            ['nim' => '33333333', 'name' => 'BPH 1', 'email' => 'bph1@sikopma.test'],
-            ['nim' => '44444444', 'name' => 'BPH 2', 'email' => 'bph2@sikopma.test'],
-            ['nim' => '55555555', 'name' => 'BPH 3', 'email' => 'bph3@sikopma.test'],
+            // =====================================================
+            // SEKRETARIAT
+            // =====================================================
+            [
+                'name' => 'Defila Cahyati',
+                'nim' => '222413540',
+                'jabatan' => 'Sekretaris I',
+                'role' => 'Sekretaris',
+                'email' => 'defila.cahyati@sikopma.test',
+            ],
+            [
+                'name' => 'Raziq Alzam Fadlullah',
+                'nim' => '112413751',
+                'jabatan' => 'Sekretaris II',
+                'role' => 'Sekretaris',
+                'email' => 'raziq.alzam@sikopma.test',
+            ],
+
+            // =====================================================
+            // BENDAHARA
+            // =====================================================
+            [
+                'name' => 'Siti Rahmadhani Zaskya Mantika',
+                'nim' => '222413785',
+                'jabatan' => 'Bendahara Umum',
+                'role' => 'Bendahara Umum',
+                'email' => 'siti.rahmadhani@sikopma.test',
+            ],
+            [
+                'name' => 'Mei Indriyanti Syamsi',
+                'nim' => '222413652',
+                'jabatan' => 'Bendahara Kegiatan',
+                'role' => 'Bendahara Kegiatan',
+                'email' => 'mei.indriyanti@sikopma.test',
+            ],
+            [
+                'name' => 'Putra Irvan Kala\'padang',
+                'nim' => '222413736',
+                'jabatan' => 'Bendahara Toko',
+                'role' => 'Bendahara Toko',
+                'email' => 'putra.irvan@sikopma.test',
+            ],
+
+            // =====================================================
+            // KOORDINATOR DIVISI
+            // =====================================================
+            [
+                'name' => 'Diah Puji Pramesti',
+                'nim' => '222413547',
+                'jabatan' => 'Koordinator Toko',
+                'role' => 'Koordinator Toko',
+                'email' => 'diah.puji@sikopma.test',
+            ],
+            [
+                'name' => 'Ego Stiven Rafliza',
+                'nim' => '222413552',
+                'jabatan' => 'Koordinator PSDA',
+                'role' => 'Koordinator PSDA',
+                'email' => 'ego.stiven@sikopma.test',
+            ],
+            [
+                'name' => 'Desvita Prabawaningrum',
+                'nim' => '222413544',
+                'jabatan' => 'Koordinator Humsar',
+                'role' => 'Koordinator Humsar',
+                'email' => 'desvita.prabawaningrum@sikopma.test',
+            ],
+            [
+                'name' => 'Fatimah Az Zahra',
+                'nim' => '222413569',
+                'jabatan' => 'Koordinator Produksi dan Pengadaan',
+                'role' => 'Koordinator Produksi',
+                'email' => 'fatimah.azzahra@sikopma.test',
+            ],
+            [
+                'name' => 'Rehandhika Arya Pratama',
+                'nim' => '222413752',
+                'jabatan' => 'Koordinator IT',
+                'role' => 'Super Admin', // Super Admin karena IT
+                'email' => 'rehandhika.arya@sikopma.test',
+            ],
+            [
+                'name' => 'Risyda Azifatil Maghfira',
+                'nim' => '222413763',
+                'jabatan' => 'Koordinator Desain',
+                'role' => 'Koordinator Desain',
+                'email' => 'risyda.azifatil@sikopma.test',
+            ],
+
+            // =====================================================
+            // ANGGOTA
+            // =====================================================
+            [
+                'name' => 'Rahmat Budiyanto',
+                'nim' => '222413742',
+                'jabatan' => 'Anggota Produksi dan Pengadaan',
+                'role' => 'Anggota',
+                'email' => 'rahmat.budiyanto@sikopma.test',
+            ],
         ];
 
-        foreach ($bphMembers as $member) {
-            $user = User::firstOrCreate(
+        foreach ($members as $member) {
+            $user = User::updateOrCreate(
                 ['nim' => $member['nim']],
                 [
                     'name' => $member['name'],
                     'email' => $member['email'],
-                    'password' => Hash::make('password'),
+                    'password' => Hash::make('password'), // Default password
                     'status' => 'active',
                 ]
             );
-            $user->assignRole('BPH');
+
+            // Remove existing roles and assign new one
+            $user->syncRoles([$member['role']]);
         }
 
-        // Regular Members
-        $regularMembers = [
-            ['nim' => '66666666', 'name' => 'Anggota 1', 'email' => 'anggota1@sikopma.test'],
-            ['nim' => '77777777', 'name' => 'Anggota 2', 'email' => 'anggota2@sikopma.test'],
-            ['nim' => '88888888', 'name' => 'Anggota 3', 'email' => 'anggota3@sikopma.test'],
-            ['nim' => '99999999', 'name' => 'Anggota 4', 'email' => 'anggota4@sikopma.test'],
-            ['nim' => '10101010', 'name' => 'Anggota 5', 'email' => 'anggota5@sikopma.test'],
-            ['nim' => '11111112', 'name' => 'Anggota 6', 'email' => 'anggota6@sikopma.test'],
-            ['nim' => '12121212', 'name' => 'Anggota 7', 'email' => 'anggota7@sikopma.test'],
-            ['nim' => '13131313', 'name' => 'Anggota 8', 'email' => 'anggota8@sikopma.test'],
-            ['nim' => '14141414', 'name' => 'Anggota 9', 'email' => 'anggota9@sikopma.test'],
-            ['nim' => '15151515', 'name' => 'Anggota 10', 'email' => 'anggota10@sikopma.test'],
-        ];
-
-        foreach ($regularMembers as $member) {
-            $user = User::firstOrCreate(
-                ['nim' => $member['nim']],
-                [
-                    'name' => $member['name'],
-                    'email' => $member['email'],
-                    'password' => Hash::make('password'),
-                    'status' => 'active',
-                ]
-            );
-            $user->assignRole('Anggota');
-        }
+        $this->command->info('✅ Wirus Angkatan 66 - ' . count($members) . ' anggota berhasil di-seed!');
+        $this->command->info('');
+        $this->command->info('📋 Struktur Organisasi:');
+        $this->command->info('   Ketua: Diva Afdholia R.');
+        $this->command->info('   Wakil Ketua: Fikri Adi Nugraha');
+        $this->command->info('   Super Admin (IT): Rehandhika Arya Pratama');
+        $this->command->info('');
+        $this->command->info('🔐 Default Password: password');
+        $this->command->info('📧 Login menggunakan NIM atau Email');
     }
 }

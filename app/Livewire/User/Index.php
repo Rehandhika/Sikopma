@@ -4,96 +4,151 @@ namespace App\Livewire\User;
 
 use Livewire\Component;
 use Livewire\WithPagination;
+use Livewire\Attributes\Title;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Url;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
 
+#[Title('Manajemen Anggota')]
 class Index extends Component
 {
     use WithPagination;
 
-    public $search = '';
-    public $roleFilter = '';
-    public $statusFilter = '';
+    #[Url(as: 'q')]
+    public string $search = '';
     
-    public $showModal = false;
-    public $editMode = false;
-    public $userId;
+    #[Url(as: 'role')]
+    public string $roleFilter = '';
     
-    // Form fields
-    public $nim;
-    public $name;
-    public $email;
-    public $phone;
-    public $address;
-    public $password;
-    public $password_confirmation;
-    public $selectedRoles = [];
-    public $status = 'active';
+    #[Url(as: 'status')]
+    public string $statusFilter = '';
 
-    protected function rules()
+    public bool $showModal = false;
+    public bool $editMode = false;
+    public ?int $userId = null;
+    
+    public string $nim = '';
+    public string $name = '';
+    public string $email = '';
+    public string $phone = '';
+    public string $address = '';
+    public string $password = '';
+    public string $password_confirmation = '';
+    public array $selectedRoles = [];
+    public string $status = 'active';
+
+    protected int $perPage = 15;
+
+    protected function rules(): array
     {
         $rules = [
-            'nim' => 'required|string|max:20|unique:users,nim',
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'phone' => 'nullable|string|max:20',
-            'address' => 'nullable|string',
-            'selectedRoles' => 'required|array|min:1',
-            'status' => 'required|in:active,inactive',
+            'nim' => ['required', 'string', 'max:20', 'unique:users,nim' . ($this->editMode ? ',' . $this->userId : '')],
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'unique:users,email' . ($this->editMode ? ',' . $this->userId : '')],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'address' => ['nullable', 'string', 'max:500'],
+            'selectedRoles' => ['required', 'array', 'min:1'],
+            'status' => ['required', 'in:active,inactive'],
         ];
 
-        if (!$this->editMode) {
-            $rules['password'] = 'required|string|min:8|confirmed';
+        if ($this->editMode) {
+            $rules['password'] = ['nullable', 'string', 'min:8', 'confirmed'];
         } else {
-            $rules['nim'] = 'required|string|max:20|unique:users,nim,' . $this->userId;
-            $rules['email'] = 'required|email|unique:users,email,' . $this->userId;
-            $rules['password'] = 'nullable|string|min:8|confirmed';
+            $rules['password'] = ['required', 'string', 'min:8', 'confirmed'];
         }
 
         return $rules;
     }
 
-    public function updatingSearch()
+    protected array $messages = [
+        'nim.required' => 'NIM wajib diisi',
+        'nim.unique' => 'NIM sudah terdaftar',
+        'name.required' => 'Nama wajib diisi',
+        'email.required' => 'Email wajib diisi',
+        'email.email' => 'Format email tidak valid',
+        'email.unique' => 'Email sudah terdaftar',
+        'password.required' => 'Password wajib diisi',
+        'password.min' => 'Password minimal 8 karakter',
+        'password.confirmed' => 'Konfirmasi password tidak cocok',
+        'selectedRoles.required' => 'Pilih minimal satu role',
+        'selectedRoles.min' => 'Pilih minimal satu role',
+    ];
+
+    public function updatedSearch(): void
     {
         $this->resetPage();
     }
 
-    public function updatingRoleFilter()
+    public function updatedRoleFilter(): void
     {
         $this->resetPage();
     }
 
-    public function updatingStatusFilter()
+    public function updatedStatusFilter(): void
     {
         $this->resetPage();
     }
 
-    public function create()
+    #[Computed]
+    public function users()
+    {
+        return User::query()
+            ->with('roles:id,name')
+            ->when($this->search, function ($q) {
+                $q->where(function ($query) {
+                    $query->where('name', 'like', "%{$this->search}%")
+                        ->orWhere('nim', 'like', "%{$this->search}%")
+                        ->orWhere('email', 'like', "%{$this->search}%");
+                });
+            })
+            ->when($this->roleFilter, function ($q) {
+                $q->whereHas('roles', fn($query) => $query->where('name', $this->roleFilter));
+            })
+            ->when($this->statusFilter, function ($q) {
+                $q->where('status', $this->statusFilter);
+            })
+            ->orderBy('name')
+            ->paginate($this->perPage);
+    }
+
+    #[Computed]
+    public function roles()
+    {
+        return Role::query()
+            ->orderByRaw("FIELD(name, 'super-admin', 'ketua', 'wakil-ketua', 'bph', 'anggota') DESC")
+            ->orderBy('name')
+            ->get();
+    }
+
+    public function create(): void
     {
         $this->resetForm();
         $this->editMode = false;
         $this->showModal = true;
     }
 
-    public function edit($id)
+    public function edit(int $id): void
     {
-        $user = User::with('roles')->findOrFail($id);
+        $user = User::with('roles:id,name')->findOrFail($id);
         
         $this->userId = $user->id;
-        $this->nim = $user->nim;
+        $this->nim = $user->nim ?? '';
         $this->name = $user->name;
         $this->email = $user->email;
-        $this->phone = $user->phone;
-        $this->address = $user->address;
-        $this->status = $user->status;
+        $this->phone = $user->phone ?? '';
+        $this->address = $user->address ?? '';
+        $this->status = $user->status ?? 'active';
         $this->selectedRoles = $user->roles->pluck('name')->toArray();
+        $this->password = '';
+        $this->password_confirmation = '';
         
         $this->editMode = true;
         $this->showModal = true;
     }
 
-    public function save()
+    public function save(): void
     {
         $this->validate();
 
@@ -105,8 +160,8 @@ class Index extends Component
                     'nim' => $this->nim,
                     'name' => $this->name,
                     'email' => $this->email,
-                    'phone' => $this->phone,
-                    'address' => $this->address,
+                    'phone' => $this->phone ?: null,
+                    'address' => $this->address ?: null,
                     'status' => $this->status,
                 ]);
 
@@ -115,44 +170,39 @@ class Index extends Component
                 }
 
                 $user->syncRoles($this->selectedRoles);
-
                 $message = 'Anggota berhasil diperbarui';
             } else {
                 $user = User::create([
                     'nim' => $this->nim,
                     'name' => $this->name,
                     'email' => $this->email,
-                    'phone' => $this->phone,
-                    'address' => $this->address,
+                    'phone' => $this->phone ?: null,
+                    'address' => $this->address ?: null,
                     'password' => Hash::make($this->password),
                     'status' => $this->status,
                 ]);
 
                 $user->syncRoles($this->selectedRoles);
-
                 $message = 'Anggota berhasil ditambahkan';
             }
 
             $this->dispatch('alert', type: 'success', message: $message);
-            $this->resetForm();
-            $this->showModal = false;
+            $this->closeModal();
         } catch (\Exception $e) {
             $this->dispatch('alert', type: 'error', message: 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 
-    public function delete($id)
+    public function delete(int $id): void
     {
         try {
             $user = User::findOrFail($id);
             
-            // Prevent deleting super admin
             if ($user->hasRole('super-admin')) {
                 $this->dispatch('alert', type: 'error', message: 'Super Admin tidak dapat dihapus');
                 return;
             }
 
-            // Prevent self-deletion
             if ($user->id === auth()->id()) {
                 $this->dispatch('alert', type: 'error', message: 'Anda tidak dapat menghapus akun sendiri');
                 return;
@@ -165,7 +215,7 @@ class Index extends Component
         }
     }
 
-    public function toggleStatus($id)
+    public function toggleStatus(int $id): void
     {
         try {
             $user = User::findOrFail($id);
@@ -185,50 +235,30 @@ class Index extends Component
         }
     }
 
-    private function resetForm()
+    public function clearFilters(): void
+    {
+        $this->reset(['search', 'roleFilter', 'statusFilter']);
+        $this->resetPage();
+    }
+
+    public function closeModal(): void
+    {
+        $this->showModal = false;
+        $this->resetForm();
+    }
+
+    private function resetForm(): void
     {
         $this->reset([
             'userId', 'nim', 'name', 'email', 'phone', 'address',
-            'password', 'password_confirmation', 'selectedRoles', 'status'
+            'password', 'password_confirmation', 'selectedRoles'
         ]);
+        $this->status = 'active';
         $this->resetValidation();
     }
 
     public function render()
     {
-        $query = User::query()->with('roles');
-
-        if ($this->search) {
-            $query->where(function($q) {
-                $q->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('nim', 'like', '%' . $this->search . '%')
-                  ->orWhere('email', 'like', '%' . $this->search . '%');
-            });
-        }
-
-        if ($this->roleFilter) {
-            $query->whereHas('roles', function($q) {
-                $q->where('name', $this->roleFilter);
-            });
-        }
-
-        if ($this->statusFilter) {
-            $query->where('status', $this->statusFilter);
-        }
-
-        $users = $query->orderBy('created_at', 'desc')->paginate(15);
-        $roles = Role::all();
-
-        $stats = [
-            'total' => User::count(),
-            'active' => User::where('status', 'active')->count(),
-            'inactive' => User::where('status', 'inactive')->count(),
-        ];
-
-        return view('livewire.user.index', [
-            'users' => $users,
-            'roles' => $roles,
-            'stats' => $stats,
-        ])->layout('layouts.app')->title('Manajemen Anggota');
+        return view('livewire.user.index')->layout('layouts.app');
     }
 }

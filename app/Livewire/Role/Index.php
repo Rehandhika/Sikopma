@@ -3,44 +3,85 @@
 namespace App\Livewire\Role;
 
 use Livewire\Component;
+use Livewire\Attributes\Title;
+use Livewire\Attributes\Computed;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 
+#[Title('Manajemen Role & Permission')]
 class Index extends Component
 {
-    public $showModal = false;
-    public $editMode = false;
-    public $roleId;
+    // Modal state
+    public bool $showModal = false;
+    public bool $editMode = false;
+    public ?int $roleId = null;
     
-    public $name;
-    public $description;
-    public $selectedPermissions = [];
+    // Form fields
+    public string $name = '';
+    public string $description = '';
+    public array $selectedPermissions = [];
+    
+    // Search & filter
+    public string $search = '';
 
-    protected function rules()
+    // System roles that cannot be deleted
+    protected array $systemRoles = ['super-admin', 'ketua', 'wakil-ketua', 'bph', 'anggota'];
+
+    protected function rules(): array
     {
-        $rules = [
-            'name' => 'required|string|max:255|unique:roles,name',
-            'description' => 'nullable|string',
-            'selectedPermissions' => 'array',
+        $uniqueRule = $this->editMode 
+            ? 'unique:roles,name,' . $this->roleId 
+            : 'unique:roles,name';
+
+        return [
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-z0-9-]+$/', $uniqueRule],
+            'description' => ['nullable', 'string', 'max:500'],
+            'selectedPermissions' => ['array'],
         ];
-
-        if ($this->editMode) {
-            $rules['name'] = 'required|string|max:255|unique:roles,name,' . $this->roleId;
-        }
-
-        return $rules;
     }
 
-    public function create()
+    protected array $messages = [
+        'name.required' => 'Nama role wajib diisi',
+        'name.regex' => 'Nama role hanya boleh huruf kecil, angka, dan tanda hubung',
+        'name.unique' => 'Nama role sudah digunakan',
+    ];
+
+    public function updatedSearch(): void
+    {
+        // Reset any state if needed
+    }
+
+    #[Computed]
+    public function roles()
+    {
+        return Role::query()
+            ->withCount('users')
+            ->with('permissions:id,name')
+            ->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%"))
+            ->orderByRaw("FIELD(name, 'super-admin', 'ketua', 'wakil-ketua', 'bph', 'anggota') DESC")
+            ->orderBy('name')
+            ->get();
+    }
+
+    #[Computed]
+    public function permissions()
+    {
+        return Permission::query()
+            ->orderBy('name')
+            ->get()
+            ->groupBy(fn($p) => explode('.', $p->name)[0] ?? 'other');
+    }
+
+    public function create(): void
     {
         $this->resetForm();
         $this->editMode = false;
         $this->showModal = true;
     }
 
-    public function edit($id)
+    public function edit(int $id): void
     {
-        $role = Role::with('permissions')->findOrFail($id);
+        $role = Role::with('permissions:id,name')->findOrFail($id);
         
         $this->roleId = $role->id;
         $this->name = $role->name;
@@ -51,16 +92,14 @@ class Index extends Component
         $this->showModal = true;
     }
 
-    public function save()
+    public function save(): void
     {
         $this->validate();
 
         try {
             if ($this->editMode) {
                 $role = Role::findOrFail($this->roleId);
-                $role->update([
-                    'name' => $this->name,
-                ]);
+                $role->update(['name' => $this->name]);
                 $message = 'Role berhasil diperbarui';
             } else {
                 $role = Role::create([
@@ -70,32 +109,27 @@ class Index extends Component
                 $message = 'Role berhasil ditambahkan';
             }
 
-            if (!empty($this->selectedPermissions)) {
-                $role->syncPermissions($this->selectedPermissions);
-            }
+            $role->syncPermissions($this->selectedPermissions);
 
             $this->dispatch('alert', type: 'success', message: $message);
-            $this->resetForm();
-            $this->showModal = false;
+            $this->closeModal();
         } catch (\Exception $e) {
             $this->dispatch('alert', type: 'error', message: 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 
-    public function delete($id)
+    public function delete(int $id): void
     {
         try {
             $role = Role::findOrFail($id);
             
-            // Prevent deleting system roles
-            if (in_array($role->name, ['super-admin', 'ketua', 'wakil-ketua', 'bph', 'anggota'])) {
+            if (in_array($role->name, $this->systemRoles)) {
                 $this->dispatch('alert', type: 'error', message: 'Role sistem tidak dapat dihapus');
                 return;
             }
 
-            // Check if role is assigned to users
             if ($role->users()->count() > 0) {
-                $this->dispatch('alert', type: 'error', message: 'Role masih digunakan oleh ' . $role->users()->count() . ' user');
+                $this->dispatch('alert', type: 'error', message: "Role masih digunakan oleh {$role->users()->count()} user");
                 return;
             }
 
@@ -106,20 +140,56 @@ class Index extends Component
         }
     }
 
-    private function resetForm()
+    public function togglePermission(string $permission): void
+    {
+        if (in_array($permission, $this->selectedPermissions)) {
+            $this->selectedPermissions = array_values(array_diff($this->selectedPermissions, [$permission]));
+        } else {
+            $this->selectedPermissions[] = $permission;
+        }
+    }
+
+    public function selectAllInGroup(string $group): void
+    {
+        $groupPermissions = $this->permissions[$group]->pluck('name')->toArray();
+        $this->selectedPermissions = array_unique(array_merge($this->selectedPermissions, $groupPermissions));
+    }
+
+    public function deselectAllInGroup(string $group): void
+    {
+        $groupPermissions = $this->permissions[$group]->pluck('name')->toArray();
+        $this->selectedPermissions = array_values(array_diff($this->selectedPermissions, $groupPermissions));
+    }
+
+    public function selectAll(): void
+    {
+        $this->selectedPermissions = Permission::pluck('name')->toArray();
+    }
+
+    public function deselectAll(): void
+    {
+        $this->selectedPermissions = [];
+    }
+
+    public function closeModal(): void
+    {
+        $this->showModal = false;
+        $this->resetForm();
+    }
+
+    private function resetForm(): void
     {
         $this->reset(['roleId', 'name', 'description', 'selectedPermissions']);
         $this->resetValidation();
     }
 
+    public function isSystemRole(string $name): bool
+    {
+        return in_array($name, $this->systemRoles);
+    }
+
     public function render()
     {
-        $roles = Role::withCount('users')->get();
-        $permissions = Permission::all();
-
-        return view('livewire.role.index', [
-            'roles' => $roles,
-            'permissions' => $permissions,
-        ])->layout('layouts.app')->title('Manajemen Role');
+        return view('livewire.role.index')->layout('layouts.app');
     }
 }

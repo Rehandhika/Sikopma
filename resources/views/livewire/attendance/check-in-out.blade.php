@@ -112,9 +112,9 @@
                                         Foto Bukti Check-in <span class="text-red-500">*</span>
                                     </label>
                                     
-                                    @if($showPhotoPreview && $checkInPhoto)
+                                    @if($showPhotoPreview && $checkInPhotoPreview)
                                         <div class="relative">
-                                            <img src="{{ $checkInPhoto->temporaryUrl() }}" 
+                                            <img src="{{ $checkInPhotoPreview }}" 
                                                  alt="Preview" 
                                                  class="w-full h-48 object-cover rounded-lg border-2 border-success-300">
                                             <button type="button" 
@@ -122,6 +122,10 @@
                                                     class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition">
                                                 <x-ui.icon name="x" class="w-4 h-4" />
                                             </button>
+                                        </div>
+                                        <div wire:loading wire:target="checkInPhoto" class="mt-2 text-sm text-gray-500">
+                                            <x-ui.icon name="arrow-path" class="w-4 h-4 inline animate-spin" />
+                                            Mengunggah foto...
                                         </div>
                                     @else
                                         <div class="flex items-center justify-center w-full">

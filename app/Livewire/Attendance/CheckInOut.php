@@ -21,6 +21,7 @@ class CheckInOut extends Component
     public $checkInTime;
     public $checkOutTime;
     public $checkInPhoto;
+    public $checkInPhotoPreview = null;
     public $scheduleStatus; // 'active', 'upcoming', 'past'
     public $showPhotoPreview = false;
 
@@ -190,7 +191,7 @@ class CheckInOut extends Component
             session()->flash('success', 'Check-in berhasil! Waktu: ' . $now->format('H:i'));
             
             // Reset form
-            $this->reset(['checkInPhoto', 'showPhotoPreview']);
+            $this->reset(['checkInPhoto', 'checkInPhotoPreview', 'showPhotoPreview']);
             
             // Reload schedule data
             $this->loadCurrentSchedule();
@@ -293,6 +294,9 @@ class CheckInOut extends Component
             'checkInPhoto' => 'image|max:5120',
         ]);
 
+        if ($this->checkInPhoto) {
+            $this->checkInPhotoPreview = $this->checkInPhoto->temporaryUrl();
+        }
         $this->showPhotoPreview = true;
     }
 
@@ -301,7 +305,7 @@ class CheckInOut extends Component
      */
     public function removePhoto()
     {
-        $this->reset(['checkInPhoto', 'showPhotoPreview']);
+        $this->reset(['checkInPhoto', 'checkInPhotoPreview', 'showPhotoPreview']);
     }
 
     /**

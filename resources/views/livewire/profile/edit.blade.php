@@ -40,16 +40,16 @@
                 >
                     <div class="flex items-center space-x-6">
                         <div class="flex-shrink-0">
-                            @if($current_photo)
+                            @if($photoPreview)
                                 <x-ui.avatar 
-                                    :src="Storage::url($current_photo)" 
+                                    :src="$photoPreview" 
                                     :name="$name" 
                                     size="xl" 
                                     class="w-24 h-24"
                                 />
-                            @elseif($photo)
+                            @elseif($current_photo)
                                 <x-ui.avatar 
-                                    :src="$photo->temporaryUrl()" 
+                                    :src="Storage::url($current_photo)" 
                                     :name="$name" 
                                     size="xl" 
                                     class="w-24 h-24"
@@ -79,6 +79,12 @@
                                     Hapus Foto
                                 </x-ui.button>
                             @endif
+                            <div wire:loading wire:target="photo" class="mt-2 text-sm text-gray-500">
+                                <svg class="w-4 h-4 inline animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Mengupload foto...
+                            </div>
                             @error('photo') 
                                 <span class="block text-sm text-danger-600 mt-1">{{ $message }}</span> 
                             @enderror

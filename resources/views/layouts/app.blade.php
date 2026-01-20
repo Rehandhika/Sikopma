@@ -2,7 +2,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ config('app.name', 'SIKOPMA') }} - @yield('title', 'Dashboard')</title>
@@ -96,7 +96,7 @@
         </aside>
 
         <!-- Main content -->
-        <div class="flex-1 md:ml-64 flex flex-col min-h-screen">
+        <div class="flex-1 md:ml-64 flex flex-col min-h-screen min-w-0 overflow-x-hidden">
             <!-- Top bar for mobile -->
             <header class="sticky top-0 z-10 bg-white border-b border-gray-200 md:hidden shadow-sm">
                 <div class="flex items-center justify-between px-4 py-3">
@@ -131,9 +131,9 @@
             </header>
 
             <!-- Page Content -->
-            <main class="flex-1">
-                <div class="py-6">
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <main class="flex-1 min-w-0 overflow-x-hidden">
+                <div class="py-4 sm:py-6">
+                    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
                         {{ $slot ?? '' }}
                         @yield('content')
                     </div>

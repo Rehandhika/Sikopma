@@ -25,6 +25,7 @@ class BannerManagement extends Component
     
     public $editingBannerId = null;
     public $showForm = false;
+    public $imagePreview = null;
 
     protected BannerService $bannerService;
 
@@ -55,7 +56,23 @@ class BannerManagement extends Component
         $this->title = $banner->title;
         $this->priority = $banner->priority;
         $this->image = null; // Reset image field for editing
+        $this->imagePreview = null;
         $this->showForm = true;
+    }
+
+    public function updatedImage()
+    {
+        $this->validateOnly('image');
+        
+        if ($this->image) {
+            $this->imagePreview = $this->image->temporaryUrl();
+        }
+    }
+
+    public function removeImage()
+    {
+        $this->image = null;
+        $this->imagePreview = null;
     }
 
     public function save()
@@ -127,6 +144,7 @@ class BannerManagement extends Component
     {
         $this->title = '';
         $this->image = null;
+        $this->imagePreview = null;
         $this->priority = 0;
         $this->editingBannerId = null;
         $this->resetValidation();
