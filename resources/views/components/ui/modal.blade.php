@@ -57,7 +57,7 @@ $maxWidths = [
                 <button 
                     @click="show = false"
                     type="button"
-                    class="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-lg p-1"
+                    class="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-lg p-1"
                 >
                     <x-ui.icon name="x" class="w-5 h-5" />
                 </button>

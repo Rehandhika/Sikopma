@@ -3,16 +3,28 @@
 namespace App\Services;
 
 use App\Models\Banner;
+use App\Services\Storage\FileStorageServiceInterface;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Collection;
 
+/**
+ * BannerService - Service untuk mengelola banner.
+ * 
+ * Sekarang mendelegasikan operasi file ke FileStorageService untuk konsistensi.
+ * Mempertahankan API yang sama untuk backward compatibility.
+ */
 class BannerService
 {
+    public function __construct(
+        protected FileStorageServiceInterface $fileStorageService
+    ) {}
+
     /**
-     * Store a new banner
+     * Store a new banner.
      *
      * @param array $data
      * @param UploadedFile $image
@@ -21,13 +33,13 @@ class BannerService
     public function store(array $data, UploadedFile $image): Banner
     {
         return DB::transaction(function () use ($data, $image) {
-            // Process the image and get paths
-            $imagePaths = $this->processImage($image);
+            // Process the image using FileStorageService
+            $result = $this->fileStorageService->upload($image, 'banner');
             
             // Create banner record
             $banner = Banner::create([
                 'title' => $data['title'] ?? null,
-                'image_path' => $imagePaths['main'],
+                'image_path' => $result->path,
                 'priority' => $data['priority'] ?? 0,
                 'is_active' => $data['is_active'] ?? true,
                 'created_by' => auth()->id(),
@@ -38,7 +50,7 @@ class BannerService
     }
 
     /**
-     * Update an existing banner
+     * Update an existing banner.
      *
      * @param Banner $banner
      * @param array $data
@@ -56,12 +68,11 @@ class BannerService
 
             // If new image is provided, process it and delete old images
             if ($image) {
-                // Delete old image files
-                $this->deleteImageFiles($banner->image_path);
-                
-                // Process new image
-                $imagePaths = $this->processImage($image);
-                $updateData['image_path'] = $imagePaths['main'];
+                // Upload new image (FileStorageService will handle old file deletion)
+                $result = $this->fileStorageService->upload($image, 'banner', [
+                    'old_path' => $banner->image_path,
+                ]);
+                $updateData['image_path'] = $result->path;
             }
 
             $banner->update($updateData);
@@ -71,7 +82,7 @@ class BannerService
     }
 
     /**
-     * Delete a banner and its associated images
+     * Delete a banner and its associated images.
      *
      * @param Banner $banner
      * @return bool
@@ -79,8 +90,15 @@ class BannerService
     public function delete(Banner $banner): bool
     {
         return DB::transaction(function () use ($banner) {
-            // Delete image files
-            $this->deleteImageFiles($banner->image_path);
+            // Delete image files using FileStorageService
+            if ($banner->image_path) {
+                try {
+                    $this->fileStorageService->delete($banner->image_path);
+                } catch (\Exception $e) {
+                    // Fallback to legacy delete
+                    $this->deleteImageFilesLegacy($banner->image_path);
+                }
+            }
             
             // Delete banner record
             return $banner->delete();
@@ -88,7 +106,7 @@ class BannerService
     }
 
     /**
-     * Toggle banner active status
+     * Toggle banner active status.
      *
      * @param Banner $banner
      * @return Banner
@@ -103,97 +121,31 @@ class BannerService
     }
 
     /**
-     * Process uploaded image - resize, compress, and create responsive variants
+     * Process uploaded image - delegates to FileStorageService.
+     * Kept for backward compatibility.
      *
      * @param UploadedFile $image
      * @return array Array with paths to different image sizes
      */
     public function processImage(UploadedFile $image): array
     {
-        // Generate unique filename
-        $uuid = Str::uuid();
-        $extension = 'jpg'; // Always convert to JPG for consistency
+        $result = $this->fileStorageService->upload($image, 'banner');
         
-        // Create directory if it doesn't exist
-        $directory = 'banners';
-        if (!Storage::disk('public')->exists($directory)) {
-            Storage::disk('public')->makeDirectory($directory);
-        }
-
-        // Get image info
-        $imageInfo = getimagesize($image->getPathname());
-        $originalWidth = $imageInfo[0];
-        $originalHeight = $imageInfo[1];
-        $mimeType = $imageInfo['mime'];
-
-        // Create image resource from uploaded file
-        $sourceImage = $this->createImageResource($image->getPathname(), $mimeType);
-        
-        if (!$sourceImage) {
-            throw new \Exception('Failed to process image. Invalid image format.');
-        }
-
-        // Define responsive sizes
-        $sizes = [
-            'main' => 1920,
-            'tablet' => 768,
-            'mobile' => 480,
+        // Return in legacy format for backward compatibility
+        $paths = [
+            'main' => $result->path,
         ];
 
-        $paths = [];
-
-        foreach ($sizes as $key => $maxWidth) {
-            // Calculate new dimensions maintaining aspect ratio
-            $newDimensions = $this->calculateDimensions($originalWidth, $originalHeight, $maxWidth);
-            
-            // Create resized image
-            $resizedImage = imagecreatetruecolor($newDimensions['width'], $newDimensions['height']);
-            
-            // Preserve transparency for PNG sources
-            if ($mimeType === 'image/png') {
-                imagealphablending($resizedImage, false);
-                imagesavealpha($resizedImage, true);
-                $transparent = imagecolorallocatealpha($resizedImage, 255, 255, 255, 127);
-                imagefill($resizedImage, 0, 0, $transparent);
-            }
-
-            // Resize the image
-            imagecopyresampled(
-                $resizedImage,
-                $sourceImage,
-                0, 0, 0, 0,
-                $newDimensions['width'],
-                $newDimensions['height'],
-                $originalWidth,
-                $originalHeight
-            );
-
-            // Generate filename
-            $filename = "{$uuid}_{$maxWidth}.{$extension}";
-            $filePath = "{$directory}/{$filename}";
-            $fullPath = Storage::disk('public')->path($filePath);
-
-            // Save as JPEG with 80% quality
-            imagejpeg($resizedImage, $fullPath, 80);
-            
-            // Clean up memory
-            imagedestroy($resizedImage);
-
-            // Store path (use main size as the primary path)
-            if ($key === 'main') {
-                $paths['main'] = $filePath;
-            }
-            $paths[$key] = $filePath;
+        // Add variant paths if available
+        foreach ($result->variants as $key => $variant) {
+            $paths[$key] = $variant['path'] ?? $variant;
         }
-
-        // Clean up source image
-        imagedestroy($sourceImage);
 
         return $paths;
     }
 
     /**
-     * Get active banners ordered by priority
+     * Get active banners ordered by priority.
      *
      * @return Collection
      */
@@ -203,62 +155,37 @@ class BannerService
     }
 
     /**
-     * Create image resource from file path based on MIME type
-     *
-     * @param string $filePath
-     * @param string $mimeType
-     * @return resource|false
+     * Get banner image URL.
+     * 
+     * @param string|null $path
+     * @param string|null $size Variant size (desktop, tablet, mobile)
+     * @return string|null
      */
-    protected function createImageResource(string $filePath, string $mimeType)
+    public function getImageUrl(?string $path, ?string $size = null): ?string
     {
-        switch ($mimeType) {
-            case 'image/jpeg':
-                return imagecreatefromjpeg($filePath);
-            case 'image/png':
-                return imagecreatefrompng($filePath);
-            case 'image/gif':
-                return imagecreatefromgif($filePath);
-            default:
-                return false;
+        if (empty($path)) {
+            return null;
+        }
+
+        try {
+            return $this->fileStorageService->getUrl($path, $size);
+        } catch (\Exception $e) {
+            // Fallback to direct URL
+            if (Storage::disk('public')->exists($path)) {
+                return Storage::disk('public')->url($path);
+            }
+            return null;
         }
     }
 
     /**
-     * Calculate new dimensions maintaining aspect ratio
-     *
-     * @param int $originalWidth
-     * @param int $originalHeight
-     * @param int $maxWidth
-     * @return array
-     */
-    protected function calculateDimensions(int $originalWidth, int $originalHeight, int $maxWidth): array
-    {
-        // If original width is smaller than max, keep original dimensions
-        if ($originalWidth <= $maxWidth) {
-            return [
-                'width' => $originalWidth,
-                'height' => $originalHeight,
-            ];
-        }
-
-        // Calculate new height maintaining aspect ratio
-        $aspectRatio = $originalHeight / $originalWidth;
-        $newWidth = $maxWidth;
-        $newHeight = (int) round($maxWidth * $aspectRatio);
-
-        return [
-            'width' => $newWidth,
-            'height' => $newHeight,
-        ];
-    }
-
-    /**
-     * Delete image files for a given main image path
+     * Delete image files for a given main image path (legacy method).
+     * Kept for backward compatibility with old file structure.
      *
      * @param string $mainImagePath
      * @return void
      */
-    protected function deleteImageFiles(string $mainImagePath): void
+    protected function deleteImageFilesLegacy(string $mainImagePath): void
     {
         // Extract UUID from main image path
         $pathInfo = pathinfo($mainImagePath);
@@ -277,6 +204,11 @@ class BannerService
                     Storage::disk('public')->delete($filePath);
                 }
             }
+        }
+
+        // Also try to delete the main path directly
+        if (Storage::disk('public')->exists($mainImagePath)) {
+            Storage::disk('public')->delete($mainImagePath);
         }
     }
 }

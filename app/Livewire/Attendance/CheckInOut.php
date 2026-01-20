@@ -7,8 +7,10 @@ use Livewire\WithFileUploads;
 use App\Models\ScheduleAssignment;
 use App\Models\Attendance;
 use App\Services\NotificationService;
+use App\Services\Storage\FileStorageServiceInterface;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class CheckInOut extends Component
 {
@@ -22,6 +24,8 @@ class CheckInOut extends Component
     public $scheduleStatus; // 'active', 'upcoming', 'past'
     public $showPhotoPreview = false;
 
+    protected FileStorageServiceInterface $fileStorageService;
+
     protected $rules = [
         'checkInPhoto' => 'required|image|max:5120', // 5MB max
     ];
@@ -31,6 +35,11 @@ class CheckInOut extends Component
         'checkInPhoto.image' => 'File harus berupa gambar (jpg, jpeg, png).',
         'checkInPhoto.max' => 'Ukuran foto maksimal 5MB.',
     ];
+
+    public function boot(FileStorageServiceInterface $fileStorageService)
+    {
+        $this->fileStorageService = $fileStorageService;
+    }
 
     public function mount()
     {
@@ -155,8 +164,8 @@ class CheckInOut extends Component
             // Validate photo and notes
             $this->validate();
 
-            // Store photo
-            $photoPath = $this->checkInPhoto->store('attendance/check-in', 'public');
+            // Store photo using FileStorageService
+            $photoPath = $this->storeCheckInPhoto();
 
             // Create attendance record
             $this->currentAttendance = Attendance::create([
@@ -191,10 +200,34 @@ class CheckInOut extends Component
             throw $e;
         } catch (\Exception $e) {
             session()->flash('error', $e->getMessage());
-            \Log::error('Check-in error: ' . $e->getMessage(), [
+            Log::error('Check-in error: ' . $e->getMessage(), [
                 'user_id' => auth()->id(),
                 'schedule_id' => $this->currentSchedule?->id,
             ]);
+        }
+    }
+
+    /**
+     * Store check-in photo using FileStorageService.
+     * 
+     * @return string Photo path
+     */
+    protected function storeCheckInPhoto(): string
+    {
+        try {
+            $result = $this->fileStorageService->upload($this->checkInPhoto, 'attendance', [
+                'day' => now()->day,
+                'user_id' => auth()->id(),
+            ]);
+
+            return $result->path;
+        } catch (\Exception $e) {
+            Log::warning('CheckInOut: FileStorageService upload failed, using fallback', [
+                'error' => $e->getMessage(),
+            ]);
+
+            // Fallback to direct storage
+            return $this->checkInPhoto->store('attendance/check-in', 'public');
         }
     }
 
@@ -244,7 +277,7 @@ class CheckInOut extends Component
 
         } catch (\Exception $e) {
             session()->flash('error', $e->getMessage());
-            \Log::error('Check-out error: ' . $e->getMessage(), [
+            Log::error('Check-out error: ' . $e->getMessage(), [
                 'user_id' => auth()->id(),
                 'attendance_id' => $this->currentAttendance?->id,
             ]);
@@ -323,11 +356,34 @@ class CheckInOut extends Component
         return $checkInAvailable->diffForHumans();
     }
 
+    /**
+     * Get check-in photo URL.
+     * 
+     * @return string|null
+     */
+    public function getCheckInPhotoUrl(): ?string
+    {
+        if (!$this->currentAttendance || !$this->currentAttendance->check_in_photo) {
+            return null;
+        }
+
+        try {
+            return $this->fileStorageService->getUrl($this->currentAttendance->check_in_photo, 'thumbnail');
+        } catch (\Exception $e) {
+            // Fallback to direct URL
+            if (Storage::disk('public')->exists($this->currentAttendance->check_in_photo)) {
+                return Storage::disk('public')->url($this->currentAttendance->check_in_photo);
+            }
+            return null;
+        }
+    }
+
     public function render()
     {
         return view('livewire.attendance.check-in-out', [
             'canCheckIn' => $this->canCheckInNow(),
             'timeUntilCheckIn' => $this->getTimeUntilCheckIn(),
+            'checkInPhotoUrl' => $this->getCheckInPhotoUrl(),
         ])->layout('layouts.app');
     }
 }

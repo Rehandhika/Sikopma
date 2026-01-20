@@ -24,8 +24,8 @@
                         'focus:ring-2 focus:ring-offset-0',
                         'disabled:opacity-50 disabled:cursor-not-allowed',
                         $error
-                            ? 'text-red-600 border-red-300 focus:ring-danger-500'
-                            : 'text-indigo-600 border-gray-300 focus:ring-indigo-500'
+                            ? 'text-danger-600 border-danger-300 focus:ring-danger-500'
+                            : 'text-primary-600 border-gray-300 focus:ring-primary-500'
                     ])
                 ]) }}
             >
@@ -45,7 +45,7 @@
     </div>
 
     @if($error)
-    <p class="text-xs text-red-600 flex items-center ml-6">
+    <p class="text-xs text-danger-600 flex items-center ml-6">
         <x-ui.icon name="exclamation-circle" class="w-4 h-4 mr-1" />
         {{ $error }}
     </p>

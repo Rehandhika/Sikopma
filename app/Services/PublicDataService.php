@@ -5,12 +5,17 @@ namespace App\Services;
 use App\Models\Banner;
 use App\Models\Product;
 use App\Models\StoreSetting;
+use App\Services\Storage\FileStorageServiceInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class PublicDataService
 {
+    public function __construct(
+        protected ?FileStorageServiceInterface $fileStorageService = null
+    ) {}
+
     public function about(): array
     {
         $storeSetting = Cache::remember('api:public:store_settings:about', 300, function () {
@@ -47,11 +52,14 @@ class PublicDataService
                 ->get(['id', 'title', 'image_path', 'priority']);
         });
 
-        return $banners->map(function (Banner $banner) {
+        $fileStorageService = $this->fileStorageService;
+
+        return $banners->map(function (Banner $banner) use ($fileStorageService) {
             $imagePath = $banner->image_path;
 
+            // Default fallback URL - use relative path for cross-device compatibility
             $defaultUrl = $imagePath
-                ? Storage::disk('public')->url($imagePath)
+                ? '/storage/' . ltrim($imagePath, '/')
                 : null;
 
             $images = [
@@ -61,18 +69,21 @@ class PublicDataService
                 '1920' => null,
             ];
 
-            if ($imagePath) {
-                $pathInfo = pathinfo($imagePath);
-                $filename = $pathInfo['filename'] ?? '';
-                $directory = $pathInfo['dirname'] ?? '';
-                $extension = $pathInfo['extension'] ?? 'jpg';
-
-                $lastUnderscorePos = strrpos($filename, '_');
-                $uuid = $lastUnderscorePos !== false ? substr($filename, 0, $lastUnderscorePos) : $filename;
-
-                $images['480'] = Storage::disk('public')->url("{$directory}/{$uuid}_480.{$extension}");
-                $images['768'] = Storage::disk('public')->url("{$directory}/{$uuid}_768.{$extension}");
-                $images['1920'] = Storage::disk('public')->url("{$directory}/{$uuid}_1920.{$extension}");
+            if ($imagePath && $fileStorageService) {
+                // Try to use FileStorageService for new path format
+                try {
+                    // Get URLs using FileStorageService (handles new structure)
+                    $images['default'] = $fileStorageService->getUrl($imagePath) ?? $defaultUrl;
+                    $images['480'] = $fileStorageService->getUrl($imagePath, 'mobile');
+                    $images['768'] = $fileStorageService->getUrl($imagePath, 'tablet');
+                    $images['1920'] = $fileStorageService->getUrl($imagePath, 'desktop');
+                } catch (\Exception $e) {
+                    // Fallback to legacy URL generation
+                    $images = $this->generateLegacyBannerUrls($imagePath, $defaultUrl);
+                }
+            } elseif ($imagePath) {
+                // Fallback to legacy URL generation
+                $images = $this->generateLegacyBannerUrls($imagePath, $defaultUrl);
             }
 
             return [
@@ -81,6 +92,34 @@ class PublicDataService
                 'images' => $images,
             ];
         })->values()->toArray();
+    }
+
+    /**
+     * Generate legacy banner URLs for old file structure.
+     */
+    protected function generateLegacyBannerUrls(string $imagePath, ?string $defaultUrl): array
+    {
+        $images = [
+            'default' => $defaultUrl,
+            '480' => null,
+            '768' => null,
+            '1920' => null,
+        ];
+
+        $pathInfo = pathinfo($imagePath);
+        $filename = $pathInfo['filename'] ?? '';
+        $directory = $pathInfo['dirname'] ?? '';
+        $extension = $pathInfo['extension'] ?? 'jpg';
+
+        $lastUnderscorePos = strrpos($filename, '_');
+        $uuid = $lastUnderscorePos !== false ? substr($filename, 0, $lastUnderscorePos) : $filename;
+
+        // Use relative URLs for cross-device compatibility
+        $images['480'] = "/storage/{$directory}/{$uuid}_480.{$extension}";
+        $images['768'] = "/storage/{$directory}/{$uuid}_768.{$extension}";
+        $images['1920'] = "/storage/{$directory}/{$uuid}_1920.{$extension}";
+
+        return $images;
     }
 
     public function categories(): array

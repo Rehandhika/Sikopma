@@ -10,14 +10,14 @@
 
 @php
 $variants = [
-    'primary' => 'bg-indigo-600 hover:bg-indigo-700 text-white focus:ring-indigo-500',
-    'secondary' => 'bg-green-600 hover:bg-green-700 text-white focus:ring-green-500',
-    'success' => 'bg-green-500 hover:bg-green-700 text-white focus:ring-green-500',
-    'danger' => 'bg-red-500 hover:bg-red-700 text-white focus:ring-red-500',
-    'warning' => 'bg-yellow-500 hover:bg-yellow-600 text-white focus:ring-yellow-500',
-    'info' => 'bg-blue-500 hover:bg-blue-700 text-white focus:ring-blue-500',
-    'white' => 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-indigo-500',
-    'outline' => 'bg-transparent border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50 focus:ring-indigo-500',
+    'primary' => 'bg-primary-600 hover:bg-primary-700 text-white focus:ring-primary-500',
+    'secondary' => 'bg-secondary-600 hover:bg-secondary-700 text-white focus:ring-secondary-500',
+    'success' => 'bg-success-500 hover:bg-success-700 text-white focus:ring-success-500',
+    'danger' => 'bg-danger-500 hover:bg-danger-700 text-white focus:ring-danger-500',
+    'warning' => 'bg-warning-500 hover:bg-warning-600 text-white focus:ring-warning-500',
+    'info' => 'bg-info-500 hover:bg-info-700 text-white focus:ring-info-500',
+    'white' => 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-primary-500',
+    'outline' => 'bg-transparent border-2 border-primary-600 text-primary-600 hover:bg-primary-50 focus:ring-primary-500',
     'ghost' => 'bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
 ];
 

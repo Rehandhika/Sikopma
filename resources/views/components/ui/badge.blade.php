@@ -6,12 +6,12 @@
 
 @php
 $variants = [
-    'primary' => 'bg-indigo-100 text-indigo-800 border-indigo-200',
-    'secondary' => 'bg-green-100 text-green-800 border-green-200',
-    'success' => 'bg-green-50 text-green-700 border-green-200',
-    'danger' => 'bg-red-50 text-red-700 border-red-200',
-    'warning' => 'bg-yellow-50 text-yellow-700 border-yellow-200',
-    'info' => 'bg-blue-50 text-blue-700 border-blue-200',
+    'primary' => 'bg-primary-100 text-primary-800 border-primary-200',
+    'secondary' => 'bg-secondary-100 text-secondary-800 border-secondary-200',
+    'success' => 'bg-success-50 text-success-700 border-success-200',
+    'danger' => 'bg-danger-50 text-danger-700 border-danger-200',
+    'warning' => 'bg-warning-50 text-warning-700 border-warning-200',
+    'info' => 'bg-info-50 text-info-700 border-info-200',
     'gray' => 'bg-gray-100 text-gray-700 border-gray-200',
 ];
 

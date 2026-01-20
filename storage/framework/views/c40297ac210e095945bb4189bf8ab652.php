@@ -50,7 +50,7 @@ $initials = collect(explode(' ', $name))
     ->join('');
 ?>
 
-<div <?php echo e($attributes->merge(['class' => 'inline-flex items-center justify-center rounded-full overflow-hidden bg-indigo-500 text-white font-semibold ' . $sizes[$size]])); ?>>
+<div <?php echo e($attributes->merge(['class' => 'inline-flex items-center justify-center rounded-full overflow-hidden bg-primary-500 text-white font-semibold ' . $sizes[$size]])); ?>>
     <?php if($src): ?>
         <img src="<?php echo e($src); ?>" alt="<?php echo e($name); ?>" class="w-full h-full object-cover">
     <?php else: ?>

@@ -7,24 +7,24 @@
 @php
 $variants = [
     'success' => [
-        'container' => 'bg-green-50 border-green-200 text-green-800',
+        'container' => 'bg-success-50 border-success-200 text-success-800',
         'icon' => 'check-circle',
-        'iconColor' => 'text-green-400',
+        'iconColor' => 'text-success-400',
     ],
     'danger' => [
-        'container' => 'bg-red-50 border-red-200 text-red-800',
+        'container' => 'bg-danger-50 border-danger-200 text-danger-800',
         'icon' => 'x-circle',
-        'iconColor' => 'text-red-400',
+        'iconColor' => 'text-danger-400',
     ],
     'warning' => [
-        'container' => 'bg-yellow-50 border-yellow-200 text-yellow-800',
+        'container' => 'bg-warning-50 border-warning-200 text-warning-800',
         'icon' => 'exclamation-triangle',
-        'iconColor' => 'text-yellow-400',
+        'iconColor' => 'text-warning-400',
     ],
     'info' => [
-        'container' => 'bg-blue-50 border-blue-200 text-blue-800',
+        'container' => 'bg-info-50 border-info-200 text-info-800',
         'icon' => 'information-circle',
-        'iconColor' => 'text-blue-400',
+        'iconColor' => 'text-info-400',
     ],
 ];
 
@@ -57,7 +57,7 @@ $config = $variants[$variant];
         <button 
             @click="show = false"
             type="button" 
-            class="ml-auto flex-shrink-0 inline-flex text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 rounded-lg p-1 transition-colors"
+            class="ml-auto flex-shrink-0 inline-flex text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 rounded-lg p-1 transition-colors"
         >
             <x-ui.icon name="x" class="h-5 w-5" />
         </button>

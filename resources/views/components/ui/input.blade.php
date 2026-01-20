@@ -15,7 +15,7 @@
     <label for="{{ $name }}" class="block text-sm font-medium text-gray-700">
         {{ $label }}
         @if($required)
-        <span class="text-red-500">*</span>
+        <span class="text-danger-500">*</span>
         @endif
     </label>
     @endif
@@ -42,8 +42,8 @@
                     $icon ? 'pl-10' : 'px-3',
                     'py-2 text-sm',
                     $error 
-                        ? 'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500' 
-                        : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'
+                        ? 'border-danger-300 text-danger-900 placeholder-danger-300 focus:border-danger-500 focus:ring-danger-500' 
+                        : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
                 ])
             ]) }}
         >
@@ -54,7 +54,7 @@
     @endif
 
     @if($error)
-    <p class="text-xs text-red-600 flex items-center">
+    <p class="text-xs text-danger-600 flex items-center">
         <x-ui.icon name="exclamation-circle" class="w-4 h-4 mr-1" />
         {{ $error }}
     </p>

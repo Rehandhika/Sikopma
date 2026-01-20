@@ -4,7 +4,31 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LogoutController;
 use App\Http\Controllers\PublicPageController;
 use App\Http\Controllers\PublicApi\HomeController as PublicHomeApiController;
+use App\Http\Controllers\FileDownloadController;
 use App\Livewire\Dashboard\Index as DashboardIndex;
+
+/*
+|--------------------------------------------------------------------------
+| File Download Routes (Signed URLs for Private Files)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['signed'])->group(function () {
+    Route::get('/file/download/{path}/{disk?}', [FileDownloadController::class, 'download'])
+        ->name('file.download')
+        ->where('path', '.*');
+    
+    Route::get('/file/view/{path}/{disk?}', [FileDownloadController::class, 'view'])
+        ->name('file.view')
+        ->where('path', '.*');
+});
+
+// Authenticated file access (for private files that require login)
+Route::middleware(['auth', 'signed'])->group(function () {
+    Route::get('/file/secure/{path}/{disk?}', [FileDownloadController::class, 'download'])
+        ->name('file.secure.download')
+        ->where('path', '.*');
+});
 
 /*
 |--------------------------------------------------------------------------

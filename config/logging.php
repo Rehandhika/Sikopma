@@ -135,6 +135,43 @@ return [
             'replace_placeholders' => true,
         ],
 
+        /*
+        |--------------------------------------------------------------------------
+        | File Access Log Channel
+        |--------------------------------------------------------------------------
+        |
+        | Log channel untuk mencatat semua akses file (view, download, delete).
+        | Digunakan untuk audit dan monitoring akses file.
+        |
+        */
+        'file_access' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/file-access.log'),
+            'level' => 'info',
+            'days' => 90,
+            'replace_placeholders' => true,
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Security Log Channel
+        |--------------------------------------------------------------------------
+        |
+        | Log channel untuk mencatat event keamanan seperti:
+        | - MIME mismatch
+        | - Path traversal attempts
+        | - Invalid signed URLs
+        | - Unauthorized access attempts
+        |
+        */
+        'security' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/security.log'),
+            'level' => 'warning',
+            'days' => 365,
+            'replace_placeholders' => true,
+        ],
+
     ],
 
 ];

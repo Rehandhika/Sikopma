@@ -4,7 +4,10 @@ namespace App\Livewire\Profile;
 
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Illuminate\Support\Facades\{Hash, Storage};
+use App\Services\Storage\FileStorageServiceInterface;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class Edit extends Component
@@ -29,6 +32,13 @@ class Edit extends Component
     
     public $activeTab = 'profile';
 
+    protected FileStorageServiceInterface $fileStorageService;
+
+    public function boot(FileStorageServiceInterface $fileStorageService)
+    {
+        $this->fileStorageService = $fileStorageService;
+    }
+
     public function mount()
     {
         $this->user = auth()->user();
@@ -48,7 +58,7 @@ class Edit extends Component
             'nim' => ['required', 'string', 'max:20', Rule::unique('users')->ignore($this->user->id)],
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:500',
-            'photo' => 'nullable|image|max:2048', // 2MB max
+            'photo' => 'nullable|image|max:2048',
         ]);
 
         try {
@@ -60,17 +70,13 @@ class Edit extends Component
                 'address' => $this->address,
             ];
 
-            // Handle photo upload
+            // Handle photo upload using FileStorageService
             if ($this->photo) {
-                // Delete old photo
-                if ($this->current_photo) {
-                    Storage::disk('public')->delete($this->current_photo);
+                $photoPath = $this->uploadProfilePhoto();
+                if ($photoPath) {
+                    $data['photo'] = $photoPath;
+                    $this->current_photo = $photoPath;
                 }
-                
-                // Store new photo
-                $path = $this->photo->store('photos', 'public');
-                $data['photo'] = $path;
-                $this->current_photo = $path;
             }
 
             $this->user->update($data);
@@ -78,7 +84,67 @@ class Edit extends Component
             $this->dispatch('alert', type: 'success', message: 'Profil berhasil diperbarui');
             $this->photo = null;
         } catch (\Exception $e) {
+            Log::error('Profile update failed', [
+                'user_id' => $this->user->id,
+                'error' => $e->getMessage(),
+            ]);
             $this->dispatch('alert', type: 'error', message: 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Upload profile photo using FileStorageService.
+     * 
+     * @return string|null Photo path or null on failure
+     */
+    protected function uploadProfilePhoto(): ?string
+    {
+        try {
+            // Upload new photo using FileStorageService
+            $result = $this->fileStorageService->upload($this->photo, 'profile', [
+                'old_path' => $this->current_photo,
+                'user_id' => $this->user->id,
+            ]);
+
+            Log::info('Profile photo uploaded via FileStorageService', [
+                'user_id' => $this->user->id,
+                'path' => $result->path,
+            ]);
+
+            return $result->path;
+        } catch (\Exception $e) {
+            Log::warning('FileStorageService upload failed, using fallback', [
+                'user_id' => $this->user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            // Fallback to legacy upload
+            return $this->uploadProfilePhotoLegacy();
+        }
+    }
+
+    /**
+     * Legacy method for uploading profile photo.
+     * Used as fallback when FileStorageService fails.
+     * 
+     * @return string|null
+     */
+    protected function uploadProfilePhotoLegacy(): ?string
+    {
+        try {
+            // Delete old photo
+            if ($this->current_photo) {
+                Storage::disk('public')->delete($this->current_photo);
+            }
+            
+            // Store new photo
+            return $this->photo->store('photos', 'public');
+        } catch (\Exception $e) {
+            Log::error('Legacy profile photo upload failed', [
+                'user_id' => $this->user->id,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
         }
     }
 
@@ -114,20 +180,78 @@ class Edit extends Component
     {
         try {
             if ($this->current_photo) {
-                Storage::disk('public')->delete($this->current_photo);
+                // Try to delete using FileStorageService
+                try {
+                    $this->fileStorageService->delete($this->current_photo);
+                } catch (\Exception $e) {
+                    // Fallback to direct delete
+                    Storage::disk('public')->delete($this->current_photo);
+                }
+
                 $this->user->update(['photo' => null]);
                 $this->current_photo = null;
                 
                 $this->dispatch('alert', type: 'success', message: 'Foto profil berhasil dihapus');
             }
         } catch (\Exception $e) {
+            Log::error('Profile photo delete failed', [
+                'user_id' => $this->user->id,
+                'error' => $e->getMessage(),
+            ]);
             $this->dispatch('alert', type: 'error', message: 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get profile photo URL.
+     * 
+     * @return string|null
+     */
+    public function getProfilePhotoUrl(): ?string
+    {
+        if (!$this->current_photo) {
+            return null;
+        }
+
+        try {
+            return $this->fileStorageService->getUrl($this->current_photo, 'medium');
+        } catch (\Exception $e) {
+            // Fallback to direct URL
+            if (Storage::disk('public')->exists($this->current_photo)) {
+                return Storage::disk('public')->url($this->current_photo);
+            }
+            return null;
+        }
+    }
+
+    /**
+     * Get profile photo thumbnail URL.
+     * 
+     * @return string|null
+     */
+    public function getProfilePhotoThumbnailUrl(): ?string
+    {
+        if (!$this->current_photo) {
+            return null;
+        }
+
+        try {
+            return $this->fileStorageService->getUrl($this->current_photo, 'small');
+        } catch (\Exception $e) {
+            // Fallback to direct URL
+            if (Storage::disk('public')->exists($this->current_photo)) {
+                return Storage::disk('public')->url($this->current_photo);
+            }
+            return null;
         }
     }
 
     public function render()
     {
-        return view('livewire.profile.edit')
+        return view('livewire.profile.edit', [
+            'profilePhotoUrl' => $this->getProfilePhotoUrl(),
+            'profilePhotoThumbnailUrl' => $this->getProfilePhotoThumbnailUrl(),
+        ])
             ->layout('layouts.app')
             ->title('Edit Profil');
     }

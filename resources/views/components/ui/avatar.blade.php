@@ -18,7 +18,7 @@ $initials = collect(explode(' ', $name))
     ->join('');
 @endphp
 
-<div {{ $attributes->merge(['class' => 'inline-flex items-center justify-center rounded-full overflow-hidden bg-indigo-500 text-white font-semibold ' . $sizes[$size]]) }}>
+<div {{ $attributes->merge(['class' => 'inline-flex items-center justify-center rounded-full overflow-hidden bg-primary-500 text-white font-semibold ' . $sizes[$size]]) }}>
     @if($src)
         <img src="{{ $src }}" alt="{{ $name }}" class="w-full h-full object-cover">
     @else

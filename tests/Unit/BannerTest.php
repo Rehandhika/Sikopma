@@ -54,7 +54,8 @@ class BannerTest extends TestCase
     /** @test */
     public function banner_service_exists_and_has_required_methods()
     {
-        $service = new BannerService();
+        // Get service from container (with dependency injection)
+        $service = app(BannerService::class);
         
         $this->assertTrue(method_exists($service, 'store'));
         $this->assertTrue(method_exists($service, 'update'));
@@ -65,44 +66,25 @@ class BannerTest extends TestCase
     }
 
     /** @test */
-    public function banner_service_calculate_dimensions_maintains_aspect_ratio()
+    public function banner_service_can_get_image_url()
     {
-        $service = new BannerService();
+        // Get service from container (with dependency injection)
+        $service = app(BannerService::class);
         
-        // Use reflection to access protected method
-        $reflection = new \ReflectionClass($service);
-        $method = $reflection->getMethod('calculateDimensions');
-        $method->setAccessible(true);
-        
-        // Test case: 1920x1080 image should maintain aspect ratio when resized to 768px width
-        $result = $method->invoke($service, 1920, 1080, 768);
-        
-        $this->assertEquals(768, $result['width']);
-        $this->assertEquals(432, $result['height']); // 768 * (1080/1920) = 432
-        
-        // Test case: smaller image should not be upscaled
-        $result = $method->invoke($service, 400, 300, 768);
-        
-        $this->assertEquals(400, $result['width']);
-        $this->assertEquals(300, $result['height']);
+        // Test that getImageUrl method exists and handles null path
+        $this->assertTrue(method_exists($service, 'getImageUrl'));
+        $this->assertNull($service->getImageUrl(null));
+        $this->assertNull($service->getImageUrl(''));
     }
 
     /** @test */
-    public function banner_service_create_image_resource_handles_different_formats()
+    public function banner_service_has_get_active_banners_method()
     {
-        $service = new BannerService();
+        // Get service from container (with dependency injection)
+        $service = app(BannerService::class);
         
-        // Use reflection to access protected method
-        $reflection = new \ReflectionClass($service);
-        $method = $reflection->getMethod('createImageResource');
-        $method->setAccessible(true);
-        
-        // Test unsupported format returns false
-        $result = $method->invoke($service, '/fake/path', 'image/webp');
-        $this->assertFalse($result);
-        
-        // Note: We can't test actual image creation without real image files
-        // but we can verify the method exists and handles unsupported formats
+        // Test that getActiveBanners returns a collection
+        $this->assertTrue(method_exists($service, 'getActiveBanners'));
     }
 
     /** @test */

@@ -13,6 +13,11 @@ use App\Services\SwapService;
 use App\Services\LeaveService;
 use App\Services\ScheduleService;
 
+/**
+ * Service Provider untuk Repository dan Service bindings
+ * 
+ * Note: Storage-related services telah dipindahkan ke FileStorageServiceProvider
+ */
 class RepositoryServiceProvider extends ServiceProvider
 {
     /**

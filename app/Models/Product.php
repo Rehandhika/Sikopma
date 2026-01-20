@@ -181,7 +181,8 @@ class Product extends Model
         if (empty($this->image)) {
             return null;
         }
-        return \Illuminate\Support\Facades\Storage::disk('public')->url($this->image);
+        // Use relative URL for cross-device compatibility
+        return '/storage/' . ltrim($this->image, '/');
     }
 
     public function hasImage(): bool
