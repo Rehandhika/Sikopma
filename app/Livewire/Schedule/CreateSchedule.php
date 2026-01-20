@@ -68,10 +68,88 @@ class CreateSchedule extends Component
     }
 
     /**
+     * Handle weekStartDate change - reinitialize grid with new dates
+     * This is the KEY fix for "Slot tidak valid" error
+     */
+    public function updatedWeekStartDate($value): void
+    {
+        // Validate the date is parseable
+        try {
+            $startDate = Carbon::parse($value);
+        } catch (\Exception $e) {
+            return;
+        }
+
+        // Auto-adjust to Monday if not already Monday
+        if ($startDate->dayOfWeek !== Carbon::MONDAY) {
+            $startDate = $startDate->startOfWeek(Carbon::MONDAY);
+            $this->weekStartDate = $startDate->format('Y-m-d');
+        }
+
+        // Auto-update weekEndDate to Thursday (+3 days)
+        $this->weekEndDate = $startDate->copy()->addDays(3)->format('Y-m-d');
+
+        // Store old assignments before reinitializing
+        $oldAssignments = $this->assignments;
+
+        // Reinitialize grid with new dates
+        $this->initializeGrid();
+
+        // Migrate any assignments that still fall within the new date range
+        foreach ($oldAssignments as $date => $sessions) {
+            if (isset($this->assignments[$date])) {
+                // This date exists in new grid, preserve assignments
+                foreach ($sessions as $session => $users) {
+                    if (isset($this->assignments[$date][$session]) && !empty($users)) {
+                        $this->assignments[$date][$session] = $users;
+                    }
+                }
+            }
+        }
+
+        // Reset UI state to prevent stale selection
+        $this->selectedDate = null;
+        $this->selectedSession = null;
+        $this->showUserSelector = false;
+        $this->availableUsers = [];
+
+        // Recalculate everything
+        $this->recalculateStatistics();
+        $this->detectConflicts();
+        $this->saveToHistory();
+    }
+
+    /**
+     * Handle weekEndDate change
+     */
+    public function updatedWeekEndDate($value): void
+    {
+        // Validate the date is parseable
+        try {
+            $endDate = Carbon::parse($value);
+            $startDate = Carbon::parse($this->weekStartDate);
+        } catch (\Exception $e) {
+            return;
+        }
+
+        // Ensure end date is after start date
+        if ($endDate->lte($startDate)) {
+            $this->weekEndDate = $startDate->copy()->addDays(3)->format('Y-m-d');
+        }
+
+        // For this system, we always use 4 days (Mon-Thu), so weekEndDate change
+        // doesn't affect the grid structure. Just validate it.
+    }
+
+    /**
      * Initialize empty grid for multi-user slots
+     * Creates a fresh grid structure based on current weekStartDate
      */
     public function initializeGrid(): void
     {
+        // Clear existing assignments first to prevent stale data
+        $this->assignments = [];
+        
         $startDate = Carbon::parse($this->weekStartDate);
         
         for ($day = 0; $day < 4; $day++) {
@@ -87,18 +165,70 @@ class CreateSchedule extends Component
     }
 
     /**
+     * Check if a slot exists in the current grid
+     */
+    private function isValidSlot(string $date, int $session): bool
+    {
+        return isset($this->assignments[$date]) && isset($this->assignments[$date][$session]);
+    }
+
+    /**
+     * Ensure grid is synchronized with current weekStartDate
+     * Returns true if grid was reinitialized
+     */
+    private function ensureGridSync(): bool
+    {
+        $startDate = Carbon::parse($this->weekStartDate);
+        $expectedFirstDate = $startDate->format('Y-m-d');
+        
+        // Check if grid has the expected first date
+        $gridDates = array_keys($this->assignments);
+        
+        if (empty($gridDates) || !in_array($expectedFirstDate, $gridDates)) {
+            // Grid is out of sync, reinitialize
+            $this->initializeGrid();
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
      * Get slot assignments (multi-user support)
+     * Safe accessor with null handling
      */
     public function getSlotAssignments(string $date, int $session): array
     {
+        // Ensure grid is in sync before returning data
+        if (!$this->isValidSlot($date, $session)) {
+            return [];
+        }
+        
         return $this->assignments[$date][$session] ?? [];
     }
 
     /**
      * Select a cell to assign user
+     * With defensive checks to prevent "Slot tidak valid" error
      */
     public function selectCell(string $date, int $session): void
     {
+        // Ensure grid is in sync with current weekStartDate
+        $wasResynced = $this->ensureGridSync();
+        
+        // Validate the slot exists in current grid
+        if (!$this->isValidSlot($date, $session)) {
+            // The date doesn't belong to current week period
+            $this->dispatch('alert', type: 'warning', message: 'Tanggal tidak sesuai dengan periode jadwal. Grid telah disegarkan.');
+            
+            // Reset selection state
+            $this->selectedDate = null;
+            $this->selectedSession = null;
+            $this->showUserSelector = false;
+            $this->availableUsers = [];
+            return;
+        }
+        
         $this->selectedDate = $date;
         $this->selectedSession = $session;
         $this->showUserSelector = true;
@@ -107,9 +237,16 @@ class CreateSchedule extends Component
 
     /**
      * Load available users for a slot
+     * With defensive validation
      */
     private function loadAvailableUsers(string $date, int $session): void
     {
+        // Validate slot exists
+        if (!$this->isValidSlot($date, $session)) {
+            $this->availableUsers = [];
+            return;
+        }
+        
         $dayName = strtolower(Carbon::parse($date)->englishDayOfWeek);
         
         $this->availableUsers = User::where('status', 'active')
@@ -119,7 +256,7 @@ class CreateSchedule extends Component
             }])
             ->get()
             ->map(function($user) use ($date, $session, $dayName) {
-                // Check if user already in this slot
+                // Check if user already in this slot (with null safety)
                 $currentSlot = $this->assignments[$date][$session] ?? [];
                 $hasConflict = collect($currentSlot)->contains('user_id', $user->id);
                 
@@ -170,23 +307,34 @@ class CreateSchedule extends Component
 
     /**
      * Add user to slot (multi-user support)
+     * With comprehensive validation to prevent "Slot tidak valid" error
      */
     public function assignUser(int $userId): void
     {
+        // Validate selection exists
         if (!$this->selectedDate || !$this->selectedSession) {
             $this->dispatch('alert', type: 'error', message: 'Pilih slot terlebih dahulu.');
             return;
         }
 
+        // Ensure grid is synchronized
+        $this->ensureGridSync();
+
         // Check if date and session exist in assignments
-        if (!isset($this->assignments[$this->selectedDate][$this->selectedSession])) {
-            $this->dispatch('alert', type: 'error', message: 'Slot tidak valid. Silakan refresh halaman.');
+        if (!$this->isValidSlot($this->selectedDate, $this->selectedSession)) {
+            // Try to recover by closing modal and showing helpful message
+            $this->showUserSelector = false;
+            $this->selectedDate = null;
+            $this->selectedSession = null;
+            $this->availableUsers = [];
+            
+            $this->dispatch('alert', type: 'error', message: 'Slot tidak valid. Grid telah disegarkan, silakan pilih slot kembali.');
             return;
         }
 
         $user = User::find($userId);
         if (!$user || $user->status !== 'active') {
-            $this->dispatch('alert', type: 'error', message: 'User tidak valid.');
+            $this->dispatch('alert', type: 'error', message: 'User tidak valid atau tidak aktif.');
             return;
         }
 
@@ -219,10 +367,28 @@ class CreateSchedule extends Component
 
     /**
      * Remove user from slot
+     * With defensive validation
      */
     public function removeUserFromSlot(string $date, int $session, int $userId): void
     {
+        // Ensure grid is synchronized
+        $this->ensureGridSync();
+        
+        // Validate slot exists
+        if (!$this->isValidSlot($date, $session)) {
+            $this->dispatch('alert', type: 'error', message: 'Slot tidak valid. Grid telah disegarkan.');
+            return;
+        }
+        
         $slot = $this->assignments[$date][$session] ?? [];
+        
+        // Check if user exists in slot before removing
+        $userExists = collect($slot)->contains('user_id', $userId);
+        if (!$userExists) {
+            $this->dispatch('alert', type: 'warning', message: 'User tidak ditemukan di slot ini.');
+            return;
+        }
+        
         $this->assignments[$date][$session] = collect($slot)
             ->reject(fn($assignment) => $assignment['user_id'] == $userId)
             ->values()
