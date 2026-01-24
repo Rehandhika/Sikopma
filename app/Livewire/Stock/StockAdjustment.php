@@ -96,7 +96,7 @@ class StockAdjustment extends Component
     public function render()
     {
         $adjustments = StockAdjustmentModel::query()
-            ->with(['product', 'user'])
+            ->with(['product', 'user', 'variant'])
             ->when($this->search, function($q) {
                 $q->whereHas('product', function($query) {
                     $query->where('name', 'like', '%' . $this->search . '%');

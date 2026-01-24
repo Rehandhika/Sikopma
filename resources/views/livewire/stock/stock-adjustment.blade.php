@@ -104,6 +104,11 @@
                 </x-data.table-cell>
                 <x-data.table-cell>
                     <div class="font-medium text-gray-900">{{ $adjustment->product->name }}</div>
+                    @if($adjustment->isVariantAdjustment() && $adjustment->variant)
+                        <div class="text-xs text-primary-600 font-medium">
+                            Varian: {{ $adjustment->variant->variant_name }}
+                        </div>
+                    @endif
                     @if($adjustment->product->sku)
                     <div class="text-xs text-gray-500">SKU: {{ $adjustment->product->sku }}</div>
                     @endif

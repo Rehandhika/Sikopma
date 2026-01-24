@@ -154,3 +154,20 @@ if (!function_exists('parse_date')) {
         return app(DateTimeSettingsService::class)->parse($date);
     }
 }
+
+
+if (!function_exists('log_audit')) {
+    /**
+     * Log an audit entry
+     * 
+     * @param string $action The action being performed
+     * @param \Illuminate\Database\Eloquent\Model $model The model being audited
+     * @param array|null $oldValues Previous values (for updates)
+     * @param array|null $newValues New values (for updates)
+     * @return \App\Models\AuditLog|null
+     */
+    function log_audit(string $action, \Illuminate\Database\Eloquent\Model $model, ?array $oldValues = null, ?array $newValues = null): ?\App\Models\AuditLog
+    {
+        return \App\Models\AuditLog::log($action, $model, $oldValues, $newValues);
+    }
+}

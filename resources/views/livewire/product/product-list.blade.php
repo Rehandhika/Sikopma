@@ -60,6 +60,21 @@
         />
     </x-layout.grid>
 
+    @if($stats['low_variant_stock'] > 0)
+    <x-ui.alert variant="warning" class="mb-6">
+        <div class="flex items-center">
+            <x-ui.icon name="exclamation-triangle" class="w-5 h-5 mr-2" />
+            <span>{{ $stats['low_variant_stock'] }} produk memiliki varian dengan stok menipis.</span>
+            <button 
+                wire:click="$set('stockFilter', 'low_variant')" 
+                class="ml-2 underline hover:no-underline"
+            >
+                Lihat
+            </button>
+        </div>
+    </x-ui.alert>
+    @endif
+
     <x-ui.card class="mb-6">
         <x-layout.grid cols="4">
             <x-ui.input 
@@ -93,7 +108,8 @@
                 :options="[
                     'available' => 'Tersedia',
                     'low' => 'Stok Menipis',
-                    'out' => 'Stok Habis'
+                    'out' => 'Stok Habis',
+                    'low_variant' => 'Varian Stok Menipis'
                 ]"
             />
         </x-layout.grid>
@@ -104,7 +120,37 @@
             <x-data.table-row>
                 <x-data.table-cell>
                     <div class="font-medium text-gray-900">{{ $product->name }}</div>
-                    @if($product->description)
+                    @if($product->has_variants)
+                        <div class="text-xs text-primary-600 flex items-center gap-1">
+                            <x-ui.icon name="squares-2x2" class="w-3 h-3" />
+                            <span>{{ $product->active_variants_count ?? $product->variant_count }} varian</span>
+                            @php
+                                $lowStockVariants = $product->activeVariants->filter(fn($v) => $v->stock <= $v->min_stock);
+                            @endphp
+                            @if($lowStockVariants->count() > 0)
+                                <span class="text-warning-600 ml-1" title="Varian dengan stok menipis">
+                                    ({{ $lowStockVariants->count() }} stok rendah)
+                                </span>
+                            @endif
+                        </div>
+                        {{-- Show low stock variant details when filter is active --}}
+                        @if($stockFilter === 'low_variant' && $lowStockVariants->count() > 0)
+                            <div class="mt-2 p-2 bg-warning-50 rounded-md border border-warning-200">
+                                <div class="text-xs font-medium text-warning-800 mb-1">Varian Stok Menipis:</div>
+                                <ul class="text-xs text-warning-700 space-y-1">
+                                    @foreach($lowStockVariants->take(5) as $variant)
+                                        <li class="flex justify-between">
+                                            <span>{{ $variant->variant_name }}</span>
+                                            <span class="font-medium">Stok: {{ $variant->stock }}/{{ $variant->min_stock }}</span>
+                                        </li>
+                                    @endforeach
+                                    @if($lowStockVariants->count() > 5)
+                                        <li class="text-warning-600 italic">+{{ $lowStockVariants->count() - 5 }} varian lainnya...</li>
+                                    @endif
+                                </ul>
+                            </div>
+                        @endif
+                    @elseif($product->description)
                         <div class="text-sm text-gray-500 truncate max-w-xs">{{ Str::limit($product->description, 50) }}</div>
                     @endif
                 </x-data.table-cell>
@@ -119,16 +165,31 @@
                     @endif
                 </x-data.table-cell>
                 <x-data.table-cell>
-                    <span class="font-semibold text-gray-900">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
+                    @if($product->has_variants)
+                        <span class="text-sm text-gray-900">{{ $product->display_price }}</span>
+                    @else
+                        <span class="font-semibold text-gray-900">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
+                    @endif
                 </x-data.table-cell>
                 <x-data.table-cell>
-                    @if($product->stock > $product->min_stock)
-                        <x-ui.badge variant="success">{{ $product->stock }}</x-ui.badge>
-                    @elseif($product->isLowStock() && !$product->isOutOfStock())
-                        <x-ui.badge variant="warning">{{ $product->stock }}</x-ui.badge>
-                    @else
-                        <x-ui.badge variant="danger">{{ $product->stock }}</x-ui.badge>
-                    @endif
+                    @php 
+                        // Use eager loaded value if available, otherwise use accessor
+                        $totalStock = $product->has_variants 
+                            ? ($product->variants_total_stock ?? $product->total_stock) 
+                            : $product->stock;
+                    @endphp
+                    <div class="flex flex-col">
+                        @if($totalStock > $product->min_stock)
+                            <x-ui.badge variant="success">{{ $totalStock }}</x-ui.badge>
+                        @elseif($totalStock > 0)
+                            <x-ui.badge variant="warning">{{ $totalStock }}</x-ui.badge>
+                        @else
+                            <x-ui.badge variant="danger">{{ $totalStock }}</x-ui.badge>
+                        @endif
+                        @if($product->has_variants)
+                            <span class="text-xs text-gray-500 mt-1">Total dari {{ $product->active_variants_count ?? $product->variant_count }} varian</span>
+                        @endif
+                    </div>
                 </x-data.table-cell>
                 <x-data.table-cell>
                     <x-ui.button 

@@ -121,14 +121,25 @@
                                         Featured
                                     </span>
                                 @endif
+                                @if($product->has_variants && $product->variant_count > 0)
+                                    <span class="bg-indigo-500/20 text-indigo-300 backdrop-blur-md border border-indigo-500/30 px-2 py-1 rounded-lg text-[10px] font-bold shadow-lg flex items-center gap-1">
+                                        <i class="fas fa-layer-group text-[8px]"></i>
+                                        {{ $product->variant_count }}
+                                    </span>
+                                @endif
                             </div>
 
                             {{-- Stock Status Overlay --}}
                             <div class="absolute bottom-3 left-3">
-                                @if($product->isOutOfStock())
+                                @php
+                                    $totalStock = $product->total_stock;
+                                    $isOutOfStock = $totalStock <= 0;
+                                    $isLowStock = !$isOutOfStock && $totalStock <= $product->min_stock;
+                                @endphp
+                                @if($isOutOfStock)
                                     <span class="bg-red-500/90 text-white px-2 py-1 rounded-md text-xs font-medium shadow-sm">Habis</span>
-                                @elseif($product->isLowStock())
-                                    <span class="bg-orange-500/90 text-white px-2 py-1 rounded-md text-xs font-medium shadow-sm">Sisa {{ $product->stock }}</span>
+                                @elseif($isLowStock)
+                                    <span class="bg-orange-500/90 text-white px-2 py-1 rounded-md text-xs font-medium shadow-sm">Sisa {{ $totalStock }}</span>
                                 @endif
                             </div>
                         </div>
@@ -143,17 +154,49 @@
                                 {{ $product->name }}
                             </h3>
 
-                            {{-- Stock Info --}}
-                            <div class="flex items-center space-x-2 mb-2 text-xs">
-                                <span class="text-slate-500">Stok: <span class="text-slate-300 font-medium">{{ $product->stock }}</span></span>
+                            {{-- Stock Info with Variant Badge --}}
+                            <div class="flex items-center flex-wrap gap-2 mb-3 text-xs">
+                                @if($product->has_variants)
+                                    {{-- Variant Count Badge --}}
+                                    <span class="inline-flex items-center gap-1 text-indigo-300 text-[10px] px-2 py-0.5 bg-indigo-500/15 border border-indigo-500/30 rounded-full font-medium">
+                                        <i class="fas fa-layer-group text-[8px]"></i>
+                                        {{ $product->variant_count }} varian
+                                    </span>
+                                    {{-- Total Stock --}}
+                                    <span class="text-slate-500">
+                                        Stok: <span class="text-slate-300 font-medium">{{ $product->total_stock }}</span>
+                                    </span>
+                                @else
+                                    <span class="text-slate-500">
+                                        Stok: <span class="text-slate-300 font-medium">{{ $product->stock }}</span>
+                                    </span>
+                                @endif
                             </div>
                             
                             <div class="flex items-end justify-between">
                                 <div class="flex flex-col">
-                                    <span class="text-xs text-slate-500 mb-1">Harga</span>
-                                    <span class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 group-hover:from-indigo-400 group-hover:to-cyan-400 transition-all duration-300">
-                                        Rp {{ number_format($product->price, 0, ',', '.') }}
-                                    </span>
+                                    @if($product->has_variants)
+                                        @php
+                                            $priceRange = $product->price_range;
+                                            $hasRange = $priceRange['min'] !== $priceRange['max'];
+                                        @endphp
+                                        <span class="text-xs text-slate-500 mb-1">
+                                            {{ $hasRange ? 'Mulai dari' : 'Harga' }}
+                                        </span>
+                                        <span class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 group-hover:from-indigo-400 group-hover:to-cyan-400 transition-all duration-300">
+                                            Rp{{ number_format($priceRange['min'], 0, ',', '.') }}
+                                        </span>
+                                        @if($hasRange)
+                                            <span class="text-[10px] text-slate-500 mt-0.5">
+                                                s/d Rp{{ number_format($priceRange['max'], 0, ',', '.') }}
+                                            </span>
+                                        @endif
+                                    @else
+                                        <span class="text-xs text-slate-500 mb-1">Harga</span>
+                                        <span class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 group-hover:from-indigo-400 group-hover:to-cyan-400 transition-all duration-300">
+                                            {{ $product->display_price }}
+                                        </span>
+                                    @endif
                                 </div>
                                 <a href="{{ route('public.products.show', $product->slug) }}" 
                                    wire:navigate.hover

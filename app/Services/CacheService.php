@@ -41,6 +41,27 @@ class CacheService
     {
         Cache::forget('products.list');
         Cache::forget('products.low_stock');
+        Cache::forget('products:categories');
+        
+        // Clear paginated catalog cache (clear first 10 pages)
+        for ($page = 1; $page <= 10; $page++) {
+            Cache::forget("products:public:page:{$page}:search::category:");
+        }
+    }
+
+    /**
+     * Clear catalog cache for public pages
+     *
+     * @return void
+     */
+    public static function clearCatalog(): void
+    {
+        Cache::forget('products:categories');
+        
+        // Clear paginated catalog cache (clear first 20 pages)
+        for ($page = 1; $page <= 20; $page++) {
+            Cache::forget("products:public:page:{$page}:search::category:");
+        }
     }
 
     /**

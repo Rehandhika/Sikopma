@@ -5,7 +5,7 @@ namespace App\Livewire\Stock;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\{Title, Computed, Url};
-use App\Models\{Product, StockAdjustment};
+use App\Models\{Product, ProductVariant, StockAdjustment};
 use App\Services\ProductService;
 use Illuminate\Support\Facades\{DB, Cache};
 
@@ -14,7 +14,6 @@ class StockManager extends Component
 {
     use WithPagination;
 
-    // View state with URL binding
     #[Url]
     public string $activeTab = 'products';
     
@@ -31,9 +30,13 @@ class StockManager extends Component
     // Modal state
     public bool $showAdjustModal = false;
     public ?int $selectedProductId = null;
+    public ?int $selectedVariantId = null;
     public string $adjustType = 'in';
     public int $adjustQuantity = 1;
     public string $adjustReason = '';
+    
+    // Expanded variants
+    public array $expandedProducts = [];
     
     // Bulk
     public array $selectedProducts = [];
@@ -59,20 +62,46 @@ class StockManager extends Component
         $this->resetPage();
     }
 
-    // Quick actions
-    public function quickAdjust(int $productId, string $type = 'in'): void
+    /**
+     * Toggle expanded state for variant products
+     */
+    public function toggleExpand(int $productId): void
+    {
+        if (in_array($productId, $this->expandedProducts)) {
+            $this->expandedProducts = array_values(array_diff($this->expandedProducts, [$productId]));
+        } else {
+            $this->expandedProducts[] = $productId;
+        }
+    }
+
+    /**
+     * Open adjust modal - for product or variant
+     */
+    public function quickAdjust(int $productId, string $type = 'in', ?int $variantId = null): void
     {
         $this->selectedProductId = $productId;
+        $this->selectedVariantId = $variantId;
         $this->adjustType = $type;
         $this->adjustQuantity = 1;
         $this->adjustReason = '';
         $this->showAdjustModal = true;
     }
 
+    /**
+     * Open adjust modal for a specific variant
+     */
+    public function adjustVariant(int $variantId, string $type = 'in'): void
+    {
+        $variant = ProductVariant::find($variantId);
+        if ($variant) {
+            $this->quickAdjust($variant->product_id, $type, $variantId);
+        }
+    }
+
     public function closeAdjustModal(): void
     {
         $this->showAdjustModal = false;
-        $this->reset(['selectedProductId', 'adjustQuantity', 'adjustReason']);
+        $this->reset(['selectedProductId', 'selectedVariantId', 'adjustQuantity', 'adjustReason']);
         $this->resetValidation();
     }
 
@@ -81,39 +110,108 @@ class StockManager extends Component
         $this->validate();
         
         try {
+            $product = Product::find($this->selectedProductId);
+            
+            if (!$product) {
+                throw new \Exception('Produk tidak ditemukan.');
+            }
+
+            // If product has variants, variant must be selected
+            if ($product->has_variants && !$this->selectedVariantId) {
+                throw new \Exception('Pilih varian terlebih dahulu.');
+            }
+
             app(ProductService::class)->adjustStock(
                 $this->selectedProductId,
                 $this->adjustType,
                 $this->adjustQuantity,
-                $this->adjustReason
+                $this->adjustReason,
+                $this->selectedVariantId
             );
+            
             $this->closeAdjustModal();
             Cache::forget('stock:stats');
-            $this->dispatch('notify', type: 'success', message: 'Stok diperbarui');
+            $this->dispatch('notify', type: 'success', message: 'Stok berhasil diperbarui');
         } catch (\Exception $e) {
             $this->dispatch('notify', type: 'error', message: $e->getMessage());
         }
     }
 
+    /**
+     * Quick increment for non-variant products only
+     */
     public function quickIncrement(int $productId): void
     {
+        $product = Product::find($productId);
+        if (!$product) return;
+        
+        if ($product->has_variants) {
+            // Expand to show variants instead
+            if (!in_array($productId, $this->expandedProducts)) {
+                $this->expandedProducts[] = $productId;
+            }
+            $this->dispatch('notify', type: 'info', message: 'Pilih varian untuk adjust stok');
+            return;
+        }
+        
         $this->doQuickAdjust($productId, 'in', 1, 'Quick +1');
     }
 
+    /**
+     * Quick decrement for non-variant products only
+     */
     public function quickDecrement(int $productId): void
     {
         $product = Product::find($productId);
-        if (!$product || $product->stock <= 0) {
+        if (!$product) return;
+        
+        if ($product->has_variants) {
+            if (!in_array($productId, $this->expandedProducts)) {
+                $this->expandedProducts[] = $productId;
+            }
+            $this->dispatch('notify', type: 'info', message: 'Pilih varian untuk adjust stok');
+            return;
+        }
+        
+        if ($product->stock <= 0) {
             $this->dispatch('notify', type: 'error', message: 'Stok sudah habis');
             return;
         }
+        
         $this->doQuickAdjust($productId, 'out', 1, 'Quick -1');
     }
 
-    private function doQuickAdjust(int $productId, string $type, int $qty, string $reason): void
+    /**
+     * Quick increment for variant
+     */
+    public function quickIncrementVariant(int $variantId): void
+    {
+        $variant = ProductVariant::find($variantId);
+        if (!$variant) return;
+        
+        $this->doQuickAdjust($variant->product_id, 'in', 1, 'Quick +1', $variantId);
+    }
+
+    /**
+     * Quick decrement for variant
+     */
+    public function quickDecrementVariant(int $variantId): void
+    {
+        $variant = ProductVariant::find($variantId);
+        if (!$variant) return;
+        
+        if ($variant->stock <= 0) {
+            $this->dispatch('notify', type: 'error', message: 'Stok varian sudah habis');
+            return;
+        }
+        
+        $this->doQuickAdjust($variant->product_id, 'out', 1, 'Quick -1', $variantId);
+    }
+
+    private function doQuickAdjust(int $productId, string $type, int $qty, string $reason, ?int $variantId = null): void
     {
         try {
-            app(ProductService::class)->adjustStock($productId, $type, $qty, $reason);
+            app(ProductService::class)->adjustStock($productId, $type, $qty, $reason, $variantId);
             Cache::forget('stock:stats');
             $this->dispatch('notify', type: 'success', message: 'Stok diperbarui');
         } catch (\Exception $e) {
@@ -124,6 +222,13 @@ class StockManager extends Component
     // Bulk operations
     public function toggleProductSelection(int $productId): void
     {
+        $product = Product::find($productId);
+        // Skip variant products for bulk selection
+        if ($product && $product->has_variants) {
+            $this->dispatch('notify', type: 'info', message: 'Produk varian tidak dapat dipilih untuk bulk adjust');
+            return;
+        }
+        
         if (in_array($productId, $this->selectedProducts)) {
             $this->selectedProducts = array_values(array_diff($this->selectedProducts, [$productId]));
         } else {
@@ -133,7 +238,8 @@ class StockManager extends Component
 
     public function selectAllVisible(): void
     {
-        $ids = $this->products->pluck('id')->toArray();
+        // Only select non-variant products
+        $ids = $this->products->filter(fn($p) => !$p->has_variants)->pluck('id')->toArray();
         $this->selectedProducts = count($this->selectedProducts) === count($ids) ? [] : $ids;
     }
 
@@ -214,7 +320,8 @@ class StockManager extends Component
     public function products()
     {
         return Product::query()
-            ->select(['id', 'name', 'sku', 'category', 'stock', 'min_stock', 'price', 'cost_price', 'image'])
+            ->select(['id', 'name', 'sku', 'category', 'stock', 'min_stock', 'price', 'cost_price', 'image', 'has_variants'])
+            ->with(['variants' => fn($q) => $q->where('is_active', true)->orderBy('variant_name')])
             ->when($this->search, fn($q) => $q->where(fn($sub) => 
                 $sub->where('name', 'like', "%{$this->search}%")->orWhere('sku', 'like', "%{$this->search}%")
             ))
@@ -230,14 +337,29 @@ class StockManager extends Component
     #[Computed]
     public function selectedProduct(): ?Product
     {
-        return $this->selectedProductId ? Product::find($this->selectedProductId) : null;
+        return $this->selectedProductId ? Product::with(['variants' => fn($q) => $q->where('is_active', true)])->find($this->selectedProductId) : null;
+    }
+
+    #[Computed]
+    public function selectedVariant(): ?ProductVariant
+    {
+        return $this->selectedVariantId ? ProductVariant::find($this->selectedVariantId) : null;
+    }
+
+    #[Computed]
+    public function adjustmentTarget(): ?object
+    {
+        if ($this->selectedVariantId) {
+            return $this->selectedVariant;
+        }
+        return $this->selectedProduct;
     }
 
     #[Computed]
     public function adjustments()
     {
         return StockAdjustment::query()
-            ->with(['product:id,name,sku', 'user:id,name'])
+            ->with(['product:id,name,sku', 'user:id,name', 'variant:id,variant_name'])
             ->when($this->historySearch, fn($q) => $q->whereHas('product', fn($sub) => 
                 $sub->where('name', 'like', "%{$this->historySearch}%")
             ))

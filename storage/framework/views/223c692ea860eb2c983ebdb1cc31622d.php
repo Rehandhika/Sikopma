@@ -75,12 +75,21 @@
                                         </svg>
                                     </div>
                                 <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-                                <span class="absolute top-1.5 right-1.5 px-1.5 py-0.5 text-[10px] font-bold rounded <?php echo e($product->stock <= 5 ? 'bg-red-500 text-white' : 'bg-black/60 text-white'); ?>"><?php echo e($product->stock); ?></span>
+                                <!--[if BLOCK]><![endif]--><?php if($product->has_variants): ?>
+                                    <span class="absolute top-1.5 left-1.5 px-1.5 py-0.5 text-[10px] font-bold rounded bg-primary-500 text-white">Varian</span>
+                                    <span class="absolute top-1.5 right-1.5 px-1.5 py-0.5 text-[10px] font-bold rounded bg-black/60 text-white"><?php echo e($product->activeVariants->sum('stock')); ?></span>
+                                <?php else: ?>
+                                    <span class="absolute top-1.5 right-1.5 px-1.5 py-0.5 text-[10px] font-bold rounded <?php echo e($product->stock <= 5 ? 'bg-red-500 text-white' : 'bg-black/60 text-white'); ?>"><?php echo e($product->stock); ?></span>
+                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                             </div>
                             
                             <div class="p-2 lg:p-2.5">
                                 <h3 class="font-medium text-gray-900 dark:text-white text-xs lg:text-sm line-clamp-2 leading-tight min-h-[2rem]"><?php echo e($product->name); ?></h3>
-                                <p class="text-primary-600 dark:text-primary-400 font-bold text-xs lg:text-sm mt-1">Rp <?php echo e(number_format($product->price, 0, ',', '.')); ?></p>
+                                <!--[if BLOCK]><![endif]--><?php if($product->has_variants): ?>
+                                    <p class="text-primary-600 dark:text-primary-400 font-bold text-xs lg:text-sm mt-1"><?php echo e($product->display_price); ?></p>
+                                <?php else: ?>
+                                    <p class="text-primary-600 dark:text-primary-400 font-bold text-xs lg:text-sm mt-1">Rp <?php echo e(number_format($product->price, 0, ',', '.')); ?></p>
+                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                             </div>
                         </button>
                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
@@ -137,8 +146,14 @@
             <?php else: ?>
                 <ul class="divide-y divide-gray-100 dark:divide-gray-700/50">
                     <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $cart; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <?php
+                            $isVariant = !empty($item['variant_id']);
+                            $stockRemaining = $item['stock'] - $item['quantity'];
+                            $isLowStock = $stockRemaining <= 3 && $stockRemaining > 0;
+                            $isNearLimit = $item['quantity'] >= $item['stock'];
+                        ?>
                         <li wire:key="cart-<?php echo e($key); ?>" class="p-3 flex gap-2.5">
-                            <div class="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden flex-shrink-0">
+                            <div class="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden flex-shrink-0 relative">
                                 <!--[if BLOCK]><![endif]--><?php if($item['image']): ?>
                                     <img src="<?php echo e($item['image']); ?>" alt="" class="w-full h-full object-cover">
                                 <?php else: ?>
@@ -148,12 +163,35 @@
                                         </svg>
                                     </div>
                                 <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                
+                                <!--[if BLOCK]><![endif]--><?php if($isVariant): ?>
+                                    <span class="absolute bottom-0 left-0 right-0 bg-primary-600/90 text-white text-[8px] font-bold text-center py-0.5">VARIAN</span>
+                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                             </div>
                             
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-start justify-between gap-1">
-                                    <h4 class="text-sm font-medium text-gray-900 dark:text-white line-clamp-1"><?php echo e($item['name']); ?></h4>
-                                    <button wire:click="removeFromCart('<?php echo e($key); ?>')" class="p-1 text-gray-400">
+                                    <div class="flex-1 min-w-0">
+                                        <h4 class="text-sm font-medium text-gray-900 dark:text-white line-clamp-1"><?php echo e($item['name']); ?></h4>
+                                        
+                                        <div class="flex items-center gap-1.5 mt-0.5">
+                                            <!--[if BLOCK]><![endif]--><?php if($isNearLimit): ?>
+                                                <span class="text-[10px] text-red-500 dark:text-red-400 font-medium">
+                                                    Maks tercapai
+                                                </span>
+                                            <?php elseif($isLowStock): ?>
+                                                <span class="text-[10px] text-amber-500 dark:text-amber-400 font-medium">
+                                                    Sisa <?php echo e($stockRemaining); ?> lagi
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="text-[10px] text-gray-400 dark:text-gray-500">
+                                                    Stok: <?php echo e($item['stock']); ?>
+
+                                                </span>
+                                            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                        </div>
+                                    </div>
+                                    <button wire:click="removeFromCart('<?php echo e($key); ?>')" class="p-1 text-gray-400 hover:text-red-500">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                         </svg>
@@ -162,13 +200,15 @@
                                 
                                 <div class="flex items-center justify-between mt-1.5">
                                     <div class="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg">
-                                        <button wire:click="decrementQty('<?php echo e($key); ?>')" class="w-7 h-7 flex items-center justify-center text-gray-600 dark:text-gray-300">
+                                        <button wire:click="decrementQty('<?php echo e($key); ?>')" class="w-7 h-7 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-primary-600">
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
                                             </svg>
                                         </button>
                                         <span class="w-8 text-center text-sm font-semibold text-gray-900 dark:text-white"><?php echo e($item['quantity']); ?></span>
-                                        <button wire:click="incrementQty('<?php echo e($key); ?>')" class="w-7 h-7 flex items-center justify-center text-gray-600 dark:text-gray-300">
+                                        <button wire:click="incrementQty('<?php echo e($key); ?>')" 
+                                            class="w-7 h-7 flex items-center justify-center <?php echo e($isNearLimit ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' : 'text-gray-600 dark:text-gray-300 hover:text-primary-600'); ?>"
+                                            <?php if($isNearLimit): ?> disabled <?php endif; ?>>
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                             </svg>
@@ -198,10 +238,10 @@
 
     
     <!--[if BLOCK]><![endif]--><?php if($showPayment): ?>
-        <div class="fixed inset-0 z-50 flex items-end lg:items-center justify-center">
+        <div class="fixed inset-0 z-50 flex items-end lg:items-center lg:justify-center p-0 lg:p-4">
             <div wire:click="closePayment" class="absolute inset-0 bg-black/50"></div>
             
-            <div class="relative w-full lg:max-w-md bg-white dark:bg-gray-800 rounded-t-2xl lg:rounded-2xl max-h-[85vh] flex flex-col" @click.stop>
+            <div class="relative w-full lg:max-w-md lg:mx-auto bg-white dark:bg-gray-800 rounded-t-2xl lg:rounded-2xl max-h-[85vh] lg:max-h-[80vh] flex flex-col animate-slide-up lg:animate-fade-in" @click.stop>
                 
                 <div class="lg:hidden flex justify-center pt-2 pb-1">
                     <div class="w-10 h-1 bg-gray-300 rounded-full"></div>
@@ -286,5 +326,155 @@
             </div>
         </div>
     <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+
+    
+    <!--[if BLOCK]><![endif]--><?php if($showVariantModal): ?>
+        <div class="fixed inset-0 z-50 flex items-end lg:items-center lg:justify-center p-0 lg:p-4">
+            <div wire:click="closeVariantModal" class="absolute inset-0 bg-black/50"></div>
+            
+            <div class="relative w-full lg:max-w-md lg:mx-auto bg-white dark:bg-gray-800 rounded-t-2xl lg:rounded-2xl max-h-[85vh] lg:max-h-[80vh] flex flex-col animate-slide-up lg:animate-fade-in" @click.stop>
+                
+                <div class="lg:hidden flex justify-center pt-2 pb-1">
+                    <div class="w-10 h-1 bg-gray-300 rounded-full"></div>
+                </div>
+                
+                <header class="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-700">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Pilih Varian</h3>
+                        <!--[if BLOCK]><![endif]--><?php if($selectedProductName): ?>
+                            <p class="text-sm text-gray-500 dark:text-gray-400"><?php echo e($selectedProductName); ?></p>
+                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                    </div>
+                    <button wire:click="closeVariantModal" class="p-1.5 text-gray-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </header>
+
+                <div class="flex-1 overflow-y-auto p-4">
+                    <!--[if BLOCK]><![endif]--><?php if(empty($productVariants)): ?>
+                        <div class="text-center py-8 text-gray-500">
+                            <p>Tidak ada varian tersedia</p>
+                        </div>
+                    <?php else: ?>
+                        
+                        <!--[if BLOCK]><![endif]--><?php if(!empty($groupedVariants)): ?>
+                            <div class="mb-4 space-y-3">
+                                <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $groupedVariants; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $optionSlug => $optionData): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
+                                        <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                            <?php echo e($optionData['option_name']); ?>
+
+                                        </h4>
+                                        <div class="flex flex-wrap gap-2">
+                                            <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $optionData['values']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $valueData): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm
+                                                    <?php echo e($valueData['total_stock'] > 0 
+                                                        ? 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-500' 
+                                                        : 'bg-gray-200 dark:bg-gray-800 text-gray-400 dark:text-gray-500 line-through'); ?>">
+                                                    <?php echo e($valueData['value']); ?>
+
+                                                    <!--[if BLOCK]><![endif]--><?php if($valueData['total_stock'] > 0): ?>
+                                                        <span class="text-xs px-1.5 py-0.5 rounded <?php echo e($valueData['total_stock'] <= 5 ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'); ?>">
+                                                            <?php echo e($valueData['total_stock']); ?>
+
+                                                        </span>
+                                                    <?php else: ?>
+                                                        <span class="text-xs text-gray-400">Habis</span>
+                                                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                                </span>
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
+                                        </div>
+                                    </div>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
+                            </div>
+                            
+                            <div class="border-t border-gray-200 dark:border-gray-700 pt-3 mb-2">
+                                <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Pilih Varian:</h4>
+                            </div>
+                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+
+                        
+                        <div class="space-y-2">
+                            <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $productVariants; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $variant): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <?php
+                                    $isOutOfStock = $variant['stock'] < 1;
+                                    $isLowStock = $variant['stock'] > 0 && $variant['stock'] <= 5;
+                                ?>
+                                <button wire:click="addVariantToCart(<?php echo e($variant['id']); ?>)" 
+                                    class="w-full p-3 rounded-xl flex items-center justify-between transition-colors
+                                        <?php echo e($isOutOfStock 
+                                            ? 'bg-gray-100 dark:bg-gray-800 opacity-50 cursor-not-allowed' 
+                                            : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'); ?>"
+                                    <?php if($isOutOfStock): ?> disabled <?php endif; ?>>
+                                    <div class="text-left flex-1">
+                                        <p class="font-medium text-gray-900 dark:text-white <?php echo e($isOutOfStock ? 'line-through' : ''); ?>">
+                                            <?php
+                                                $optionValues = collect($variant['option_values'])->pluck('value')->implode(' / ');
+                                            ?>
+                                            <?php echo e($optionValues ?: $variant['variant_name']); ?>
+
+                                        </p>
+                                        <div class="flex items-center gap-2 mt-1">
+                                            
+                                            <!--[if BLOCK]><![endif]--><?php if($isOutOfStock): ?>
+                                                <span class="inline-flex items-center gap-1 text-xs text-red-500 dark:text-red-400">
+                                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                    Habis
+                                                </span>
+                                            <?php elseif($isLowStock): ?>
+                                                <span class="inline-flex items-center gap-1 text-xs text-amber-500 dark:text-amber-400">
+                                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                    Stok: <?php echo e($variant['stock']); ?>
+
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="inline-flex items-center gap-1 text-xs text-green-500 dark:text-green-400">
+                                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                    Stok: <?php echo e($variant['stock']); ?>
+
+                                                </span>
+                                            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                        </div>
+                                    </div>
+                                    <div class="text-right ml-3">
+                                        <p class="font-bold text-primary-600 dark:text-primary-400">
+                                            Rp <?php echo e(number_format($variant['price'], 0, ',', '.')); ?>
+
+                                        </p>
+                                    </div>
+                                </button>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
+                        </div>
+                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                </div>
+            </div>
+        </div>
+    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+
+    
+    <style>
+        @keyframes slide-up {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes fade-in {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .animate-slide-up {
+            animation: slide-up 0.3s ease-out;
+        }
+        .animate-fade-in {
+            animation: fade-in 0.2s ease-out;
+        }
+    </style>
 </div>
 <?php /**PATH C:\laragon\www\Kopma\resources\views/livewire/cashier/pos.blade.php ENDPATH**/ ?>

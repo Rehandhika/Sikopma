@@ -186,7 +186,7 @@ class PublicDataService
 
     public function product(string $slug): array
     {
-        $cacheKey = "api:public:product:slug:{$slug}";
+        $cacheKey = "api:public:product:slug:{$slug}:v3";
 
         $product = Cache::remember($cacheKey, 300, function () use ($slug) {
             return Product::query()
@@ -202,16 +202,42 @@ class PublicDataService
                     'description',
                     'image',
                     'is_featured',
+                    'has_variants',
                 ])
+                ->with(['activeVariants' => function ($query) {
+                    $query->select([
+                        'id',
+                        'product_id',
+                        'sku',
+                        'variant_name',
+                        'price',
+                        'stock',
+                        'min_stock',
+                        'option_values',
+                        'is_active',
+                    ])->orderBy('price');
+                }])
                 ->where('is_public', true)
                 ->active()
                 ->where('slug', $slug)
                 ->firstOrFail();
         });
 
-        return array_merge($product->toArray(), [
-            'image_large_url' => $product->image_large_url,
-        ]);
+        // Convert to array and ensure snake_case keys
+        $data = $product->toArray();
+        $data['image_large_url'] = $product->image_large_url;
+        $data['total_stock'] = $product->total_stock;
+        $data['price_range'] = $product->price_range;
+        $data['display_price'] = $product->display_price;
+        $data['variant_count'] = $product->variant_count;
+        
+        // Ensure active_variants key exists (Laravel may use camelCase)
+        if (isset($data['activeVariants'])) {
+            $data['active_variants'] = $data['activeVariants'];
+            unset($data['activeVariants']);
+        }
+
+        return $data;
     }
 }
 

@@ -82,17 +82,69 @@ class ProductService
 
     /**
      * Adjust stock
+     * Updated to support variant products - blocks direct adjustment for variant products
      *
      * @param int $productId
      * @param string $type (in/out)
      * @param int $quantity
      * @param string $reason
+     * @param int|null $variantId Optional variant ID for variant-level adjustment
      * @return Product
      */
-    public function adjustStock(int $productId, string $type, int $quantity, string $reason): Product
+    public function adjustStock(int $productId, string $type, int $quantity, string $reason, ?int $variantId = null): Product
     {
-        return DB::transaction(function () use ($productId, $type, $quantity, $reason) {
+        return DB::transaction(function () use ($productId, $type, $quantity, $reason, $variantId) {
             $product = Product::findOrFail($productId);
+            
+            // If product has variants and no variant specified, block the adjustment
+            if ($product->has_variants && !$variantId) {
+                throw new \Exception(
+                    'Produk dengan varian tidak dapat disesuaikan stoknya secara langsung. ' .
+                    'Sesuaikan stok pada level varian.'
+                );
+            }
+
+            // If variant ID is provided, use variant adjustment
+            if ($variantId) {
+                $variant = $product->variants()->findOrFail($variantId);
+                $previousStock = $variant->stock;
+
+                // Validate stock for 'out' type
+                if ($type === 'out' && $variant->stock < $quantity) {
+                    throw new \Exception('Stok varian tidak mencukupi. Stok tersedia: ' . $variant->stock);
+                }
+
+                // Update variant stock
+                if ($type === 'in') {
+                    $variant->increment('stock', $quantity);
+                } else {
+                    $variant->decrement('stock', $quantity);
+                }
+
+                $newStock = $variant->fresh()->stock;
+
+                // Log adjustment with variant_id
+                StockAdjustment::create([
+                    'product_id' => $productId,
+                    'variant_id' => $variantId,
+                    'type' => $type,
+                    'quantity' => $quantity,
+                    'previous_stock' => $previousStock,
+                    'new_stock' => $newStock,
+                    'reason' => $reason,
+                    'user_id' => auth()->id(),
+                ]);
+
+                // Sync product total stock
+                $variantService = app(\App\Services\ProductVariantService::class);
+                $variantService->syncProductTotalStock($product);
+
+                log_audit('variant_stock_adjustment', $variant, ['type' => $type, 'quantity' => $quantity]);
+
+                return $product->fresh();
+            }
+
+            // Non-variant product adjustment
             $previousStock = $product->stock;
 
             // Validate stock for 'out' type
@@ -112,6 +164,7 @@ class ProductService
             // Log adjustment
             StockAdjustment::create([
                 'product_id' => $productId,
+                'variant_id' => null,
                 'type' => $type,
                 'quantity' => $quantity,
                 'previous_stock' => $previousStock,

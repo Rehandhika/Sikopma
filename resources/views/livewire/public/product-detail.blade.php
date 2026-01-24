@@ -38,10 +38,20 @@
                         </div>
                     @endif
 
-                    @if($product->is_featured)
-                        <div class="absolute top-4 left-4">
+                    {{-- Badges --}}
+                    <div class="absolute top-4 left-4 flex flex-col gap-2">
+                        @if($product->is_featured)
                             <span class="inline-flex items-center px-3 py-1 rounded-full bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 text-xs font-bold uppercase tracking-wider backdrop-blur-md">
                                 <i class="fas fa-star mr-1.5"></i> Unggulan
+                            </span>
+                        @endif
+                    </div>
+
+                    {{-- Variant Count Badge --}}
+                    @if($product->has_variants && $product->variant_count > 0)
+                        <div class="absolute bottom-4 left-4">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-bold backdrop-blur-md">
+                                <i class="fas fa-layer-group mr-1.5"></i> {{ $product->variant_count }} Varian
                             </span>
                         </div>
                     @endif
@@ -62,38 +72,130 @@
                                 {{ $product->category }}
                             </span>
                         @endif
-                        @if($product->sku)
-                            <span class="text-xs font-mono text-slate-500">SKU: {{ $product->sku }}</span>
+                        @if($this->displaySku)
+                            <span class="text-xs font-mono text-slate-500">SKU: {{ $this->displaySku }}</span>
                         @endif
                     </div>
 
                     {{-- Title --}}
-                    <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-6 leading-tight">{{ $product->name }}</h1>
+                    <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 leading-tight">{{ $product->name }}</h1>
+
+                    {{-- Selected Variant Name --}}
+                    @if($product->has_variants && $this->selectedVariant)
+                        <p class="text-sm text-indigo-400 mb-4">
+                            Varian: {{ collect($this->selectedVariant->option_values)->pluck('value')->implode(' / ') }}
+                        </p>
+                    @endif
 
                     {{-- Price Section (Highlight) --}}
-                    <div class="bg-slate-950/50 rounded-2xl p-5 lg:p-6 border border-white/5 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0">
+                    <div class="bg-slate-950/50 rounded-2xl p-5 lg:p-6 border border-white/5 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0">
                         <div>
-                            <p class="text-sm text-slate-400 mb-1">Harga Satuan</p>
+                            <p class="text-sm text-slate-400 mb-1">
+                                {{ $product->has_variants ? 'Harga Varian' : 'Harga Satuan' }}
+                            </p>
                             <div class="text-3xl lg:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">
-                                Rp {{ number_format($product->price, 0, ',', '.') }}
+                                Rp {{ number_format($this->displayPrice, 0, ',', '.') }}
                             </div>
+                            @if($product->has_variants)
+                                @php
+                                    $priceRange = $product->price_range;
+                                    $hasRange = $priceRange['min'] !== $priceRange['max'];
+                                @endphp
+                                @if($hasRange)
+                                    <p class="text-xs text-slate-500 mt-1">
+                                        Range: Rp {{ number_format($priceRange['min'], 0, ',', '.') }} - Rp {{ number_format($priceRange['max'], 0, ',', '.') }}
+                                    </p>
+                                @endif
+                            @endif
                         </div>
                         <div class="text-left sm:text-right pt-4 sm:pt-0 border-t sm:border-t-0 border-white/5">
                             <p class="text-sm text-slate-400 mb-2">Status Stok</p>
-                            @if($product->isOutOfStock())
-                                <span class="inline-block px-3 py-1 bg-red-500/20 text-red-400 text-sm font-medium rounded-lg border border-red-500/20">Habis ({{ $product->stock }})</span>
-                            @elseif($product->isLowStock())
-                                <span class="inline-block px-3 py-1 bg-orange-500/20 text-orange-400 text-sm font-medium rounded-lg border border-orange-500/20">Sisa {{ $product->stock }}</span>
+                            @php
+                                $displayStock = $this->displayStock;
+                                $isOutOfStock = $displayStock <= 0;
+                                $isLowStock = !$isOutOfStock && $displayStock <= ($product->min_stock ?? 5);
+                            @endphp
+                            @if($isOutOfStock)
+                                <span class="inline-block px-3 py-1 bg-red-500/20 text-red-400 text-sm font-medium rounded-lg border border-red-500/20">Habis</span>
+                            @elseif($isLowStock)
+                                <span class="inline-block px-3 py-1 bg-orange-500/20 text-orange-400 text-sm font-medium rounded-lg border border-orange-500/20">Sisa {{ $displayStock }}</span>
                             @else
-                                <span class="inline-block px-3 py-1 bg-green-500/20 text-green-400 text-sm font-medium rounded-lg border border-green-500/20">Tersedia ({{ $product->stock }})</span>
+                                <span class="inline-block px-3 py-1 bg-green-500/20 text-green-400 text-sm font-medium rounded-lg border border-green-500/20">Tersedia ({{ $displayStock }})</span>
+                            @endif
+                            @if($product->has_variants)
+                                <p class="text-xs text-slate-500 mt-1">Total: {{ $product->total_stock }} unit</p>
                             @endif
                         </div>
                     </div>
 
+                    {{-- Variant Selector (Grouped by Option Type) --}}
+                    @if($product->has_variants && $product->activeVariants->isNotEmpty())
+                        <div class="bg-slate-950/30 rounded-2xl p-5 border border-white/5 mb-6">
+                            <h3 class="text-sm font-medium text-slate-400 uppercase tracking-wider mb-4">
+                                Pilih Varian ({{ $product->activeVariants->count() }} tersedia)
+                            </h3>
+                            
+                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                @foreach($product->activeVariants as $variant)
+                                    @php
+                                        $isSelected = $selectedVariantId === $variant->id;
+                                        $isOutOfStockVariant = $variant->stock <= 0;
+                                        $optionLabel = collect($variant->option_values)->pluck('value')->implode(' / ');
+                                    @endphp
+                                    <button
+                                        wire:click="selectVariant({{ $variant->id }})"
+                                        @if($isOutOfStockVariant) disabled @endif
+                                        class="relative p-3 rounded-xl border-2 transition-all duration-200 text-left
+                                            {{ $isSelected 
+                                                ? 'border-indigo-500 bg-indigo-500/10 ring-2 ring-indigo-500/20' 
+                                                : 'border-white/10 bg-slate-900/40 hover:border-indigo-500/50 hover:bg-slate-900/60'
+                                            }}
+                                            {{ $isOutOfStockVariant ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer' }}"
+                                    >
+                                        {{-- Selected Indicator --}}
+                                        @if($isSelected)
+                                            <div class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-check text-white text-[10px]"></i>
+                                            </div>
+                                        @endif
+                                        
+                                        {{-- Variant Label --}}
+                                        <div class="font-medium text-slate-200 text-sm truncate">
+                                            {{ $optionLabel ?: $variant->variant_name }}
+                                        </div>
+                                        
+                                        {{-- Price and Stock --}}
+                                        <div class="mt-1 flex items-center justify-between gap-2">
+                                            <span class="text-xs font-semibold text-indigo-400">
+                                                Rp {{ number_format($variant->price, 0, ',', '.') }}
+                                            </span>
+                                            @if($isOutOfStockVariant)
+                                                <span class="text-[10px] text-red-400 font-medium px-1.5 py-0.5 bg-red-500/10 rounded">Habis</span>
+                                            @elseif($variant->stock <= ($variant->min_stock ?? 5))
+                                                <span class="text-[10px] text-orange-400 font-medium">Sisa {{ $variant->stock }}</span>
+                                            @else
+                                                <span class="text-[10px] text-emerald-400 font-medium">Stok {{ $variant->stock }}</span>
+                                            @endif
+                                        </div>
+                                    </button>
+                                @endforeach
+                            </div>
+
+                            {{-- Out of Stock Variants Summary --}}
+                            @php
+                                $outOfStockCount = $product->activeVariants->where('stock', '<=', 0)->count();
+                            @endphp
+                            @if($outOfStockCount > 0)
+                                <p class="text-xs text-slate-500 mt-3 flex items-center gap-1">
+                                    <i class="fas fa-info-circle text-slate-600"></i>
+                                    {{ $outOfStockCount }} varian sedang habis
+                                </p>
+                            @endif
+                        </div>
+                    @endif
+
                     {{-- Actions --}}
                     <div class="space-y-4 mb-8">
-                        {{-- WhatsApp Button Removed as requested --}}
-                        
                         <div class="bg-indigo-900/20 border border-indigo-500/20 rounded-xl p-4 flex items-start space-x-3">
                             <i class="fas fa-info-circle text-indigo-400 mt-0.5"></i>
                             <p class="text-sm text-indigo-200/80 leading-relaxed">

@@ -190,6 +190,14 @@ class ProductList extends Component
     public function render()
     {
         $products = Product::query()
+            // Use scopeWithVariantStats for eager loading variant statistics
+            // Requirements: 1.3 - Load variant counts dalam single query
+            ->withVariantStats()
+            // Eager load activeVariants for low stock variant display
+            // Requirements: 2.4 - Show which variants are low
+            ->with(['activeVariants' => function ($query) {
+                $query->select('id', 'product_id', 'variant_name', 'stock', 'min_stock');
+            }])
             ->when($this->search, function($q) {
                 $q->where(function($query) {
                     $query->where('name', 'like', '%' . $this->search . '%')
@@ -202,6 +210,7 @@ class ProductList extends Component
             ->when($this->stockFilter === 'low', fn($q) => $q->lowStock())
             ->when($this->stockFilter === 'out', fn($q) => $q->outOfStock())
             ->when($this->stockFilter === 'available', fn($q) => $q->inStock())
+            ->when($this->stockFilter === 'low_variant', fn($q) => $q->withLowStockVariants())
             ->latest()
             ->paginate(20);
 
@@ -210,6 +219,7 @@ class ProductList extends Component
             'active' => Product::active()->count(),
             'low_stock' => Product::lowStock()->count(),
             'out_of_stock' => Product::outOfStock()->count(),
+            'low_variant_stock' => Product::withLowStockVariants()->count(),
         ];
 
         return view('livewire.product.product-list', [

@@ -41,8 +41,12 @@ class Catalog extends Component
             return Product::query()
                 ->select([
                     'id', 'name', 'slug', 'price', 'stock', 'min_stock', 
-                    'category', 'image', 'is_featured', 'status', 'is_public', 'display_order'
+                    'category', 'image', 'is_featured', 'status', 'is_public', 'display_order', 'has_variants'
                 ])
+                ->withVariantStats() // Eager load variant statistics untuk performa
+                ->with(['activeVariants' => function ($q) {
+                    $q->select(['id', 'product_id', 'price', 'stock', 'is_active']);
+                }])
                 ->public()
                 ->active()
                 ->when($search, function ($query) use ($search) {

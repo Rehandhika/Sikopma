@@ -112,16 +112,17 @@
     {{-- Products Tab --}}
     @if($activeTab === 'products')
         <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            {{-- Mobile Cards / Desktop Table --}}
+            {{-- Desktop Table --}}
             <div class="hidden sm:block overflow-x-auto">
                 <table class="w-full">
                     <thead class="bg-gray-50 text-xs font-medium text-gray-500 uppercase">
                         <tr>
                             <th class="w-8 px-3 py-3">
                                 <input type="checkbox" wire:click="selectAllVisible" 
-                                    @checked(count($selectedProducts) > 0 && count($selectedProducts) === $this->products->count())
+                                    @checked(count($selectedProducts) > 0 && count($selectedProducts) === $this->products->filter(fn($p) => !$p->has_variants)->count())
                                     class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
                             </th>
+                            <th class="w-10 px-2 py-3"></th>
                             <th class="px-3 py-3 text-left">Produk</th>
                             <th class="px-3 py-3 text-center w-24">Stok</th>
                             <th class="px-3 py-3 text-center w-28">Adjust</th>
@@ -131,11 +132,30 @@
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @forelse($this->products as $product)
-                            <tr wire:key="p-{{ $product->id }}" class="hover:bg-gray-50/50 transition-colors">
+                            {{-- Product Row --}}
+                            <tr wire:key="p-{{ $product->id }}" @class([
+                                'transition-colors',
+                                'bg-primary-50/30' => in_array($product->id, $expandedProducts) && $product->has_variants,
+                                'hover:bg-gray-50/50' => !in_array($product->id, $expandedProducts),
+                            ])>
                                 <td class="px-3 py-2">
-                                    <input type="checkbox" wire:click="toggleProductSelection({{ $product->id }})"
-                                        @checked(in_array($product->id, $selectedProducts))
-                                        class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                    @if(!$product->has_variants)
+                                        <input type="checkbox" wire:click="toggleProductSelection({{ $product->id }})"
+                                            @checked(in_array($product->id, $selectedProducts))
+                                            class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                    @else
+                                        <span class="w-4 h-4 block"></span>
+                                    @endif
+                                </td>
+                                <td class="px-2 py-2">
+                                    @if($product->has_variants)
+                                        <button wire:click="toggleExpand({{ $product->id }})" 
+                                            class="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-all"
+                                            title="{{ in_array($product->id, $expandedProducts) ? 'Tutup varian' : 'Lihat varian' }}">
+                                            <x-ui.icon :name="in_array($product->id, $expandedProducts) ? 'chevron-down' : 'chevron-right'" 
+                                                class="w-4 h-4 text-gray-500 transition-transform" />
+                                        </button>
+                                    @endif
                                 </td>
                                 <td class="px-3 py-2">
                                     <div class="flex items-center gap-2">
@@ -147,52 +167,155 @@
                                             </div>
                                         @endif
                                         <div class="min-w-0">
-                                            <p class="font-medium text-gray-900 text-sm truncate">{{ $product->name }}</p>
+                                            <div class="flex items-center gap-2">
+                                                <p class="font-medium text-gray-900 text-sm truncate">{{ $product->name }}</p>
+                                                @if($product->has_variants)
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-700">
+                                                        {{ $product->variants->count() }} varian
+                                                    </span>
+                                                @endif
+                                            </div>
                                             <p class="text-xs text-gray-500">{{ $product->sku ?? $product->category ?? '-' }}</p>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-3 py-2 text-center">
-                                    <button wire:click="quickAdjust({{ $product->id }}, 'in')" 
-                                        class="group cursor-pointer hover:bg-gray-100 rounded-lg px-2 py-1 transition-colors"
-                                        title="Klik untuk adjust">
-                                        <span @class([
-                                            'text-lg font-bold',
-                                            'text-red-600' => $product->stock <= 0,
-                                            'text-yellow-600' => $product->stock > 0 && $product->stock <= $product->min_stock,
-                                            'text-gray-900' => $product->stock > $product->min_stock,
-                                        ])>{{ $product->stock }}</span>
-                                        <span class="block text-[10px] text-gray-400">min {{ $product->min_stock }}</span>
-                                    </button>
+                                    @if($product->has_variants)
+                                        <button wire:click="toggleExpand({{ $product->id }})" 
+                                            class="group cursor-pointer hover:bg-gray-100 rounded-lg px-2 py-1 transition-colors"
+                                            title="Klik untuk lihat varian">
+                                            <span @class([
+                                                'text-lg font-bold',
+                                                'text-red-600' => $product->total_stock <= 0,
+                                                'text-yellow-600' => $product->total_stock > 0 && $product->total_stock <= $product->min_stock,
+                                                'text-gray-900' => $product->total_stock > $product->min_stock,
+                                            ])>{{ $product->total_stock }}</span>
+                                            <span class="block text-[10px] text-gray-400">total</span>
+                                        </button>
+                                    @else
+                                        <button wire:click="quickAdjust({{ $product->id }}, 'in')" 
+                                            class="group cursor-pointer hover:bg-gray-100 rounded-lg px-2 py-1 transition-colors"
+                                            title="Klik untuk adjust">
+                                            <span @class([
+                                                'text-lg font-bold',
+                                                'text-red-600' => $product->stock <= 0,
+                                                'text-yellow-600' => $product->stock > 0 && $product->stock <= $product->min_stock,
+                                                'text-gray-900' => $product->stock > $product->min_stock,
+                                            ])>{{ $product->stock }}</span>
+                                            <span class="block text-[10px] text-gray-400">min {{ $product->min_stock }}</span>
+                                        </button>
+                                    @endif
                                 </td>
                                 <td class="px-3 py-2">
-                                    <div class="flex items-center justify-center gap-1">
-                                        <button wire:click="quickDecrement({{ $product->id }})" 
-                                            @disabled($product->stock <= 0)
-                                            @class([
-                                                'w-7 h-7 rounded-md text-sm font-bold transition-all',
-                                                'bg-red-50 text-red-600 hover:bg-red-100' => $product->stock > 0,
-                                                'bg-gray-100 text-gray-300 cursor-not-allowed' => $product->stock <= 0,
-                                            ])>−</button>
-                                        <button wire:click="quickIncrement({{ $product->id }})" 
-                                            class="w-7 h-7 rounded-md bg-green-50 text-green-600 hover:bg-green-100 text-sm font-bold transition-all">+</button>
-                                    </div>
+                                    @if($product->has_variants)
+                                        <div class="flex items-center justify-center">
+                                            <button wire:click="toggleExpand({{ $product->id }})" 
+                                                class="text-xs text-primary-600 hover:text-primary-700 font-medium">
+                                                {{ in_array($product->id, $expandedProducts) ? 'Tutup' : 'Expand' }}
+                                            </button>
+                                        </div>
+                                    @else
+                                        <div class="flex items-center justify-center gap-1">
+                                            <button wire:click="quickDecrement({{ $product->id }})" 
+                                                @disabled($product->stock <= 0)
+                                                @class([
+                                                    'w-7 h-7 rounded-md text-sm font-bold transition-all',
+                                                    'bg-red-50 text-red-600 hover:bg-red-100' => $product->stock > 0,
+                                                    'bg-gray-100 text-gray-300 cursor-not-allowed' => $product->stock <= 0,
+                                                ])>−</button>
+                                            <button wire:click="quickIncrement({{ $product->id }})" 
+                                                class="w-7 h-7 rounded-md bg-green-50 text-green-600 hover:bg-green-100 text-sm font-bold transition-all">+</button>
+                                        </div>
+                                    @endif
                                 </td>
                                 <td class="px-3 py-2 text-right text-sm">
-                                    <p class="font-medium">Rp {{ number_format($product->price, 0, ',', '.') }}</p>
-                                    <p class="text-xs text-gray-400">{{ number_format($product->cost_price, 0, ',', '.') }}</p>
+                                    @if($product->has_variants)
+                                        <p class="font-medium text-gray-600">{{ $product->display_price }}</p>
+                                    @else
+                                        <p class="font-medium">Rp {{ number_format($product->price, 0, ',', '.') }}</p>
+                                        <p class="text-xs text-gray-400">{{ number_format($product->cost_price, 0, ',', '.') }}</p>
+                                    @endif
                                 </td>
                                 <td class="px-3 py-2 text-right text-sm">
-                                    <p class="font-medium">Rp {{ number_format($product->stock * $product->price, 0, ',', '.') }}</p>
-                                    @php $profit = $product->stock * ($product->price - $product->cost_price); @endphp
+                                    @php 
+                                        $stockVal = $product->has_variants ? $product->total_stock : $product->stock;
+                                        $value = $stockVal * $product->price;
+                                        $profit = $stockVal * ($product->price - $product->cost_price);
+                                    @endphp
+                                    <p class="font-medium">Rp {{ number_format($value, 0, ',', '.') }}</p>
                                     <p class="text-xs {{ $profit >= 0 ? 'text-green-600' : 'text-red-600' }}">
                                         {{ $profit >= 0 ? '+' : '' }}{{ number_format($profit, 0, ',', '.') }}
                                     </p>
                                 </td>
                             </tr>
+                            
+                            {{-- Variant Rows (Expandable) --}}
+                            @if($product->has_variants && in_array($product->id, $expandedProducts))
+                                @foreach($product->variants as $variant)
+                                    <tr wire:key="v-{{ $variant->id }}" class="bg-gray-50/70 hover:bg-gray-100/70 transition-colors">
+                                        <td class="px-3 py-2"></td>
+                                        <td class="px-2 py-2">
+                                            <div class="w-7 h-7 flex items-center justify-center">
+                                                <div class="w-2 h-2 rounded-full bg-gray-300"></div>
+                                            </div>
+                                        </td>
+                                        <td class="px-3 py-2">
+                                            <div class="flex items-center gap-2 pl-2">
+                                                <div class="w-6 h-6 rounded bg-gray-200 flex items-center justify-center">
+                                                    <x-ui.icon name="tag" class="w-3 h-3 text-gray-500" />
+                                                </div>
+                                                <div class="min-w-0">
+                                                    <p class="font-medium text-gray-700 text-sm">{{ $variant->variant_name }}</p>
+                                                    <p class="text-xs text-gray-400">{{ $variant->sku ?? '-' }}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-3 py-2 text-center">
+                                            <button wire:click="quickAdjust({{ $product->id }}, 'in', {{ $variant->id }})" 
+                                                class="group cursor-pointer hover:bg-white rounded-lg px-2 py-1 transition-colors"
+                                                title="Klik untuk adjust varian">
+                                                <span @class([
+                                                    'text-base font-bold',
+                                                    'text-red-600' => $variant->stock <= 0,
+                                                    'text-yellow-600' => $variant->stock > 0 && $variant->stock <= $variant->min_stock,
+                                                    'text-gray-900' => $variant->stock > $variant->min_stock,
+                                                ])>{{ $variant->stock }}</span>
+                                                <span class="block text-[10px] text-gray-400">min {{ $variant->min_stock }}</span>
+                                            </button>
+                                        </td>
+                                        <td class="px-3 py-2">
+                                            <div class="flex items-center justify-center gap-1">
+                                                <button wire:click="quickDecrementVariant({{ $variant->id }})" 
+                                                    @disabled($variant->stock <= 0)
+                                                    @class([
+                                                        'w-6 h-6 rounded text-xs font-bold transition-all',
+                                                        'bg-red-50 text-red-600 hover:bg-red-100' => $variant->stock > 0,
+                                                        'bg-gray-100 text-gray-300 cursor-not-allowed' => $variant->stock <= 0,
+                                                    ])>−</button>
+                                                <button wire:click="quickIncrementVariant({{ $variant->id }})" 
+                                                    class="w-6 h-6 rounded bg-green-50 text-green-600 hover:bg-green-100 text-xs font-bold transition-all">+</button>
+                                            </div>
+                                        </td>
+                                        <td class="px-3 py-2 text-right text-sm">
+                                            <p class="font-medium text-gray-700">Rp {{ number_format($variant->price, 0, ',', '.') }}</p>
+                                            <p class="text-xs text-gray-400">{{ number_format($variant->cost_price, 0, ',', '.') }}</p>
+                                        </td>
+                                        <td class="px-3 py-2 text-right text-sm">
+                                            @php 
+                                                $varValue = $variant->stock * $variant->price;
+                                                $varProfit = $variant->stock * ($variant->price - $variant->cost_price);
+                                            @endphp
+                                            <p class="font-medium text-gray-700">Rp {{ number_format($varValue, 0, ',', '.') }}</p>
+                                            <p class="text-xs {{ $varProfit >= 0 ? 'text-green-600' : 'text-red-600' }}">
+                                                {{ $varProfit >= 0 ? '+' : '' }}{{ number_format($varProfit, 0, ',', '.') }}
+                                            </p>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @endif
                         @empty
                             <tr>
-                                <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="7" class="px-4 py-8 text-center text-gray-500">
                                     <x-ui.icon name="cube" class="w-8 h-8 mx-auto mb-2 text-gray-300" />
                                     <p>Tidak ada produk</p>
                                 </td>
@@ -205,36 +328,108 @@
             {{-- Mobile View --}}
             <div class="sm:hidden divide-y divide-gray-100">
                 @forelse($this->products as $product)
-                    <div wire:key="pm-{{ $product->id }}" class="p-3 flex items-center gap-3">
-                        <input type="checkbox" wire:click="toggleProductSelection({{ $product->id }})"
-                            @checked(in_array($product->id, $selectedProducts))
-                            class="rounded border-gray-300 text-primary-600">
+                    {{-- Product Card --}}
+                    <div wire:key="pm-{{ $product->id }}" @class([
+                        'transition-colors',
+                        'bg-primary-50/30' => in_array($product->id, $expandedProducts) && $product->has_variants,
+                    ])>
+                        <div class="p-3 flex items-center gap-3">
+                            @if(!$product->has_variants)
+                                <input type="checkbox" wire:click="toggleProductSelection({{ $product->id }})"
+                                    @checked(in_array($product->id, $selectedProducts))
+                                    class="rounded border-gray-300 text-primary-600 flex-shrink-0">
+                            @elseif($product->has_variants)
+                                <button wire:click="toggleExpand({{ $product->id }})" 
+                                    class="w-6 h-6 rounded flex items-center justify-center hover:bg-gray-100 flex-shrink-0">
+                                    <x-ui.icon :name="in_array($product->id, $expandedProducts) ? 'chevron-down' : 'chevron-right'" 
+                                        class="w-4 h-4 text-gray-500" />
+                                </button>
+                            @endif
+                            
+                            @if($product->image)
+                                <img src="{{ $product->image_thumbnail_url }}" class="w-10 h-10 rounded-lg object-cover flex-shrink-0" loading="lazy">
+                            @else
+                                <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                                    <x-ui.icon name="cube" class="w-5 h-5 text-gray-400" />
+                                </div>
+                            @endif
+                            
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-1.5">
+                                    <p class="font-medium text-sm truncate">{{ $product->name }}</p>
+                                    @if($product->has_variants)
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-700 flex-shrink-0">
+                                            {{ $product->variants->count() }}
+                                        </span>
+                                    @endif
+                                </div>
+                                <p class="text-xs text-gray-500">
+                                    @if($product->has_variants)
+                                        {{ $product->display_price }}
+                                    @else
+                                        Rp {{ number_format($product->price, 0, ',', '.') }}
+                                    @endif
+                                </p>
+                            </div>
+                            
+                            @if($product->has_variants)
+                                <div class="flex items-center gap-2 flex-shrink-0">
+                                    <button wire:click="toggleExpand({{ $product->id }})" @class([
+                                        'px-3 py-1.5 text-center font-bold rounded-lg',
+                                        'text-red-600 bg-red-50' => $product->total_stock <= 0,
+                                        'text-yellow-600 bg-yellow-50' => $product->total_stock > 0 && $product->total_stock <= $product->min_stock,
+                                        'text-gray-900 bg-gray-100' => $product->total_stock > $product->min_stock,
+                                    ])>
+                                        <span class="text-base">{{ $product->total_stock }}</span>
+                                        <span class="block text-[10px] font-normal text-gray-500">total</span>
+                                    </button>
+                                </div>
+                            @else
+                                <div class="flex items-center gap-2 flex-shrink-0">
+                                    <button wire:click="quickDecrement({{ $product->id }})" @disabled($product->stock <= 0)
+                                        class="w-8 h-8 rounded-lg bg-red-50 text-red-600 font-bold disabled:opacity-50">−</button>
+                                    <button wire:click="quickAdjust({{ $product->id }}, 'in')" @class([
+                                        'w-10 text-center font-bold',
+                                        'text-red-600' => $product->stock <= 0,
+                                        'text-yellow-600' => $product->stock > 0 && $product->stock <= $product->min_stock,
+                                        'text-gray-900' => $product->stock > $product->min_stock,
+                                    ])>{{ $product->stock }}</button>
+                                    <button wire:click="quickIncrement({{ $product->id }})" 
+                                        class="w-8 h-8 rounded-lg bg-green-50 text-green-600 font-bold">+</button>
+                                </div>
+                            @endif
+                        </div>
                         
-                        @if($product->image)
-                            <img src="{{ $product->image_thumbnail_url }}" class="w-10 h-10 rounded-lg object-cover" loading="lazy">
-                        @else
-                            <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
-                                <x-ui.icon name="cube" class="w-5 h-5 text-gray-400" />
+                        {{-- Mobile Variant List (Expandable) --}}
+                        @if($product->has_variants && in_array($product->id, $expandedProducts))
+                            <div class="border-t border-gray-100 bg-gray-50/70">
+                                @foreach($product->variants as $variant)
+                                    <div wire:key="vm-{{ $variant->id }}" class="px-3 py-2.5 flex items-center gap-3 border-b border-gray-100 last:border-b-0">
+                                        <div class="w-6 flex-shrink-0 flex justify-center">
+                                            <div class="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
+                                        </div>
+                                        
+                                        <div class="flex-1 min-w-0">
+                                            <p class="font-medium text-sm text-gray-700 truncate">{{ $variant->variant_name }}</p>
+                                            <p class="text-xs text-gray-500">Rp {{ number_format($variant->price, 0, ',', '.') }}</p>
+                                        </div>
+                                        
+                                        <div class="flex items-center gap-2 flex-shrink-0">
+                                            <button wire:click="quickDecrementVariant({{ $variant->id }})" @disabled($variant->stock <= 0)
+                                                class="w-7 h-7 rounded bg-red-50 text-red-600 font-bold text-sm disabled:opacity-50">−</button>
+                                            <button wire:click="quickAdjust({{ $product->id }}, 'in', {{ $variant->id }})" @class([
+                                                'w-9 text-center font-bold text-sm',
+                                                'text-red-600' => $variant->stock <= 0,
+                                                'text-yellow-600' => $variant->stock > 0 && $variant->stock <= $variant->min_stock,
+                                                'text-gray-900' => $variant->stock > $variant->min_stock,
+                                            ])>{{ $variant->stock }}</button>
+                                            <button wire:click="quickIncrementVariant({{ $variant->id }})" 
+                                                class="w-7 h-7 rounded bg-green-50 text-green-600 font-bold text-sm">+</button>
+                                        </div>
+                                    </div>
+                                @endforeach
                             </div>
                         @endif
-                        
-                        <div class="flex-1 min-w-0">
-                            <p class="font-medium text-sm truncate">{{ $product->name }}</p>
-                            <p class="text-xs text-gray-500">Rp {{ number_format($product->price, 0, ',', '.') }}</p>
-                        </div>
-                        
-                        <div class="flex items-center gap-2">
-                            <button wire:click="quickDecrement({{ $product->id }})" @disabled($product->stock <= 0)
-                                class="w-8 h-8 rounded-lg bg-red-50 text-red-600 font-bold disabled:opacity-50">−</button>
-                            <button wire:click="quickAdjust({{ $product->id }}, 'in')" @class([
-                                'w-10 text-center font-bold',
-                                'text-red-600' => $product->stock <= 0,
-                                'text-yellow-600' => $product->stock > 0 && $product->stock <= $product->min_stock,
-                                'text-gray-900' => $product->stock > $product->min_stock,
-                            ])>{{ $product->stock }}</button>
-                            <button wire:click="quickIncrement({{ $product->id }})" 
-                                class="w-8 h-8 rounded-lg bg-green-50 text-green-600 font-bold">+</button>
-                        </div>
                     </div>
                 @empty
                     <div class="p-8 text-center text-gray-500">Tidak ada produk</div>
@@ -263,7 +458,14 @@
                             <x-ui.icon :name="$adj->type === 'in' ? 'arrow-up' : 'arrow-down'" class="w-4 h-4" />
                         </div>
                         <div class="flex-1 min-w-0">
-                            <p class="font-medium text-sm truncate">{{ $adj->product->name ?? '-' }}</p>
+                            <div class="flex items-center gap-1.5">
+                                <p class="font-medium text-sm truncate">{{ $adj->product->name ?? '-' }}</p>
+                                @if($adj->variant)
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-700 flex-shrink-0">
+                                        {{ $adj->variant->variant_name }}
+                                    </span>
+                                @endif
+                            </div>
                             <p class="text-xs text-gray-500 truncate">{{ $adj->reason }}</p>
                         </div>
                         <div class="text-right flex-shrink-0">
@@ -295,25 +497,55 @@
         </div>
     @endif
 
-    {{-- Quick Adjust Modal - Simplified --}}
+    {{-- Quick Adjust Modal - Support Variants --}}
     @if($showAdjustModal && $this->selectedProduct)
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4" x-data x-init="$refs.qty.focus()">
             <div class="fixed inset-0 bg-black/50" wire:click="closeAdjustModal"></div>
             <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
                 <form wire:submit="saveAdjustment">
-                    {{-- Product Header --}}
+                    {{-- Product/Variant Header --}}
                     <div class="p-4 bg-gray-50 border-b flex items-center gap-3">
                         @if($this->selectedProduct->image)
                             <img src="{{ $this->selectedProduct->image_thumbnail_url }}" class="w-10 h-10 rounded-lg object-cover">
+                        @else
+                            <div class="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center">
+                                <x-ui.icon name="cube" class="w-5 h-5 text-gray-400" />
+                            </div>
                         @endif
                         <div class="flex-1 min-w-0">
                             <p class="font-medium truncate">{{ $this->selectedProduct->name }}</p>
-                            <p class="text-sm text-gray-500">Stok: {{ $this->selectedProduct->stock }}</p>
+                            @if($this->selectedVariant)
+                                <div class="flex items-center gap-1.5">
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-700">
+                                        {{ $this->selectedVariant->variant_name }}
+                                    </span>
+                                    <span class="text-sm text-gray-500">Stok: {{ $this->selectedVariant->stock }}</span>
+                                </div>
+                            @else
+                                <p class="text-sm text-gray-500">Stok: {{ $this->selectedProduct->stock }}</p>
+                            @endif
                         </div>
                         <button type="button" wire:click="closeAdjustModal" class="text-gray-400 hover:text-gray-600">
                             <x-ui.icon name="x-mark" class="w-5 h-5" />
                         </button>
                     </div>
+
+                    {{-- Variant Selector (if product has variants but none selected) --}}
+                    @if($this->selectedProduct->has_variants && !$this->selectedVariantId)
+                        <div class="p-4 border-b bg-yellow-50">
+                            <p class="text-sm text-yellow-800 font-medium mb-2">Pilih varian:</p>
+                            <div class="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                                @foreach($this->selectedProduct->variants as $variant)
+                                    <button type="button" 
+                                        wire:click="$set('selectedVariantId', {{ $variant->id }})"
+                                        class="p-2 text-left rounded-lg border border-gray-200 bg-white hover:border-primary-500 hover:bg-primary-50 transition-colors">
+                                        <p class="font-medium text-sm truncate">{{ $variant->variant_name }}</p>
+                                        <p class="text-xs text-gray-500">Stok: {{ $variant->stock }}</p>
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
 
                     <div class="p-4 space-y-4">
                         {{-- Type Toggle --}}
@@ -341,21 +573,20 @@
                             @error('adjustQuantity')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                             
                             {{-- Preview --}}
+                            @php
+                                $currentStock = $this->selectedVariant ? $this->selectedVariant->stock : $this->selectedProduct->stock;
+                                $newStock = $adjustType === 'in' 
+                                    ? $currentStock + (int)$adjustQuantity 
+                                    : max(0, $currentStock - (int)$adjustQuantity);
+                            @endphp
                             <div class="flex items-center justify-center gap-2 mt-2 text-sm text-gray-500">
-                                {{ $this->selectedProduct->stock }}
+                                {{ $currentStock }}
                                 <x-ui.icon name="arrow-right" class="w-4 h-4" />
                                 <span @class([
                                     'font-bold',
                                     'text-green-600' => $adjustType === 'in',
                                     'text-red-600' => $adjustType === 'out',
-                                ])>
-                                    @php
-                                        $newStock = $adjustType === 'in' 
-                                            ? $this->selectedProduct->stock + (int)$adjustQuantity 
-                                            : max(0, $this->selectedProduct->stock - (int)$adjustQuantity);
-                                    @endphp
-                                    {{ $newStock }}
-                                </span>
+                                ])>{{ $newStock }}</span>
                             </div>
                         </div>
 
@@ -370,11 +601,14 @@
                     {{-- Actions --}}
                     <div class="p-4 border-t bg-gray-50 flex gap-2">
                         <button type="button" wire:click="closeAdjustModal" class="flex-1 py-3 rounded-xl bg-gray-200 text-gray-700 font-medium">Batal</button>
-                        <button type="submit" @class([
-                            'flex-1 py-3 rounded-xl text-white font-medium transition-all',
-                            'bg-green-500 hover:bg-green-600' => $adjustType === 'in',
-                            'bg-red-500 hover:bg-red-600' => $adjustType === 'out',
-                        ])>
+                        <button type="submit" 
+                            @disabled($this->selectedProduct->has_variants && !$this->selectedVariantId)
+                            @class([
+                                'flex-1 py-3 rounded-xl text-white font-medium transition-all',
+                                'bg-green-500 hover:bg-green-600' => $adjustType === 'in',
+                                'bg-red-500 hover:bg-red-600' => $adjustType === 'out',
+                                'opacity-50 cursor-not-allowed' => $this->selectedProduct->has_variants && !$this->selectedVariantId,
+                            ])>
                             <span wire:loading.remove wire:target="saveAdjustment">Simpan</span>
                             <span wire:loading wire:target="saveAdjustment">...</span>
                         </button>
