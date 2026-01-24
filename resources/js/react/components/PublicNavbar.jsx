@@ -27,17 +27,17 @@ export default function PublicNavbar() {
             <div className="max-w-7xl mx-auto">
                 <div className="relative rounded-2xl border border-border bg-background/70 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.1)] px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
                     <a href="/" className="flex items-center gap-3 group">
-                        <div className="relative w-10 h-10 flex items-center justify-center">
-                            <div className="absolute inset-0 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-xl rotate-3 transition-transform group-hover:rotate-6" />
-                            <div className="absolute inset-0 bg-background rounded-xl rotate-3 scale-[0.9]" />
-                            <span className="relative font-semibold text-xl text-foreground">S</span>
-                        </div>
+                        <img 
+                            src="/images/logo.png" 
+                            alt="SIKOPMA" 
+                            className="h-9 w-auto object-contain transition-transform group-hover:scale-105"
+                        />
                         <div className="hidden sm:flex flex-col">
                             <span className="font-semibold text-lg text-foreground tracking-tight leading-none group-hover:text-primary transition-colors">
                                 SIKOPMA
                             </span>
-                            <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground hidden sm:block">
-                                Future Store
+                            <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground hidden sm:block">
+                                UKM Kewirausahaan STIS
                             </span>
                         </div>
                     </a>

@@ -98,7 +98,7 @@ export default function StoreStatusPopover() {
                         ].join(' ')}
                     />
                     <span className="text-xs font-mono tracking-widest">
-                        {loading ? 'LOADING' : error ? 'OFFLINE' : isOpen ? 'OPEN NOW' : 'CLOSED'}
+                        {loading ? 'LOADING' : error ? 'OFFLINE' : isOpen ? 'BUKA' : 'TUTUP'}
                     </span>
                 </Button>
             </PopoverTrigger>

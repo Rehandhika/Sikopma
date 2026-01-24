@@ -41,9 +41,7 @@
                 <!-- Logo -->
                 <div class="flex items-center justify-between px-4 py-5 border-b border-gray-200">
                     <div class="flex items-center space-x-2">
-                        <div class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <span class="text-white font-bold text-sm">S</span>
-                        </div>
+                        <img src="{{ asset('images/logo.png') }}" alt="SIKOPMA" class="w-8 h-8 rounded-lg flex-shrink-0 object-cover">
                         <span class="text-xl font-semibold text-gray-900">SIKOPMA</span>
                     </div>
                     <button @click="sidebarOpen = false" 

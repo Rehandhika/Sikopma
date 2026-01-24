@@ -5,10 +5,8 @@
       <!-- Header -->
       <div class="px-8 pt-10 pb-6 text-center">
         <!-- Logo -->
-        <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-blue-600 rounded-2xl shadow-md mb-4">
-          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-          </svg>
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl shadow-md mb-4 overflow-hidden">
+          <img src="{{ asset('images/logo.png') }}" alt="SIKOPMA" class="w-16 h-16 object-cover">
         </div>
         <h1 class="text-3xl font-bold text-gray-900 mb-1">Masuk</h1>
         <p class="text-sm text-gray-500">Gunakan akun Sipadu Anda</p>

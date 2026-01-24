@@ -29,27 +29,6 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
         }
-        .glow-pulse {
-            animation: glow-pulse 2s ease-in-out infinite;
-        }
-        @keyframes glow-pulse {
-            0%, 100% { box-shadow: 0 0 20px rgba(251, 191, 36, 0.3); }
-            50% { box-shadow: 0 0 40px rgba(251, 191, 36, 0.5); }
-        }
-        .gear-spin {
-            animation: gear-spin 8s linear infinite;
-        }
-        @keyframes gear-spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        .gear-spin-reverse {
-            animation: gear-spin-reverse 6s linear infinite;
-        }
-        @keyframes gear-spin-reverse {
-            from { transform: rotate(360deg); }
-            to { transform: rotate(0deg); }
-        }
     </style>
 </head>
 <body class="bg-slate-950 font-sans antialiased text-slate-300 selection:bg-amber-500/30 selection:text-amber-200">
@@ -71,9 +50,7 @@
                     <!-- Brand / Logo -->
                     <div class="flex items-center gap-3 group">
                         <div class="relative w-10 h-10 flex items-center justify-center">
-                            <div class="absolute inset-0 bg-gradient-to-tr from-amber-600 to-orange-600 rounded-xl rotate-3"></div>
-                            <div class="absolute inset-0 bg-slate-950 rounded-xl rotate-3 scale-[0.9]"></div>
-                            <span class="relative font-grotesk font-bold text-xl text-white">S</span>
+                            <img src="{{ asset('images/logo.png') }}" alt="SIKOPMA" class="w-10 h-10 rounded-xl object-cover shadow-lg">
                         </div>
                         <div class="flex flex-col">
                             <span class="font-grotesk font-bold text-lg text-white tracking-tight leading-none">SIKOPMA</span>
@@ -106,25 +83,11 @@
         <main class="flex-1 flex items-center justify-center px-4 py-12">
             <div class="w-full max-w-lg text-center">
                 
-                <!-- Animated Gear Icon -->
+                <!-- Logo with Glow Effect -->
                 <div class="relative w-32 h-32 mx-auto mb-8">
-                    <!-- Outer gear -->
-                    <div class="absolute inset-0 gear-spin">
-                        <svg class="w-full h-full text-amber-500/30" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97 0-.33-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1 0 .33.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.26 1.17-.59 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66Z"/>
-                        </svg>
-                    </div>
-                    <!-- Inner gear -->
-                    <div class="absolute inset-4 gear-spin-reverse">
-                        <svg class="w-full h-full text-amber-500/50" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97 0-.33-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1 0 .33.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.26 1.17-.59 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66Z"/>
-                        </svg>
-                    </div>
-                    <!-- Center icon -->
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <div class="w-12 h-12 bg-amber-500/20 rounded-full flex items-center justify-center glow-pulse">
-                            <i class="fas fa-wrench text-amber-400 text-xl"></i>
-                        </div>
+                    <div class="absolute inset-0 bg-amber-500/20 rounded-full blur-xl animate-pulse"></div>
+                    <div class="relative w-full h-full flex items-center justify-center">
+                        <img src="{{ asset('images/logo.png') }}" alt="SIKOPMA" class="w-24 h-24 rounded-2xl object-cover shadow-2xl">
                     </div>
                 </div>
 

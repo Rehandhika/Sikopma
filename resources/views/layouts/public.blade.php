@@ -71,14 +71,10 @@
                     
                     <!-- Left: Brand / Logo -->
                     <a href="{{ route('home') }}" class="flex items-center gap-3 group z-10 w-1/3" wire:navigate>
-                        <div class="relative w-10 h-10 flex items-center justify-center">
-                            <div class="absolute inset-0 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-xl rotate-3 transition-transform group-hover:rotate-6"></div>
-                            <div class="absolute inset-0 bg-slate-950 rounded-xl rotate-3 scale-[0.9]"></div>
-                            <span class="relative font-grotesk font-bold text-xl text-white">S</span>
-                        </div>
+                        <img src="{{ asset('images/logo.png') }}" alt="SIKOPMA" class="h-9 w-auto object-contain transition-transform group-hover:scale-105">
                         <div class="flex flex-col">
                             <span class="font-grotesk font-bold text-lg text-white tracking-tight leading-none group-hover:text-indigo-300 transition-colors">SIKOPMA</span>
-                            <span class="text-[10px] uppercase tracking-[0.2em] text-slate-500 hidden sm:block">Future Store</span>
+                            <span class="text-[10px] uppercase tracking-[0.15em] text-slate-500 hidden sm:block">UKM Kewirausahaan STIS</span>
                         </div>
                     </a>
 

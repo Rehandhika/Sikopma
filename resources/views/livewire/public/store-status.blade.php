@@ -29,7 +29,7 @@
             <!-- Text Label -->
             <div class="flex flex-col items-start leading-none">
                 <span class="text-[9px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">Status</span>
-                <span x-text="isOpen ? 'OPEN NOW' : 'CLOSED'" 
+                <span x-text="isOpen ? 'BUKA' : 'TUTUP'" 
                       class="font-mono text-xs font-bold tracking-widest glow-text"
                       :class="isOpen ? 'text-green-300 drop-shadow-[0_0_5px_rgba(74,222,128,0.5)]' : 'text-red-400 drop-shadow-[0_0_5px_rgba(248,113,113,0.5)]'">
                 </span>
