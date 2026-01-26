@@ -371,47 +371,7 @@ export default function ProductDetailPage({ slug, initialData }) {
                         </div>
                     </div>
 
-                    <div className="mt-8 lg:mt-12 grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
-                        <Card className="bg-card/40 border-border/60 rounded-2xl text-center">
-                            <CardContent className="p-6 space-y-2">
-                                <Clock className="h-6 w-6 text-blue-400 mx-auto" />
-                                <div className="text-foreground font-medium">Jam Operasional</div>
-                                <div className="text-sm text-muted-foreground">
-                                    Lihat detail di halaman Tentang
-                                </div>
-                                <Button asChild variant="ghost" className="text-primary">
-                                    <a href="/tentang">Buka Tentang</a>
-                                </Button>
-                            </CardContent>
-                        </Card>
 
-                        <Card className="bg-card/40 border-border/60 rounded-2xl text-center">
-                            <CardContent className="p-6 space-y-2">
-                                <MapPin className="h-6 w-6 text-blue-400 mx-auto" />
-                                <div className="text-foreground font-medium">Lokasi</div>
-                                <div className="text-sm text-muted-foreground">
-                                    {address ?? 'Alamat belum tersedia'}
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="bg-card/40 border-border/60 rounded-2xl text-center">
-                            <CardContent className="p-6 space-y-2">
-                                <Headset className="h-6 w-6 text-blue-400 mx-auto" />
-                                <div className="text-foreground font-medium">Bantuan</div>
-                                <div className="text-sm text-muted-foreground">
-                                    {whatsapp ? `WhatsApp: ${whatsapp}` : 'Hubungi admin'}
-                                </div>
-                                {waDigits ? (
-                                    <Button asChild variant="ghost" className="text-primary">
-                                        <a href={`https://wa.me/${waDigits}`} target="_blank" rel="noreferrer">
-                                            Chat WhatsApp
-                                        </a>
-                                    </Button>
-                                ) : null}
-                            </CardContent>
-                        </Card>
-                    </div>
                 </div>
             </div>
         </PublicLayout>

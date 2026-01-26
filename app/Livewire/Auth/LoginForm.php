@@ -16,7 +16,6 @@ class LoginForm extends Component
 {
     public $nim = '';
     public $password = '';
-    public $remember = false;
 
     protected $rules = [
         'nim' => 'required|string|min:8|max:20',
@@ -52,7 +51,7 @@ class LoginForm extends Component
             'status' => 'active',
         ];
 
-        if (Auth::attempt($credentials, $this->remember)) {
+        if (Auth::attempt($credentials, false)) {
             // Clear rate limiter
             RateLimiter::clear($key);
             

@@ -132,16 +132,18 @@
 
         <!-- Minimal Footer -->
         <footer class="mt-auto border-t border-white/5 bg-slate-950/80 backdrop-blur-lg">
-            <div class="max-w-7xl mx-auto px-6 py-6">
-                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="max-w-7xl mx-auto px-4 py-6">
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-slate-500">
                     <div class="flex items-center gap-2">
-                        <span class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
-                        <span class="text-xs font-grotesk text-slate-500 tracking-widest uppercase">SIKOPMA System v3.0</span>
+                        <span class="w-1.5 h-1.5 bg-blue-500/60 rounded-full"></span>
+                        <span class="tracking-wide">SIKOPMA</span>
+                        <span class="text-slate-700">•</span>
+                        <span>Divisi IT UKM Kewirausahaan STIS</span>
                     </div>
                     
-                    <p class="text-xs text-slate-600 font-mono">
-                        {{ date('Y') }} &copy; Developed for Students
-                    </p>
+                    <span class="font-mono text-slate-600">
+                        © {{ date('Y') }}
+                    </span>
                 </div>
             </div>
         </footer>
