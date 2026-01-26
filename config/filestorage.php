@@ -14,26 +14,28 @@ return [
         'product' => [
             'disk' => 'public',
             'base_path' => 'products',
-            'max_size' => 5 * 1024 * 1024, // 5MB
+            'max_size' => 10 * 1024 * 1024, // 10MB - increased for high quality images
             'allowed_mimes' => ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
-            'convert_to_webp' => true,
+            'convert_to_webp' => false, // Disabled to preserve original quality
+            'preserve_original' => true, // Keep original without compression
             'variants' => [
-                'thumbnail' => ['width' => 150, 'height' => 150, 'quality' => 70],
-                'medium' => ['width' => 400, 'height' => 400, 'quality' => 80],
-                'large' => ['width' => 800, 'height' => 800, 'quality' => 85],
+                'thumbnail' => ['width' => 150, 'height' => 150, 'quality' => 100],
+                'medium' => ['width' => 400, 'height' => 400, 'quality' => 100],
+                'large' => ['width' => 800, 'height' => 800, 'quality' => 100],
             ],
         ],
 
         'banner' => [
             'disk' => 'public',
             'base_path' => 'banners',
-            'max_size' => 5 * 1024 * 1024, // 5MB
+            'max_size' => 10 * 1024 * 1024, // 10MB - increased for high quality banners
             'allowed_mimes' => ['image/jpeg', 'image/png'],
-            'convert_to_webp' => false, // Keep as JPEG for compatibility
+            'convert_to_webp' => false, // Keep original format
+            'preserve_original' => true, // Keep original without compression
             'variants' => [
-                'desktop' => ['width' => 1920, 'quality' => 80],
-                'tablet' => ['width' => 768, 'quality' => 80],
-                'mobile' => ['width' => 480, 'quality' => 80],
+                'desktop' => ['width' => 1920, 'quality' => 100],
+                'tablet' => ['width' => 768, 'quality' => 100],
+                'mobile' => ['width' => 480, 'quality' => 100],
             ],
         ],
 

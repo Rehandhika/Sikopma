@@ -166,6 +166,9 @@ class ImageProcessingService implements ImageProcessingServiceInterface
             );
         }
 
+        // Check if we should preserve original without any processing
+        $preserveOriginal = $config['preserve_original'] ?? false;
+        
         // Get original image info
         $imageInfo = @getimagesize($sourcePath);
         if ($imageInfo === false) {
@@ -175,6 +178,33 @@ class ImageProcessingService implements ImageProcessingServiceInterface
         $origWidth = $imageInfo[0];
         $origHeight = $imageInfo[1];
         $imageType = $imageInfo[2];
+
+        // If preserve_original is true, just copy the file without processing
+        if ($preserveOriginal) {
+            // Ensure target directory exists
+            $targetDir = dirname($targetPath);
+            if (!is_dir($targetDir)) {
+                mkdir($targetDir, 0755, true);
+            }
+
+            // Copy original file without any modification
+            copy($sourcePath, $targetPath);
+            
+            $fileSize = filesize($targetPath);
+            $outputFormat = $this->getFormatFromImageType($imageType);
+            $outputMime = $this->getMimeFromImageType($imageType);
+
+            return new ProcessedImage(
+                path: $targetPath,
+                width: $origWidth,
+                height: $origHeight,
+                size: $fileSize,
+                mimeType: $outputMime,
+                format: $outputFormat,
+                wasConverted: false,
+                wasResized: false
+            );
+        }
 
         // Create source image
         $sourceImage = $this->createImageFromFile($sourcePath, $imageType);
@@ -383,6 +413,8 @@ class ImageProcessingService implements ImageProcessingServiceInterface
 
     /**
      * Generate a single variant.
+     * 
+     * Note: quality 100 = maximum quality (minimal compression for JPEG/WebP)
      */
     protected function generateSingleVariant(
         $sourceImage,
