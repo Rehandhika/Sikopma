@@ -2,13 +2,12 @@
 
 namespace App\Services;
 
-use App\Models\Attendance;
-use App\Models\ScheduleAssignment;
-use App\Models\Penalty;
-use App\Models\LeaveRequest;
-use App\Repositories\AttendanceRepository;
 use App\Exceptions\BusinessException;
-use App\Exceptions\ScheduleConflictException;
+use App\Models\Attendance;
+use App\Models\LeaveRequest;
+use App\Models\Penalty;
+use App\Models\ScheduleAssignment;
+use App\Repositories\AttendanceRepository;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -16,6 +15,7 @@ use Illuminate\Support\Facades\Log;
 class AttendanceService
 {
     protected AttendanceRepository $repository;
+
     protected PenaltyService $penaltyService;
 
     public function __construct(AttendanceRepository $repository, PenaltyService $penaltyService)
@@ -27,10 +27,6 @@ class AttendanceService
     /**
      * Process check-in with validation and penalty calculation
      *
-     * @param int $userId
-     * @param int $scheduleAssignmentId
-     * @param string|null $notes
-     * @return Attendance
      * @throws \Exception
      */
     public function checkIn(int $userId, int $scheduleAssignmentId, ?string $notes = null): Attendance
@@ -38,18 +34,18 @@ class AttendanceService
         try {
             // Validate schedule exists and belongs to user
             $schedule = ScheduleAssignment::findOrFail($scheduleAssignmentId);
-            
+
             if ($schedule->user_id !== $userId) {
                 Log::warning('Unauthorized check-in attempt', [
                     'user_id' => $userId,
                     'schedule_id' => $scheduleAssignmentId,
-                    'schedule_user_id' => $schedule->user_id
+                    'schedule_user_id' => $schedule->user_id,
                 ]);
                 throw new BusinessException('Jadwal tidak sesuai dengan user.', 'UNAUTHORIZED_SCHEDULE');
             }
 
             // Validate schedule date is today
-            if (!$schedule->date->isToday()) {
+            if (! $schedule->date->isToday()) {
                 throw new BusinessException('Hanya dapat check-in untuk jadwal hari ini.', 'INVALID_SCHEDULE_DATE');
             }
 
@@ -63,7 +59,7 @@ class AttendanceService
             }
 
             $checkInTime = now();
-            
+
             // Check if user has approved leave for this date
             if ($this->hasApprovedLeave($userId, $checkInTime->toDateString())) {
                 // User has approved leave, mark as excused without penalty
@@ -97,7 +93,7 @@ class AttendanceService
             $statusData = $this->determineStatus($checkInTime, $schedule);
             $status = $statusData['status'];
             $lateMinutes = $statusData['late_minutes'];
-            
+
             // Create attendance record within transaction
             return DB::transaction(function () use ($userId, $scheduleAssignmentId, $notes, $checkInTime, $status, $lateMinutes, $schedule) {
                 $attendance = $this->repository->create([
@@ -139,7 +135,7 @@ class AttendanceService
                 'user_id' => $userId,
                 'schedule_assignment_id' => $scheduleAssignmentId,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
             throw new BusinessException('Terjadi kesalahan saat melakukan check-in. Silakan coba lagi.', 'CHECK_IN_FAILED');
         }
@@ -148,14 +144,12 @@ class AttendanceService
     /**
      * Check if user has approved leave for the given date
      *
-     * @param int $userId
-     * @param string|Carbon $date
-     * @return bool
+     * @param  string|Carbon  $date
      */
     public function hasApprovedLeave(int $userId, $date): bool
     {
         $dateCarbon = $date instanceof Carbon ? $date : Carbon::parse($date);
-        
+
         return LeaveRequest::where('user_id', $userId)
             ->where('status', 'approved')
             ->where('start_date', '<=', $dateCarbon)
@@ -167,18 +161,16 @@ class AttendanceService
      * Determine attendance status based on check-in time
      * Returns array with status and late_minutes
      *
-     * @param Carbon $checkInTime
-     * @param ScheduleAssignment $schedule
      * @return array ['status' => string, 'late_minutes' => int]
      */
     public function determineStatus(Carbon $checkInTime, ScheduleAssignment $schedule): array
     {
         $scheduleStart = $this->getScheduleStartTime($schedule);
         $gracePeriod = 5; // 5 minutes grace period
-        
+
         // Calculate minutes late (negative if early)
         $minutesLate = $checkInTime->diffInMinutes($scheduleStart, false);
-        
+
         // Within grace period (0-5 minutes late)
         if ($minutesLate <= $gracePeriod) {
             return [
@@ -186,7 +178,7 @@ class AttendanceService
                 'late_minutes' => 0,
             ];
         }
-        
+
         // Late (more than 5 minutes)
         return [
             'status' => 'late',
@@ -200,24 +192,19 @@ class AttendanceService
      * 6-15 menit = late, 5 poin
      * 16-30 menit = late, 10 poin
      * >30 menit = late, 15 poin
-     *
-     * @param int $userId
-     * @param Attendance $attendance
-     * @param int $lateMinutes
-     * @return void
      */
     protected function applyLatePenalty(int $userId, Attendance $attendance, int $lateMinutes): void
     {
         // Determine penalty type and points based on late minutes
         if ($lateMinutes >= 6 && $lateMinutes <= 15) {
             $penaltyTypeCode = 'LATE_MINOR';
-            $description = "Terlambat {$lateMinutes} menit pada " . $attendance->check_in->format('d/m/Y H:i');
+            $description = "Terlambat {$lateMinutes} menit pada ".$attendance->check_in->format('d/m/Y H:i');
         } elseif ($lateMinutes >= 16 && $lateMinutes <= 30) {
             $penaltyTypeCode = 'LATE_MODERATE';
-            $description = "Terlambat {$lateMinutes} menit pada " . $attendance->check_in->format('d/m/Y H:i');
+            $description = "Terlambat {$lateMinutes} menit pada ".$attendance->check_in->format('d/m/Y H:i');
         } else { // > 30 minutes
             $penaltyTypeCode = 'LATE_SEVERE';
-            $description = "Terlambat {$lateMinutes} menit pada " . $attendance->check_in->format('d/m/Y H:i');
+            $description = "Terlambat {$lateMinutes} menit pada ".$attendance->check_in->format('d/m/Y H:i');
         }
 
         // Create penalty using PenaltyService with automatic threshold checking
@@ -234,16 +221,13 @@ class AttendanceService
     /**
      * Process check-out
      *
-     * @param int $attendanceId
-     * @param string|null $notes
-     * @return Attendance
      * @throws \Exception
      */
     public function checkOut(int $attendanceId, ?string $notes = null): Attendance
     {
         $attendance = Attendance::findOrFail($attendanceId);
 
-        if (!$attendance->check_in) {
+        if (! $attendance->check_in) {
             throw new \Exception('Belum check-in.');
         }
 
@@ -266,14 +250,12 @@ class AttendanceService
      * Mark absent for users who didn't check in
      * This method is called by ProcessAbsencesJob
      *
-     * @param ScheduleAssignment $assignment
-     * @return Attendance
      * @throws Exception
      */
     public function markAbsent(ScheduleAssignment $assignment): Attendance
     {
         // Validate assignment exists and is valid
-        if (!$assignment->exists) {
+        if (! $assignment->exists) {
             throw new Exception('Invalid schedule assignment');
         }
 
@@ -299,7 +281,7 @@ class AttendanceService
             $this->penaltyService->createPenalty(
                 $assignment->user_id,
                 'ABSENT',
-                "Tidak hadir pada " . $assignment->date->format('d/m/Y') . " sesi " . $assignment->session,
+                'Tidak hadir pada '.$assignment->date->format('d/m/Y').' sesi '.$assignment->session,
                 'attendance',
                 $attendance->id,
                 $assignment->date
@@ -320,11 +302,6 @@ class AttendanceService
 
     /**
      * Get attendance summary for a user
-     *
-     * @param int $userId
-     * @param Carbon|null $startDate
-     * @param Carbon|null $endDate
-     * @return array
      */
     public function getUserSummary(int $userId, ?Carbon $startDate = null, ?Carbon $endDate = null): array
     {
@@ -343,6 +320,7 @@ class AttendanceService
         ];
 
         $timeString = $sessionTimes[$schedule->session] ?? '07:30';
+
         return $schedule->date->copy()->setTimeFromTimeString($timeString);
     }
 
@@ -366,7 +344,7 @@ class AttendanceService
             'present_count' => $attendances->where('status', 'present')->count(),
             'late_count' => $attendances->where('status', 'late')->count(),
             'absent_count' => $attendances->where('status', 'absent')->count(),
-            'attendance_rate' => $attendances->count() > 0 
+            'attendance_rate' => $attendances->count() > 0
                 ? round(($attendances->whereIn('status', ['present', 'late'])->count() / $attendances->count()) * 100, 2)
                 : 0,
             'total_penalties' => $attendances->sum(function ($attendance) {
@@ -382,14 +360,14 @@ class AttendanceService
     public function validatePhotoProof(string $photoPath): bool
     {
         try {
-            if (!\Storage::disk('public')->exists($photoPath)) {
+            if (! \Storage::disk('public')->exists($photoPath)) {
                 return false;
             }
 
             $fileInfo = pathinfo($photoPath);
             $allowedExtensions = ['jpg', 'jpeg', 'png'];
-            
-            if (!in_array(strtolower($fileInfo['extension']), $allowedExtensions)) {
+
+            if (! in_array(strtolower($fileInfo['extension']), $allowedExtensions)) {
                 return false;
             }
 
@@ -405,8 +383,9 @@ class AttendanceService
         } catch (\Exception $e) {
             Log::error('Failed to validate photo proof', [
                 'photo_path' => $photoPath,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }

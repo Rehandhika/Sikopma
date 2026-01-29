@@ -24,7 +24,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register DateTimeSettingsService as singleton
         $this->app->singleton(DateTimeSettingsService::class, function ($app) {
-            return new DateTimeSettingsService();
+            return new DateTimeSettingsService;
         });
     }
 
@@ -34,7 +34,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Attendance::observe(AttendanceObserver::class);
-        
+
         // Register event listeners for permission cache invalidation
         // These handle Spatie Permission events when roles/permissions change
         // @see Requirements 2.3, 8.1, 8.2
@@ -42,10 +42,10 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(RoleDetached::class, InvalidatePermissionCacheOnRoleChange::class);
         Event::listen(PermissionAttached::class, InvalidatePermissionCacheOnPermissionChange::class);
         Event::listen(PermissionDetached::class, InvalidatePermissionCacheOnPermissionChange::class);
-        
+
         // Register User observer for additional cache invalidation coverage
         \App\Models\User::observe(\App\Observers\UserRoleObserver::class);
-        
+
         // Register Blade directives for datetime formatting
         $this->registerDateTimeDirectives();
     }
@@ -93,6 +93,7 @@ class AppServiceProvider extends ServiceProvider
         // @systemNow - Get current time in system timezone
         Blade::directive('systemNow', function ($expression) {
             $format = $expression ?: "'Y-m-d H:i:s'";
+
             return "<?php echo app(\App\Services\DateTimeSettingsService::class)->now()->format($format); ?>";
         });
     }

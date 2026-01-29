@@ -18,11 +18,11 @@ class DatabaseSeeder extends Seeder
             StoreSettingSeeder::class,
             ScheduleConfigurationSeeder::class,
             PaymentConfigurationSeeder::class,
-            
+
             // Users, Roles & Permissions
             RolePermissionSeeder::class,
             UserSeeder::class,
-            
+
             // Products dari Katalog
             KatalogSeeder::class,
         ]);

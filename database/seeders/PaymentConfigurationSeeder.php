@@ -10,7 +10,7 @@ class PaymentConfigurationSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     * 
+     *
      * Seeds default payment configuration:
      * - Cash: enabled by default
      * - Transfer: disabled by default

@@ -2,8 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\SwapRequest;
 use App\Models\ScheduleChangeRequest;
+use App\Models\SwapRequest;
 use App\Models\User;
 
 class SwapRequestPolicy

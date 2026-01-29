@@ -13,12 +13,12 @@ return new class extends Migration
     {
         Schema::create('store_settings', function (Blueprint $table) {
             $table->id();
-            
+
             // Real-Time Status
             $table->boolean('is_open')->default(false);
             $table->text('status_reason')->nullable();
             $table->timestamp('last_status_change')->nullable();
-            
+
             // Mode Control
             $table->boolean('auto_status')->default(true);
             $table->boolean('manual_mode')->default(false);
@@ -28,19 +28,19 @@ return new class extends Migration
             $table->boolean('manual_open_override')->default(false);
             $table->foreignId('manual_set_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamp('manual_set_at')->nullable();
-            
+
             // Operating Configuration
             $table->json('operating_hours');
-            
+
             // Contact Information
             $table->string('contact_phone', 20)->nullable();
             $table->string('contact_email', 100)->nullable();
             $table->text('contact_address')->nullable();
             $table->string('contact_whatsapp', 20)->nullable();
             $table->text('about_text')->nullable();
-            
+
             $table->timestamps();
-            
+
             // Indexes for performance
             $table->index(['is_open', 'manual_mode'], 'idx_store_status');
         });

@@ -11,7 +11,7 @@ use Tests\TestCase;
 
 /**
  * Unit tests for PaymentConfigurationService
- * 
+ *
  * Validates: Requirements 1.1, 1.3, 1.4, 6.1, 6.2
  */
 class PaymentConfigurationServiceTest extends TestCase
@@ -23,7 +23,7 @@ class PaymentConfigurationServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new PaymentConfigurationService();
+        $this->service = new PaymentConfigurationService;
         Cache::flush();
         Storage::fake('public');
     }

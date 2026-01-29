@@ -8,8 +8,11 @@ use Livewire\Component;
 class StoreStatus extends Component
 {
     public bool $isOpen = false;
+
     public string $reason = '';
+
     public array $attendees = [];
+
     public ?string $nextOpenTime = null;
 
     /**
@@ -26,7 +29,7 @@ class StoreStatus extends Component
     public function refresh(StoreStatusService $storeStatusService): void
     {
         $status = $storeStatusService->getStatus();
-        
+
         $this->isOpen = $status['is_open'];
         $this->reason = $status['reason'];
         $this->attendees = $status['attendees'];

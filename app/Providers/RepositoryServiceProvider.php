@@ -2,20 +2,20 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
 use App\Repositories\AttendanceRepository;
+use App\Repositories\SalesRepository;
 use App\Repositories\ScheduleRepository;
 use App\Repositories\SwapRepository;
-use App\Repositories\SalesRepository;
 use App\Services\AttendanceService;
-use App\Services\NotificationService;
-use App\Services\SwapService;
 use App\Services\LeaveService;
+use App\Services\NotificationService;
 use App\Services\ScheduleService;
+use App\Services\SwapService;
+use Illuminate\Support\ServiceProvider;
 
 /**
  * Service Provider untuk Repository dan Service bindings
- * 
+ *
  * Note: Storage-related services telah dipindahkan ke FileStorageServiceProvider
  */
 class RepositoryServiceProvider extends ServiceProvider
@@ -27,19 +27,19 @@ class RepositoryServiceProvider extends ServiceProvider
     {
         // Repository bindings
         $this->app->bind(AttendanceRepository::class, function ($app) {
-            return new AttendanceRepository();
+            return new AttendanceRepository;
         });
 
         $this->app->bind(ScheduleRepository::class, function ($app) {
-            return new ScheduleRepository();
+            return new ScheduleRepository;
         });
 
         $this->app->bind(SwapRepository::class, function ($app) {
-            return new SwapRepository();
+            return new SwapRepository;
         });
 
         $this->app->bind(SalesRepository::class, function ($app) {
-            return new SalesRepository();
+            return new SalesRepository;
         });
 
         // Service bindings
@@ -51,7 +51,7 @@ class RepositoryServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(NotificationService::class, function ($app) {
-            return new NotificationService();
+            return new NotificationService;
         });
 
         $this->app->bind(SwapService::class, function ($app) {
@@ -59,7 +59,7 @@ class RepositoryServiceProvider extends ServiceProvider
         });
 
         $this->app->bind(LeaveService::class, function ($app) {
-            return new LeaveService();
+            return new LeaveService;
         });
 
         $this->app->bind(ScheduleService::class, function ($app) {

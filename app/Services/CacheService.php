@@ -8,41 +8,34 @@ class CacheService
 {
     /**
      * Clear all dashboard caches
-     *
-     * @return void
      */
     public static function clearDashboard(): void
     {
-        Cache::forget('dashboard.admin_stats.' . today()->format('Y-m-d-H'));
-        
+        Cache::forget('dashboard.admin_stats.'.today()->format('Y-m-d-H'));
+
         // Clear all user stats for today
-        $pattern = 'dashboard.user_stats.*.' . today()->format('Y-m-d');
+        $pattern = 'dashboard.user_stats.*.'.today()->format('Y-m-d');
         // Note: Laravel doesn't support wildcard delete by default
         // You may need to track keys or use Redis tags
     }
 
     /**
      * Clear user-specific dashboard cache
-     *
-     * @param int $userId
-     * @return void
      */
     public static function clearUserDashboard(int $userId): void
     {
-        Cache::forget("dashboard.user_stats.{$userId}." . today()->format('Y-m-d'));
+        Cache::forget("dashboard.user_stats.{$userId}.".today()->format('Y-m-d'));
     }
 
     /**
      * Clear product list cache
-     *
-     * @return void
      */
     public static function clearProducts(): void
     {
         Cache::forget('products.list');
         Cache::forget('products.low_stock');
         Cache::forget('products:categories');
-        
+
         // Clear paginated catalog cache (clear first 10 pages)
         for ($page = 1; $page <= 10; $page++) {
             Cache::forget("products:public:page:{$page}:search::category:");
@@ -51,13 +44,11 @@ class CacheService
 
     /**
      * Clear catalog cache for public pages
-     *
-     * @return void
      */
     public static function clearCatalog(): void
     {
         Cache::forget('products:categories');
-        
+
         // Clear paginated catalog cache (clear first 20 pages)
         for ($page = 1; $page <= 20; $page++) {
             Cache::forget("products:public:page:{$page}:search::category:");
@@ -66,30 +57,24 @@ class CacheService
 
     /**
      * Clear attendance cache
-     *
-     * @return void
      */
     public static function clearAttendance(): void
     {
         Cache::forget('attendance.today_summary');
-        Cache::forget('attendance.stats.' . today()->format('Y-m-d'));
+        Cache::forget('attendance.stats.'.today()->format('Y-m-d'));
     }
 
     /**
      * Clear sales cache
-     *
-     * @return void
      */
     public static function clearSales(): void
     {
         Cache::forget('sales.today');
-        Cache::forget('sales.stats.' . today()->format('Y-m-d'));
+        Cache::forget('sales.stats.'.today()->format('Y-m-d'));
     }
 
     /**
      * Clear all application caches
-     *
-     * @return void
      */
     public static function clearAll(): void
     {
@@ -98,15 +83,11 @@ class CacheService
 
     /**
      * Remember with default TTL from config
-     *
-     * @param string $key
-     * @param string $configKey
-     * @param callable $callback
-     * @return mixed
      */
     public static function rememberWithConfig(string $key, string $configKey, callable $callback): mixed
     {
         $ttl = now()->addMinutes(config("sikopma.cache.{$configKey}", 10));
+
         return Cache::remember($key, $ttl, $callback);
     }
 }

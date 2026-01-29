@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * CacheManager - Mengelola caching URL file.
- * 
+ *
  * Bertanggung jawab untuk:
  * - Cache URL file untuk mengurangi filesystem checks
  * - Invalidate cache saat file diupdate atau dihapus
@@ -58,6 +58,7 @@ class CacheManager implements CacheManagerInterface
 
         if ($cachedUrl !== null) {
             $this->statistics['hits']++;
+
             return $cachedUrl;
         }
 
@@ -123,7 +124,7 @@ class CacheManager implements CacheManagerInterface
         // Use cache tags if available, otherwise log warning
         if ($this->supportsCacheTags()) {
             Cache::tags([$this->getTypeTag($type)])->flush();
-            
+
             Log::info('CacheManager: Cache invalidated for type', [
                 'type' => $type,
             ]);
@@ -144,7 +145,7 @@ class CacheManager implements CacheManagerInterface
     {
         if ($this->supportsCacheTags()) {
             Cache::tags([$this->prefix])->flush();
-            
+
             Log::info('CacheManager: All file URL cache invalidated');
         } else {
             Log::warning('CacheManager: Cannot invalidate all without cache tags support', [
@@ -159,6 +160,7 @@ class CacheManager implements CacheManagerInterface
     public function has(string $path, string $size): bool
     {
         $cacheKey = $this->getCacheKey($path, $size);
+
         return Cache::has($cacheKey);
     }
 
@@ -169,6 +171,7 @@ class CacheManager implements CacheManagerInterface
     {
         try {
             $pathInfo = $this->organizer->parsePath($path);
+
             return $this->buildCacheKey($pathInfo->type, $size, $path);
         } catch (\Exception $e) {
             // Fallback to hash-based key if path parsing fails
@@ -198,6 +201,7 @@ class CacheManager implements CacheManagerInterface
     protected function buildCacheKey(string $type, string $size, string $path): string
     {
         $hash = $this->hashPath($path);
+
         return "{$this->prefix}_{$type}_{$size}_{$hash}";
     }
 
@@ -207,6 +211,7 @@ class CacheManager implements CacheManagerInterface
     protected function buildCacheKeyFromHash(string $size, string $path): string
     {
         $hash = $this->hashPath($path);
+
         return "{$this->prefix}_unknown_{$size}_{$hash}";
     }
 
@@ -253,6 +258,7 @@ class CacheManager implements CacheManagerInterface
     protected function supportsCacheTags(): bool
     {
         $driver = config('cache.default');
+
         return in_array($driver, ['redis', 'memcached', 'dynamodb']);
     }
 

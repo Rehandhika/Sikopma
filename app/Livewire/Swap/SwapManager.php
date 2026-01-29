@@ -2,12 +2,18 @@
 
 namespace App\Livewire\Swap;
 
+use App\Models\ScheduleAssignment;
+use App\Models\SwapRequest;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Lazy;
+use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Livewire\Attributes\{Title, Layout, Url, Lazy};
-use App\Models\{SwapRequest, ScheduleAssignment, User};
-use Carbon\Carbon;
-use Illuminate\Support\Facades\{DB, Auth, Cache};
 
 #[Title('Tukar Jadwal')]
 #[Layout('layouts.app')]
@@ -24,16 +30,24 @@ class SwapManager extends Component
 
     // Create form
     public bool $showForm = false;
+
     public ?int $selectedAssignment = null;
+
     public string $targetDate = '';
+
     public int $targetSession = 0;
+
     public ?int $selectedTarget = null;
+
     public string $reason = '';
 
     // Detail/Review modal
     public ?int $viewingId = null;
+
     public ?int $reviewingId = null;
+
     public string $reviewAction = '';
+
     public string $reviewNotes = '';
 
     public function mount(): void
@@ -88,11 +102,12 @@ class SwapManager extends Component
 
         // Validate business rules
         $myAssignment = ScheduleAssignment::find($this->selectedAssignment);
-        
+
         // Check 24h deadline
         $deadline = $myAssignment->date->copy()->setTimeFromTimeString($myAssignment->time_start)->subHours(24);
         if (now()->gt($deadline)) {
             $this->addError('selectedAssignment', 'Minimal 24 jam sebelum shift');
+
             return;
         }
 
@@ -103,6 +118,7 @@ class SwapManager extends Component
             ->exists();
         if ($exists) {
             $this->addError('selectedAssignment', 'Sudah ada permintaan untuk jadwal ini');
+
             return;
         }
 
@@ -112,8 +128,9 @@ class SwapManager extends Component
             ->where('user_id', $this->selectedTarget)
             ->first();
 
-        if (!$targetAssignment) {
+        if (! $targetAssignment) {
             $this->addError('selectedTarget', 'Target tidak memiliki jadwal di waktu tersebut');
+
             return;
         }
 
@@ -148,7 +165,7 @@ class SwapManager extends Component
             ->where('requester_id', Auth::id())
             ->where('status', 'pending')
             ->update(['status' => 'cancelled']);
-        
+
         $this->viewingId = null;
         $this->clearCache();
         $this->dispatch('toast', message: 'Permintaan dibatalkan', type: 'success');
@@ -164,7 +181,7 @@ class SwapManager extends Component
                 'status' => 'target_approved',
                 'target_responded_at' => now(),
             ]);
-        
+
         $this->viewingId = null;
         $this->clearCache();
         $this->dispatch('toast', message: 'Permintaan disetujui, menunggu admin', type: 'success');
@@ -179,7 +196,7 @@ class SwapManager extends Component
                 'status' => 'target_rejected',
                 'target_responded_at' => now(),
             ]);
-        
+
         $this->viewingId = null;
         $this->clearCache();
         $this->dispatch('toast', message: 'Permintaan ditolak', type: 'success');
@@ -203,12 +220,14 @@ class SwapManager extends Component
     public function submitAdminReview(): void
     {
         $swap = SwapRequest::with(['requesterAssignment', 'targetAssignment'])->find($this->reviewingId);
-        if (!$swap || $swap->status !== 'target_approved') return;
+        if (! $swap || $swap->status !== 'target_approved') {
+            return;
+        }
 
         DB::beginTransaction();
         try {
             $newStatus = $this->reviewAction === 'approved' ? 'admin_approved' : 'admin_rejected';
-            
+
             $swap->update([
                 'status' => $newStatus,
                 'admin_response' => $this->reviewNotes,
@@ -229,14 +248,14 @@ class SwapManager extends Component
             }
 
             DB::commit();
-            
+
             $this->closeAdminReview();
             $this->viewingId = null;
             $this->clearCache();
-            
+
             $msg = $this->reviewAction === 'approved' ? 'Tukar jadwal disetujui dan diproses' : 'Permintaan ditolak';
             $this->dispatch('toast', message: $msg, type: 'success');
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
             $this->dispatch('toast', message: 'Gagal memproses', type: 'error');
@@ -245,7 +264,7 @@ class SwapManager extends Component
 
     private function clearCache(): void
     {
-        Cache::forget('swap_stats_' . Auth::id());
+        Cache::forget('swap_stats_'.Auth::id());
     }
 
     public function render()
@@ -254,7 +273,7 @@ class SwapManager extends Component
         $isAdmin = Auth::user()->hasAnyRole(['Super Admin', 'Ketua', 'Wakil Ketua', 'BPH']);
 
         // Stats - cached
-        $stats = Cache::remember("swap_stats_{$userId}_{$this->activeTab}", 60, function () use ($userId, $isAdmin) {
+        $stats = Cache::remember("swap_stats_{$userId}_{$this->activeTab}", 60, function () use ($userId) {
             if ($this->activeTab === 'my-requests') {
                 return [
                     'pending' => SwapRequest::where('requester_id', $userId)->where('status', 'pending')->count(),
@@ -277,7 +296,7 @@ class SwapManager extends Component
         });
 
         // Query
-        $query = match($this->activeTab) {
+        $query = match ($this->activeTab) {
             'my-requests' => SwapRequest::where('requester_id', $userId),
             'received' => SwapRequest::where('target_id', $userId),
             'admin' => SwapRequest::whereIn('status', ['target_approved', 'admin_approved', 'admin_rejected']),
@@ -296,7 +315,7 @@ class SwapManager extends Component
         ])->latest()->paginate(10);
 
         // My assignments for form
-        $myAssignments = $this->showForm 
+        $myAssignments = $this->showForm
             ? ScheduleAssignment::where('user_id', $userId)
                 ->where('date', '>=', now()->format('Y-m-d'))
                 ->orderBy('date')
@@ -310,17 +329,17 @@ class SwapManager extends Component
                 ->where('user_id', '!=', $userId)
                 ->with('user:id,name,nim')
                 ->get()
-                ->map(fn($a) => ['id' => $a->user_id, 'name' => $a->user->name, 'nim' => $a->user->nim])
+                ->map(fn ($a) => ['id' => $a->user_id, 'name' => $a->user->name, 'nim' => $a->user->nim])
             : collect();
 
         // Viewing request
         $viewingRequest = $this->viewingId
             ? SwapRequest::with([
                 'requester:id,name,nim',
-                'target:id,name,nim', 
+                'target:id,name,nim',
                 'requesterAssignment:id,date,session,time_start,time_end',
                 'targetAssignment:id,date,session,time_start,time_end',
-                'adminResponder:id,name'
+                'adminResponder:id,name',
             ])->find($this->viewingId)
             : null;
 

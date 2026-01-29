@@ -23,17 +23,17 @@ class PathInfo
     public function getFullPath(): string
     {
         $parts = [$this->type, $this->year, $this->month];
-        
+
         if ($this->day !== null) {
             $parts[] = $this->day;
         }
-        
+
         if ($this->variant !== null) {
             $parts[] = $this->variant;
         }
-        
-        $parts[] = $this->filename . '.' . $this->extension;
-        
+
+        $parts[] = $this->filename.'.'.$this->extension;
+
         return implode('/', $parts);
     }
 
@@ -43,15 +43,15 @@ class PathInfo
     public function getDirectory(): string
     {
         $parts = [$this->type, $this->year, $this->month];
-        
+
         if ($this->day !== null) {
             $parts[] = $this->day;
         }
-        
+
         if ($this->variant !== null) {
             $parts[] = $this->variant;
         }
-        
+
         return implode('/', $parts);
     }
 
@@ -61,11 +61,11 @@ class PathInfo
     public function getBaseDirectory(): string
     {
         $parts = [$this->type, $this->year, $this->month];
-        
+
         if ($this->day !== null) {
             $parts[] = $this->day;
         }
-        
+
         return implode('/', $parts);
     }
 

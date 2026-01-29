@@ -3,28 +3,27 @@
 use App\Services\DateTimeSettingsService;
 use Carbon\Carbon;
 
-if (!function_exists('format_currency')) {
+if (! function_exists('format_currency')) {
     /**
      * Format number as Indonesian Rupiah currency
-     * 
-     * @param float|int|null $amount
-     * @param bool $withSymbol Include "Rp" symbol
-     * @param int $decimals Number of decimal places
-     * @return string
+     *
+     * @param  float|int|null  $amount
+     * @param  bool  $withSymbol  Include "Rp" symbol
+     * @param  int  $decimals  Number of decimal places
      */
     function format_currency($amount, bool $withSymbol = true, int $decimals = 0): string
     {
         if ($amount === null) {
             $amount = 0;
         }
-        
+
         $formatted = number_format((float) $amount, $decimals, ',', '.');
-        
-        return $withSymbol ? 'Rp ' . $formatted : $formatted;
+
+        return $withSymbol ? 'Rp '.$formatted : $formatted;
     }
 }
 
-if (!function_exists('format_rupiah')) {
+if (! function_exists('format_rupiah')) {
     /**
      * Alias for format_currency
      */
@@ -34,7 +33,7 @@ if (!function_exists('format_rupiah')) {
     }
 }
 
-if (!function_exists('format_date')) {
+if (! function_exists('format_date')) {
     /**
      * Format date using system settings
      */
@@ -44,7 +43,7 @@ if (!function_exists('format_date')) {
     }
 }
 
-if (!function_exists('format_time')) {
+if (! function_exists('format_time')) {
     /**
      * Format time using system settings
      */
@@ -54,7 +53,7 @@ if (!function_exists('format_time')) {
     }
 }
 
-if (!function_exists('format_datetime')) {
+if (! function_exists('format_datetime')) {
     /**
      * Format datetime using system settings
      */
@@ -64,7 +63,7 @@ if (!function_exists('format_datetime')) {
     }
 }
 
-if (!function_exists('format_date_human')) {
+if (! function_exists('format_date_human')) {
     /**
      * Format date in human readable format
      */
@@ -74,7 +73,7 @@ if (!function_exists('format_date_human')) {
     }
 }
 
-if (!function_exists('format_datetime_human')) {
+if (! function_exists('format_datetime_human')) {
     /**
      * Format datetime in human readable format
      */
@@ -84,7 +83,7 @@ if (!function_exists('format_datetime_human')) {
     }
 }
 
-if (!function_exists('diff_for_humans')) {
+if (! function_exists('diff_for_humans')) {
     /**
      * Get relative time (e.g., "2 jam yang lalu")
      */
@@ -94,7 +93,7 @@ if (!function_exists('diff_for_humans')) {
     }
 }
 
-if (!function_exists('system_now')) {
+if (! function_exists('system_now')) {
     /**
      * Get current time in system timezone
      * Returns custom time if custom datetime is enabled
@@ -105,7 +104,7 @@ if (!function_exists('system_now')) {
     }
 }
 
-if (!function_exists('real_now')) {
+if (! function_exists('real_now')) {
     /**
      * Get real current time (ignores custom datetime setting)
      */
@@ -115,7 +114,7 @@ if (!function_exists('real_now')) {
     }
 }
 
-if (!function_exists('is_custom_datetime_enabled')) {
+if (! function_exists('is_custom_datetime_enabled')) {
     /**
      * Check if custom datetime mode is enabled
      */
@@ -125,7 +124,7 @@ if (!function_exists('is_custom_datetime_enabled')) {
     }
 }
 
-if (!function_exists('system_timezone')) {
+if (! function_exists('system_timezone')) {
     /**
      * Get current system timezone
      */
@@ -135,7 +134,7 @@ if (!function_exists('system_timezone')) {
     }
 }
 
-if (!function_exists('system_locale')) {
+if (! function_exists('system_locale')) {
     /**
      * Get current system locale
      */
@@ -145,7 +144,7 @@ if (!function_exists('system_locale')) {
     }
 }
 
-if (!function_exists('parse_date')) {
+if (! function_exists('parse_date')) {
     /**
      * Parse a date string with system timezone
      */
@@ -155,16 +154,14 @@ if (!function_exists('parse_date')) {
     }
 }
 
-
-if (!function_exists('log_audit')) {
+if (! function_exists('log_audit')) {
     /**
      * Log an audit entry
-     * 
-     * @param string $action The action being performed
-     * @param \Illuminate\Database\Eloquent\Model $model The model being audited
-     * @param array|null $oldValues Previous values (for updates)
-     * @param array|null $newValues New values (for updates)
-     * @return \App\Models\AuditLog|null
+     *
+     * @param  string  $action  The action being performed
+     * @param  \Illuminate\Database\Eloquent\Model  $model  The model being audited
+     * @param  array|null  $oldValues  Previous values (for updates)
+     * @param  array|null  $newValues  New values (for updates)
      */
     function log_audit(string $action, \Illuminate\Database\Eloquent\Model $model, ?array $oldValues = null, ?array $newValues = null): ?\App\Models\AuditLog
     {

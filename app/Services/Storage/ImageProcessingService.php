@@ -10,7 +10,7 @@ use Illuminate\Http\UploadedFile;
 
 /**
  * ImageProcessingService - Menangani validasi, resize, dan konversi format gambar.
- * 
+ *
  * Bertanggung jawab untuk:
  * - Validasi file gambar (tipe, ukuran, MIME content)
  * - Resize gambar yang terlalu besar
@@ -47,19 +47,20 @@ class ImageProcessingService implements ImageProcessingServiceInterface
     {
         $errors = [];
         $config = $this->getTypeConfig($type);
-        
-        if (!$config) {
+
+        if (! $config) {
             $errors[] = __('filestorage.validation.invalid_file_type', [
                 'type' => $type,
-                'valid_types' => implode(', ', array_keys(config('filestorage.types', [])))
+                'valid_types' => implode(', ', array_keys(config('filestorage.types', []))),
             ]);
+
             return ValidationResult::invalid($errors);
         }
 
         // Check file size
         $maxSize = $config['max_size'] ?? 5 * 1024 * 1024;
         $fileSize = $file->getSize();
-        
+
         if ($fileSize > $maxSize) {
             $maxMB = round($maxSize / (1024 * 1024), 2);
             $errors[] = __('filestorage.validation.file_too_large', ['max' => $maxMB]);
@@ -68,24 +69,24 @@ class ImageProcessingService implements ImageProcessingServiceInterface
         // Check MIME type
         $allowedMimes = $config['allowed_mimes'] ?? [];
         $declaredMime = $file->getMimeType();
-        
-        if (!empty($allowedMimes) && !in_array($declaredMime, $allowedMimes, true)) {
+
+        if (! empty($allowedMimes) && ! in_array($declaredMime, $allowedMimes, true)) {
             $errors[] = __('filestorage.validation.invalid_type', [
-                'types' => implode(', ', $this->formatMimeTypes($allowedMimes))
+                'types' => implode(', ', $this->formatMimeTypes($allowedMimes)),
             ]);
         }
 
         // Validate actual content for images
         if ($this->isImageMime($declaredMime)) {
             $tempPath = $file->getRealPath();
-            
-            if (!$this->isValidImage($tempPath)) {
+
+            if (! $this->isValidImage($tempPath)) {
                 $errors[] = __('filestorage.validation.invalid_image');
             } elseif (config('filestorage.security.validate_mime_content', true)) {
                 // Validate actual MIME matches declared using magic bytes
-                if (!$this->validateMimeContent($tempPath, $declaredMime)) {
+                if (! $this->validateMimeContent($tempPath, $declaredMime)) {
                     $errors[] = __('filestorage.validation.mime_mismatch');
-                    
+
                     // Log security event
                     \Log::channel('security')->warning('MIME content mismatch detected', [
                         'declared_mime' => $declaredMime,
@@ -96,7 +97,7 @@ class ImageProcessingService implements ImageProcessingServiceInterface
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             return ValidationResult::invalid($errors);
         }
 
@@ -106,14 +107,14 @@ class ImageProcessingService implements ImageProcessingServiceInterface
     /**
      * Validate that file content matches declared MIME type using magic bytes.
      *
-     * @param string $filePath Path to the file
-     * @param string $declaredMime Declared MIME type
+     * @param  string  $filePath  Path to the file
+     * @param  string  $declaredMime  Declared MIME type
      * @return bool True if content matches declared MIME
      */
     protected function validateMimeContent(string $filePath, string $declaredMime): bool
     {
         $actualMime = $this->detectMimeType($filePath);
-        
+
         if ($actualMime === null) {
             // Cannot detect, use PHP's finfo as fallback
             $finfo = new \finfo(FILEINFO_MIME_TYPE);
@@ -137,7 +138,7 @@ class ImageProcessingService implements ImageProcessingServiceInterface
         }
 
         $mime = strtolower(trim($mime));
-        
+
         // Handle common variations
         $normalizations = [
             'image/jpg' => 'image/jpeg',
@@ -152,23 +153,23 @@ class ImageProcessingService implements ImageProcessingServiceInterface
      */
     public function process(string $sourcePath, string $type, string $targetPath): ProcessedImage
     {
-        if (!file_exists($sourcePath)) {
+        if (! file_exists($sourcePath)) {
             throw FileProcessingException::resizeFailed($sourcePath);
         }
 
         $config = $this->getTypeConfig($type);
-        if (!$config) {
+        if (! $config) {
             throw new FileValidationException(
                 __('filestorage.validation.invalid_file_type', [
                     'type' => $type,
-                    'valid_types' => implode(', ', array_keys(config('filestorage.types', [])))
+                    'valid_types' => implode(', ', array_keys(config('filestorage.types', []))),
                 ])
             );
         }
 
         // Check if we should preserve original without any processing
         $preserveOriginal = $config['preserve_original'] ?? false;
-        
+
         // Get original image info
         $imageInfo = @getimagesize($sourcePath);
         if ($imageInfo === false) {
@@ -183,13 +184,13 @@ class ImageProcessingService implements ImageProcessingServiceInterface
         if ($preserveOriginal) {
             // Ensure target directory exists
             $targetDir = dirname($targetPath);
-            if (!is_dir($targetDir)) {
+            if (! is_dir($targetDir)) {
                 mkdir($targetDir, 0755, true);
             }
 
             // Copy original file without any modification
             copy($sourcePath, $targetPath);
-            
+
             $fileSize = filesize($targetPath);
             $outputFormat = $this->getFormatFromImageType($imageType);
             $outputMime = $this->getMimeFromImageType($imageType);
@@ -228,7 +229,7 @@ class ImageProcessingService implements ImageProcessingServiceInterface
 
                 $resized = imagecreatetruecolor($newWidth, $newHeight);
                 $this->preserveTransparency($resized);
-                
+
                 imagecopyresampled(
                     $resized, $sourceImage,
                     0, 0, 0, 0,
@@ -244,7 +245,7 @@ class ImageProcessingService implements ImageProcessingServiceInterface
 
             // Ensure target directory exists
             $targetDir = dirname($targetPath);
-            if (!is_dir($targetDir)) {
+            if (! is_dir($targetDir)) {
                 mkdir($targetDir, 0755, true);
             }
 
@@ -290,18 +291,17 @@ class ImageProcessingService implements ImageProcessingServiceInterface
         }
     }
 
-
     /**
      * {@inheritdoc}
      */
     public function generateVariants(string $originalPath, string $type, string $baseTargetPath): array
     {
-        if (!file_exists($originalPath)) {
+        if (! file_exists($originalPath)) {
             throw FileProcessingException::variantFailed($originalPath, 'all');
         }
 
         $config = $this->getTypeConfig($type);
-        if (!$config) {
+        if (! $config) {
             return [];
         }
 
@@ -342,13 +342,13 @@ class ImageProcessingService implements ImageProcessingServiceInterface
                         $baseTargetPath,
                         $convertToWebp
                     );
-                    
+
                     if ($result !== null) {
                         $results[$variantName] = $result;
                     }
                 } catch (\Exception $e) {
                     // Log error but continue with other variants
-                    \Log::warning("Failed to generate variant {$variantName}: " . $e->getMessage());
+                    \Log::warning("Failed to generate variant {$variantName}: ".$e->getMessage());
                 }
             }
         } finally {
@@ -363,7 +363,7 @@ class ImageProcessingService implements ImageProcessingServiceInterface
      */
     public function isValidImage(string $path): bool
     {
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             return false;
         }
 
@@ -388,7 +388,7 @@ class ImageProcessingService implements ImageProcessingServiceInterface
      */
     public function getDimensions(string $path): ?array
     {
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             return null;
         }
 
@@ -413,7 +413,7 @@ class ImageProcessingService implements ImageProcessingServiceInterface
 
     /**
      * Generate a single variant.
-     * 
+     *
      * Note: quality 100 = maximum quality (minimal compression for JPEG/WebP)
      */
     protected function generateSingleVariant(
@@ -450,10 +450,10 @@ class ImageProcessingService implements ImageProcessingServiceInterface
 
         // Determine variant path
         $pathInfo = pathinfo($baseTargetPath);
-        $variantDir = $pathInfo['dirname'] . '/' . $variantName;
+        $variantDir = $pathInfo['dirname'].'/'.$variantName;
         $filename = $pathInfo['filename'];
-        
-        if (!is_dir($variantDir)) {
+
+        if (! is_dir($variantDir)) {
             mkdir($variantDir, 0755, true);
         }
 
@@ -463,14 +463,14 @@ class ImageProcessingService implements ImageProcessingServiceInterface
         $wasConverted = false;
 
         if ($convertToWebp && function_exists('imagewebp')) {
-            $variantPath = $variantDir . '/' . $filename . '.webp';
+            $variantPath = $variantDir.'/'.$filename.'.webp';
             imagewebp($variant, $variantPath, $quality);
             $outputFormat = 'webp';
             $outputMime = 'image/webp';
             $wasConverted = ($imageType !== IMAGETYPE_WEBP);
         } else {
             $extension = $this->getExtensionFromImageType($imageType);
-            $variantPath = $variantDir . '/' . $filename . '.' . $extension;
+            $variantPath = $variantDir.'/'.$filename.'.'.$extension;
             $this->saveImage($variant, $variantPath, $imageType, $quality);
             $outputFormat = $this->getFormatFromImageType($imageType);
             $outputMime = $this->getMimeFromImageType($imageType);
@@ -506,6 +506,7 @@ class ImageProcessingService implements ImageProcessingServiceInterface
         // If both dimensions specified, use contain mode (fit within bounds)
         if ($targetWidth !== null && $targetHeight !== null) {
             $ratio = min($targetWidth / $origWidth, $targetHeight / $origHeight);
+
             return [
                 (int) round($origWidth * $ratio),
                 (int) round($origHeight * $ratio),
@@ -515,6 +516,7 @@ class ImageProcessingService implements ImageProcessingServiceInterface
         // If only width specified, calculate height maintaining ratio
         if ($targetWidth !== null) {
             $ratio = $targetWidth / $origWidth;
+
             return [
                 $targetWidth,
                 (int) round($origHeight * $ratio),
@@ -524,6 +526,7 @@ class ImageProcessingService implements ImageProcessingServiceInterface
         // If only height specified, calculate width maintaining ratio
         if ($targetHeight !== null) {
             $ratio = $targetHeight / $origHeight;
+
             return [
                 (int) round($origWidth * $ratio),
                 $targetHeight,
@@ -533,7 +536,6 @@ class ImageProcessingService implements ImageProcessingServiceInterface
         // No resize needed
         return [$origWidth, $origHeight];
     }
-
 
     /**
      * Create GD image resource from file.
@@ -619,8 +621,8 @@ class ImageProcessingService implements ImageProcessingServiceInterface
         $pathInfo = pathinfo($path);
         $directory = $pathInfo['dirname'];
         $filename = $pathInfo['filename'];
-        
-        return $directory . '/' . $filename . '.' . $newExtension;
+
+        return $directory.'/'.$filename.'.'.$newExtension;
     }
 
     /**

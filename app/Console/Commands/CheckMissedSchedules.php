@@ -2,20 +2,21 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use App\Models\ScheduleAssignment;
 use App\Models\Attendance;
+use App\Models\ScheduleAssignment;
 use App\Services\PenaltyService;
 use Carbon\Carbon;
+use Illuminate\Console\Command;
 
 class CheckMissedSchedules extends Command
 {
     protected $signature = 'schedule:check-missed';
+
     protected $description = 'Check for missed schedules and create penalties';
 
     public function handle()
     {
-        $penaltyService = new PenaltyService();
+        $penaltyService = new PenaltyService;
 
         // Get yesterday's scheduled assignments
         $yesterday = Carbon::yesterday()->toDateString();
@@ -33,7 +34,7 @@ class CheckMissedSchedules extends Command
                 ->where('schedule_assignment_id', $assignment->id)
                 ->first();
 
-            if (!$attendance || !$attendance->check_in) {
+            if (! $attendance || ! $attendance->check_in) {
                 // Mark as missed
                 $assignment->update(['status' => 'missed']);
 

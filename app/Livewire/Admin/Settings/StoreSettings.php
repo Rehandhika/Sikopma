@@ -10,20 +10,29 @@ use Livewire\Component;
 class StoreSettings extends Component
 {
     public $currentStatus = [];
+
     public $statusLoaded = false;
 
     // Next Open Mode properties
     public $nextOpenMode = 'default';
+
     public $customClosedMessage = '';
+
     public $customNextOpenDate = '';
+
     public $academicHolidayStart = '';
+
     public $academicHolidayEnd = '';
+
     public $academicHolidayName = '';
 
     // Academic Holidays list
     public $academicHolidays = [];
+
     public $showHolidayForm = false;
+
     public $editingHolidayId = null;
+
     public $holidayForm = [
         'name' => '',
         'start_date' => '',
@@ -39,7 +48,7 @@ class StoreSettings extends Component
 
     public function mount()
     {
-        if (!auth()->user()->hasAnyRole(['Super Admin', 'Ketua', 'Wakil Ketua'])) {
+        if (! auth()->user()->hasAnyRole(['Super Admin', 'Ketua', 'Wakil Ketua'])) {
             abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
 
@@ -51,7 +60,7 @@ class StoreSettings extends Component
     public function loadNextOpenSettings()
     {
         $setting = \App\Models\StoreSetting::first();
-        
+
         if ($setting) {
             $this->nextOpenMode = $setting->next_open_mode ?? 'default';
             $this->customClosedMessage = $setting->custom_closed_message ?? '';
@@ -81,7 +90,7 @@ class StoreSettings extends Component
     {
         $this->storeStatusService->manualOpenOverride(true);
         $this->refreshStatus();
-        
+
         $this->dispatch('toast', message: 'Override buka diaktifkan - koperasi dapat buka di luar jadwal jika ada pengurus', type: 'success');
     }
 
@@ -89,7 +98,7 @@ class StoreSettings extends Component
     {
         $this->storeStatusService->manualOpenOverride(false);
         $this->refreshStatus();
-        
+
         $this->dispatch('toast', message: 'Override buka dinonaktifkan - kembali ke jadwal normal', type: 'success');
     }
 
@@ -99,7 +108,7 @@ class StoreSettings extends Component
         $reason = 'Mode manual diaktifkan oleh admin';
         $this->storeStatusService->toggleManualMode(false, $reason);
         $this->refreshStatus();
-        
+
         $this->dispatch('toast', message: 'Mode manual diaktifkan - Anda memiliki kontrol penuh terhadap status', type: 'info');
     }
 
@@ -108,7 +117,7 @@ class StoreSettings extends Component
         $reason = $isOpen ? 'Dibuka manual oleh admin' : 'Ditutup manual oleh admin';
         $this->storeStatusService->toggleManualMode($isOpen, $reason);
         $this->refreshStatus();
-        
+
         $statusText = $isOpen ? 'BUKA' : 'TUTUP';
         $this->dispatch('toast', message: "Status diubah menjadi {$statusText} (mode manual, type: 'success')");
     }
@@ -117,7 +126,7 @@ class StoreSettings extends Component
     {
         $this->storeStatusService->backToAutoMode();
         $this->refreshStatus();
-        
+
         $this->dispatch('toast', message: 'Mode manual dinonaktifkan - kembali ke mode otomatis', type: 'success');
     }
 
@@ -127,7 +136,7 @@ class StoreSettings extends Component
         $this->storeStatusService->resetToDefaultMode();
         $this->loadNextOpenSettings();
         $this->refreshStatus();
-        
+
         $this->dispatch('toast', message: 'Semua pengaturan manual direset - kembali ke mode otomatis', type: 'success');
     }
 
@@ -138,24 +147,26 @@ class StoreSettings extends Component
             // Validate
             if (empty($this->academicHolidayName) && empty($this->customClosedMessage)) {
                 $this->dispatch('toast', message: 'Harap isi nama libur atau pesan kustom', type: 'error');
+
                 return;
             }
 
-            if (!empty($this->academicHolidayStart) && !empty($this->academicHolidayEnd)) {
+            if (! empty($this->academicHolidayStart) && ! empty($this->academicHolidayEnd)) {
                 $start = Carbon::parse($this->academicHolidayStart);
                 $end = Carbon::parse($this->academicHolidayEnd);
-                
+
                 if ($end->lt($start)) {
                     $this->dispatch('toast', message: 'Tanggal akhir harus setelah tanggal mulai', type: 'error');
+
                     return;
                 }
             }
 
             $this->storeStatusService->setCustomNextOpenMode(
                 $this->customClosedMessage ?: null,
-                !empty($this->customNextOpenDate) ? Carbon::parse($this->customNextOpenDate) : null,
-                !empty($this->academicHolidayStart) ? Carbon::parse($this->academicHolidayStart) : null,
-                !empty($this->academicHolidayEnd) ? Carbon::parse($this->academicHolidayEnd) : null,
+                ! empty($this->customNextOpenDate) ? Carbon::parse($this->customNextOpenDate) : null,
+                ! empty($this->academicHolidayStart) ? Carbon::parse($this->academicHolidayStart) : null,
+                ! empty($this->academicHolidayEnd) ? Carbon::parse($this->academicHolidayEnd) : null,
                 $this->academicHolidayName ?: null
             );
 
@@ -173,7 +184,7 @@ class StoreSettings extends Component
         $this->storeStatusService->resetToDefaultMode();
         $this->loadNextOpenSettings();
         $this->refreshStatus();
-        
+
         $this->dispatch('toast', message: 'Mode keterangan buka direset ke default', type: 'success');
     }
 
@@ -207,11 +218,13 @@ class StoreSettings extends Component
     {
         if (empty($this->holidayForm['name'])) {
             $this->dispatch('toast', message: 'Nama libur harus diisi', type: 'error');
+
             return;
         }
 
         if (empty($this->holidayForm['start_date']) || empty($this->holidayForm['end_date'])) {
             $this->dispatch('toast', message: 'Tanggal mulai dan akhir harus diisi', type: 'error');
+
             return;
         }
 
@@ -220,6 +233,7 @@ class StoreSettings extends Component
 
         if ($end->lt($start)) {
             $this->dispatch('toast', message: 'Tanggal akhir harus setelah tanggal mulai', type: 'error');
+
             return;
         }
 
@@ -256,7 +270,7 @@ class StoreSettings extends Component
     {
         $holiday = AcademicHoliday::find($id);
         if ($holiday) {
-            $holiday->update(['is_active' => !$holiday->is_active]);
+            $holiday->update(['is_active' => ! $holiday->is_active]);
             $this->loadAcademicHolidays();
             $this->storeStatusService->forceUpdate();
             $this->refreshStatus();

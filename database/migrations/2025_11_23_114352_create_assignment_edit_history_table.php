@@ -21,7 +21,7 @@ return new class extends Migration
             $table->json('new_values')->nullable();
             $table->text('reason')->nullable();
             $table->timestamps();
-            
+
             // Indexes for performance
             $table->index(['assignment_id', 'created_at']);
             $table->index(['schedule_id', 'created_at']);

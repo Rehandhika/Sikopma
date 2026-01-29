@@ -8,11 +8,11 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     * 
+     *
      * Adds performance indexes for POS Entry System:
      * - idx_sales_date_payment: Optimize payment method breakdown queries
      * - idx_sale_items_sale_product: Optimize sale items lookup by product
-     * 
+     *
      * Requirements: 8.2, 8.3
      */
     public function up(): void

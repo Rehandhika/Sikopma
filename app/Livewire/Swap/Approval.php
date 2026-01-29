@@ -2,27 +2,29 @@
 
 namespace App\Livewire\Swap;
 
-use Livewire\Component;
-use Livewire\WithPagination;
 use App\Models\SwapRequest;
 use App\Services\ActivityLogService;
 use Illuminate\Support\Facades\DB;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Approval extends Component
 {
     use WithPagination;
 
     public $selectedSwap;
+
     public $approvalNotes = '';
+
     public $showModal = false;
 
     public function viewDetails($id)
     {
         $this->selectedSwap = SwapRequest::with([
-            'requester', 
-            'target', 
-            'requesterAssignment', 
-            'targetAssignment'
+            'requester',
+            'target',
+            'requesterAssignment',
+            'targetAssignment',
         ])->find($id);
         $this->showModal = true;
     }
@@ -30,7 +32,7 @@ class Approval extends Component
     public function approve($id)
     {
         $swap = SwapRequest::with(['requesterAssignment', 'targetAssignment'])->find($id);
-        
+
         if ($swap && $swap->status === 'target_approved') {
             DB::transaction(function () use ($swap) {
                 // Swap the schedules
@@ -63,7 +65,7 @@ class Approval extends Component
     public function reject($id)
     {
         $swap = SwapRequest::with(['requester', 'requesterAssignment'])->find($id);
-        
+
         if ($swap && $swap->status === 'target_approved') {
             $swap->update([
                 'status' => 'admin_rejected',

@@ -1,9 +1,8 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -16,7 +15,7 @@ return new class extends Migration
         DB::table('stock_adjustments')
             ->where('type', 'addition')
             ->update(['type' => 'in']);
-            
+
         DB::table('stock_adjustments')
             ->where('type', 'reduction')
             ->update(['type' => 'out']);
@@ -37,7 +36,7 @@ return new class extends Migration
         DB::table('stock_adjustments')
             ->where('type', 'in')
             ->update(['type' => 'addition']);
-            
+
         DB::table('stock_adjustments')
             ->where('type', 'out')
             ->update(['type' => 'reduction']);

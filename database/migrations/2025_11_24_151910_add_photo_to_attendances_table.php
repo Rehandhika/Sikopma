@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::table('attendances', function (Blueprint $table) {
             // Add photo column for check-in proof
             $table->string('check_in_photo')->nullable()->after('check_in');
-            
+
             // Remove geolocation columns if they exist
             if (Schema::hasColumn('attendances', 'latitude')) {
                 $table->dropColumn(['latitude', 'longitude']);
@@ -30,7 +30,7 @@ return new class extends Migration
         Schema::table('attendances', function (Blueprint $table) {
             // Remove photo column
             $table->dropColumn('check_in_photo');
-            
+
             // Restore geolocation columns
             $table->decimal('latitude', 10, 8)->nullable();
             $table->decimal('longitude', 11, 8)->nullable();

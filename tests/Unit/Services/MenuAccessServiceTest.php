@@ -3,13 +3,12 @@
 namespace Tests\Unit\Services;
 
 use App\Services\MenuAccessService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use Tests\TestCase;
 
 /**
  * Unit tests for MenuAccessService
- * 
+ *
  * Validates: Requirements 5.1, 5.2, 5.3, 5.4
  */
 class MenuAccessServiceTest extends TestCase
@@ -19,7 +18,7 @@ class MenuAccessServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->menuAccessService = new MenuAccessService();
+        $this->menuAccessService = new MenuAccessService;
     }
 
     /**
@@ -37,12 +36,12 @@ class MenuAccessServiceTest extends TestCase
     {
         // No user authenticated
         $menuItems = $this->menuAccessService->getMenuWithAccessState();
-        
+
         foreach ($menuItems as $item) {
             if (isset($item['type']) && $item['type'] === 'divider') {
                 continue;
             }
-            
+
             $this->assertFalse(
                 $item['accessible'],
                 "Menu '{$item['label']}' should be locked for unauthenticated user"
@@ -67,9 +66,9 @@ class MenuAccessServiceTest extends TestCase
         // Create a mock user
         $user = Mockery::mock(\App\Models\User::class);
         $user->shouldReceive('hasRole')->with('Super Admin')->andReturn(false);
-        
+
         $this->actingAs($user);
-        
+
         $this->assertFalse($this->menuAccessService->canAccess('nonexistent_menu'));
     }
 
@@ -79,10 +78,10 @@ class MenuAccessServiceTest extends TestCase
     public function test_menu_configuration_is_loaded(): void
     {
         $menuConfig = config('menu.items');
-        
+
         $this->assertIsArray($menuConfig);
         $this->assertNotEmpty($menuConfig);
-        
+
         // Check that dashboard menu exists
         $dashboardMenu = collect($menuConfig)->firstWhere('key', 'dashboard');
         $this->assertNotNull($dashboardMenu);
@@ -95,7 +94,7 @@ class MenuAccessServiceTest extends TestCase
     public function test_super_admin_role_is_configured(): void
     {
         $superAdminRole = config('menu.super_admin_role');
-        
+
         $this->assertEquals('Super Admin', $superAdminRole);
     }
 

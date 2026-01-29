@@ -2,12 +2,12 @@
 
 namespace App\Livewire\Leave;
 
-use Livewire\Component;
-use Livewire\WithPagination;
-use Livewire\Attributes\Title;
 use App\Models\LeaveRequest;
 use App\Services\ActivityLogService;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Title;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 #[Title('Persetujuan Cuti/Izin')]
 class PendingApprovals extends Component
@@ -15,9 +15,13 @@ class PendingApprovals extends Component
     use WithPagination;
 
     public $statusFilter = 'pending';
+
     public $reviewModal = false;
+
     public $reviewId;
+
     public $reviewAction;
+
     public $review_notes = '';
 
     public function openReview($id, $action)
@@ -37,7 +41,7 @@ class PendingApprovals extends Component
         DB::beginTransaction();
         try {
             $request = LeaveRequest::with('user')->findOrFail($this->reviewId);
-            
+
             $request->update([
                 'status' => $this->reviewAction,
                 'reviewed_by' => auth()->id(),
@@ -55,22 +59,22 @@ class PendingApprovals extends Component
             }
 
             DB::commit();
-            
+
             $message = $this->reviewAction === 'approved' ? 'Pengajuan disetujui' : 'Pengajuan ditolak';
             $this->dispatch('toast', message: $message, type: 'success');
-            
+
             $this->reviewModal = false;
             $this->reset(['reviewId', 'reviewAction', 'review_notes']);
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->dispatch('toast', message: 'Terjadi kesalahan: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Terjadi kesalahan: '.$e->getMessage(), type: 'error');
         }
     }
 
     public function render()
     {
         $requests = LeaveRequest::with(['user', 'reviewer'])
-            ->when($this->statusFilter !== 'all', fn($q) => $q->where('status', $this->statusFilter))
+            ->when($this->statusFilter !== 'all', fn ($q) => $q->where('status', $this->statusFilter))
             ->latest()
             ->paginate(15);
 

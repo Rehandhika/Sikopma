@@ -62,7 +62,7 @@ class UserCredentialController extends Controller
             5 // 5 detik delay antar email
         );
 
-        return back()->with('success', 
+        return back()->with('success',
             "Berhasil menjadwalkan {$results['success']} email. Gagal: {$results['failed']}"
         );
     }

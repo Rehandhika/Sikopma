@@ -2,7 +2,7 @@
 
 /**
  * Menu Configuration for Sidebar Navigation
- * 
+ *
  * Each menu item supports:
  * - key: Unique identifier for the menu item
  * - label: Display label in Indonesian

@@ -15,9 +15,9 @@ class StoreStatusChanged implements ShouldBroadcast
     /**
      * Create a new event instance.
      *
-     * @param bool $isOpen Whether the store is open
-     * @param string $reason The reason for the current status
-     * @param array $attendees Array of attendee names
+     * @param  bool  $isOpen  Whether the store is open
+     * @param  string  $reason  The reason for the current status
+     * @param  array  $attendees  Array of attendee names
      */
     public function __construct(
         public bool $isOpen,
@@ -27,8 +27,6 @@ class StoreStatusChanged implements ShouldBroadcast
 
     /**
      * Get the channels the event should broadcast on.
-     *
-     * @return Channel
      */
     public function broadcastOn(): Channel
     {
@@ -37,8 +35,6 @@ class StoreStatusChanged implements ShouldBroadcast
 
     /**
      * The event's broadcast name.
-     *
-     * @return string
      */
     public function broadcastAs(): string
     {
@@ -47,8 +43,6 @@ class StoreStatusChanged implements ShouldBroadcast
 
     /**
      * Get the data to broadcast.
-     *
-     * @return array
      */
     public function broadcastWith(): array
     {

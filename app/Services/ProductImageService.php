@@ -3,15 +3,14 @@
 namespace App\Services;
 
 use App\Services\Storage\FileStorageServiceInterface;
-use App\Services\Storage\DTOs\FileResult;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * ProductImageService - Wrapper untuk backward compatibility.
- * 
+ *
  * Service ini sekarang mendelegasikan ke FileStorageService untuk semua operasi file.
  * Mempertahankan API yang sama untuk backward compatibility dengan kode existing.
  */
@@ -19,6 +18,7 @@ class ProductImageService
 {
     // Legacy constants untuk backward compatibility
     private const DISK = 'public';
+
     private const BASE_PATH = 'products';
 
     public function __construct(
@@ -28,9 +28,8 @@ class ProductImageService
     /**
      * Upload and process product image.
      * Delegates to FileStorageService.
-     * 
-     * @param UploadedFile $file
-     * @param string|null $oldImagePath Path file lama untuk dihapus
+     *
+     * @param  string|null  $oldImagePath  Path file lama untuk dihapus
      * @return string Path file yang disimpan
      */
     public function upload(UploadedFile $file, ?string $oldImagePath = null): string
@@ -52,10 +51,8 @@ class ProductImageService
     /**
      * Get image URL with specific size.
      * Delegates to FileStorageService.
-     * 
-     * @param string|null $path
-     * @param string $size Size variant (thumbnail, medium, large)
-     * @return string|null
+     *
+     * @param  string  $size  Size variant (thumbnail, medium, large)
      */
     public function getUrl(?string $path, string $size = 'medium'): ?string
     {
@@ -66,7 +63,7 @@ class ProductImageService
         try {
             // Try new FileStorageService first
             $url = $this->fileStorageService->getUrl($path, $size);
-            
+
             if ($url) {
                 return $url;
             }
@@ -74,14 +71,14 @@ class ProductImageService
             // Fallback for legacy paths - check if file exists directly
             if (Storage::disk(self::DISK)->exists($path)) {
                 // Use relative URL for cross-device compatibility
-                return '/storage/' . ltrim($path, '/');
+                return '/storage/'.ltrim($path, '/');
             }
 
             // Try legacy variant path format
             $legacyVariantPath = $this->getLegacyVariantPath($path, $size);
             if (Storage::disk(self::DISK)->exists($legacyVariantPath)) {
                 // Use relative URL for cross-device compatibility
-                return '/storage/' . ltrim($legacyVariantPath, '/');
+                return '/storage/'.ltrim($legacyVariantPath, '/');
             }
 
             return null;
@@ -91,22 +88,19 @@ class ProductImageService
                 'size' => $size,
                 'error' => $e->getMessage(),
             ]);
-            
+
             // Ultimate fallback - return direct URL if file exists
             if (Storage::disk(self::DISK)->exists($path)) {
                 // Use relative URL for cross-device compatibility
-                return '/storage/' . ltrim($path, '/');
+                return '/storage/'.ltrim($path, '/');
             }
-            
+
             return null;
         }
     }
 
     /**
      * Get thumbnail URL (shortcut).
-     * 
-     * @param string|null $path
-     * @return string|null
      */
     public function getThumbnailUrl(?string $path): ?string
     {
@@ -116,9 +110,6 @@ class ProductImageService
     /**
      * Delete image and all variants.
      * Delegates to FileStorageService.
-     * 
-     * @param string|null $path
-     * @return bool
      */
     public function delete(?string $path): bool
     {
@@ -129,7 +120,7 @@ class ProductImageService
         try {
             // Try new FileStorageService first
             $deleted = $this->fileStorageService->delete($path);
-            
+
             if ($deleted) {
                 return true;
             }
@@ -141,7 +132,7 @@ class ProductImageService
                 'path' => $path,
                 'error' => $e->getMessage(),
             ]);
-            
+
             // Try legacy delete as fallback
             return $this->deleteLegacyFiles($path);
         }
@@ -149,9 +140,6 @@ class ProductImageService
 
     /**
      * Check if file exists.
-     * 
-     * @param string|null $path
-     * @return bool
      */
     public function exists(?string $path): bool
     {
@@ -170,10 +158,6 @@ class ProductImageService
     /**
      * Get legacy variant path format.
      * For backward compatibility with old file structure.
-     * 
-     * @param string $originalPath
-     * @param string $size
-     * @return string
      */
     protected function getLegacyVariantPath(string $originalPath, string $size): string
     {
@@ -187,9 +171,6 @@ class ProductImageService
     /**
      * Delete legacy format files.
      * For backward compatibility.
-     * 
-     * @param string $path
-     * @return bool
      */
     protected function deleteLegacyFiles(string $path): bool
     {
@@ -209,7 +190,7 @@ class ProductImageService
                 Storage::disk(self::DISK)->delete($variantPath);
             }
             // Clear legacy cache
-            Cache::forget('product_img_' . md5($variantPath));
+            Cache::forget('product_img_'.md5($variantPath));
         }
 
         return $deleted;

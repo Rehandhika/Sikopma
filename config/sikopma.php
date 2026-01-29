@@ -45,8 +45,6 @@ return [
      */
     'late_threshold_minutes' => 15,
 
-
-
     /**
      * Penalty point thresholds
      */

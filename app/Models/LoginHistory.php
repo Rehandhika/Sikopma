@@ -61,7 +61,7 @@ class LoginHistory extends Model
      */
     public function getDurationAttribute()
     {
-        if (!$this->logged_out_at) {
+        if (! $this->logged_out_at) {
             return null;
         }
 

@@ -26,28 +26,28 @@ class SwapRequestCreate extends FormRequest
                 'integer',
                 Rule::exists('schedule_assignments', 'id')->where(function ($query) {
                     $query->where('user_id', auth()->id())
-                          ->where('date', '>=', today()->addDays(config('sikopma.swap.min_advance_notice_days', 2)))
-                          ->where('status', 'scheduled');
-                })
+                        ->where('date', '>=', today()->addDays(config('sikopma.swap.min_advance_notice_days', 2)))
+                        ->where('status', 'scheduled');
+                }),
             ],
             'target_user_id' => [
                 'required',
                 'integer',
                 Rule::exists('users', 'id')->where(function ($query) {
                     $query->where('status', 'active')
-                          ->whereHas('roles', function ($subQuery) {
-                              $subQuery->whereIn('name', ['Super Admin', 'Ketua', 'Wakil Ketua', 'BPH', 'Anggota']);
-                          });
-                })
+                        ->whereHas('roles', function ($subQuery) {
+                            $subQuery->whereIn('name', ['Super Admin', 'Ketua', 'Wakil Ketua', 'BPH', 'Anggota']);
+                        });
+                }),
             ],
             'target_schedule_assignment_id' => [
                 'nullable',
                 'integer',
                 Rule::exists('schedule_assignments', 'id')->where(function ($query) {
                     $query->where('user_id', $this->target_user_id)
-                          ->where('date', '>=', today()->addDays(config('sikopma.swap.min_advance_notice_days', 2)))
-                          ->where('status', 'scheduled');
-                })
+                        ->where('date', '>=', today()->addDays(config('sikopma.swap.min_advance_notice_days', 2)))
+                        ->where('status', 'scheduled');
+                }),
             ],
             'reason' => 'required|string|max:1000|min:10',
             'notes' => 'nullable|string|max:500',
@@ -78,11 +78,11 @@ class SwapRequestCreate extends FormRequest
     public function getValidatedData(): array
     {
         $data = $this->validated();
-        
+
         // Sanitize text inputs to prevent XSS
         $data['reason'] = strip_tags($data['reason']);
         $data['reason'] = trim($data['reason']);
-        
+
         if (isset($data['notes'])) {
             $data['notes'] = strip_tags($data['notes']);
             $data['notes'] = trim($data['notes']);

@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Storage;
 
 /**
  * FileCleanupService - Service untuk pembersihan file orphan dan temporary.
- * 
+ *
  * Bertanggung jawab untuk:
  * - Identifikasi file orphan (tidak ada di database)
  * - Pembersihan file orphan dengan dry-run mode
@@ -76,19 +76,19 @@ class FileCleanupService implements FileCleanupServiceInterface
         foreach ($types as $fileType) {
             $storageFiles = $this->getStorageFiles($fileType);
             $databaseRefs = $this->getDatabaseReferences($fileType);
-            
+
             // Normalize database references for comparison
-            $normalizedRefs = $databaseRefs->map(fn($path) => $this->normalizePath($path))->filter()->toArray();
+            $normalizedRefs = $databaseRefs->map(fn ($path) => $this->normalizePath($path))->filter()->toArray();
 
             foreach ($storageFiles as $file) {
                 $normalizedPath = $this->normalizePath($file['path']);
-                
+
                 // Check if file is referenced in database
-                if (!in_array($normalizedPath, $normalizedRefs, true)) {
+                if (! in_array($normalizedPath, $normalizedRefs, true)) {
                     // Check grace period
                     $gracePeriodDays = config('filestorage.cleanup.orphan_grace_period', 7);
                     $graceDate = Carbon::now()->subDays($gracePeriodDays);
-                    
+
                     if ($file['modified_at'] < $graceDate) {
                         $orphanFiles->push([
                             'path' => $file['path'],
@@ -110,7 +110,7 @@ class FileCleanupService implements FileCleanupServiceInterface
     public function cleanOrphanFiles(bool $dryRun = true, ?string $type = null): CleanupResult
     {
         $orphanFiles = $this->findOrphanFiles($type);
-        
+
         $filesScanned = $orphanFiles->count();
         $filesDeleted = 0;
         $bytesFreed = 0;
@@ -122,15 +122,15 @@ class FileCleanupService implements FileCleanupServiceInterface
                 $config = config("filestorage.types.{$file['type']}");
                 $disk = $config['disk'] ?? 'public';
 
-                if (!$dryRun) {
+                if (! $dryRun) {
                     // Delete the file
                     if (Storage::disk($disk)->exists($file['path'])) {
                         Storage::disk($disk)->delete($file['path']);
-                        
+
                         // Also delete variants if they exist
                         $this->deleteVariants($file['path'], $file['type'], $disk);
                     }
-                    
+
                     // Log deletion for audit
                     Log::info('FileCleanupService: Orphan file deleted', [
                         'path' => $file['path'],
@@ -147,7 +147,7 @@ class FileCleanupService implements FileCleanupServiceInterface
                     'path' => $file['path'],
                     'error' => $e->getMessage(),
                 ];
-                
+
                 Log::error('FileCleanupService: Failed to delete orphan file', [
                     'path' => $file['path'],
                     'error' => $e->getMessage(),
@@ -184,7 +184,7 @@ class FileCleanupService implements FileCleanupServiceInterface
     {
         $hoursOld = $hoursOld ?? config('filestorage.cleanup.temp_max_age', 24);
         $threshold = Carbon::now()->subHours($hoursOld);
-        
+
         $filesScanned = 0;
         $filesDeleted = 0;
         $bytesFreed = 0;
@@ -201,33 +201,33 @@ class FileCleanupService implements FileCleanupServiceInterface
             try {
                 // Check both public and local disks
                 foreach (['public', 'local'] as $disk) {
-                    if (!Storage::disk($disk)->exists($tempPath)) {
+                    if (! Storage::disk($disk)->exists($tempPath)) {
                         continue;
                     }
 
                     $files = Storage::disk($disk)->files($tempPath);
-                    
+
                     foreach ($files as $file) {
                         $filesScanned++;
-                        
+
                         try {
                             $lastModified = Carbon::createFromTimestamp(
                                 Storage::disk($disk)->lastModified($file)
                             );
-                            
+
                             if ($lastModified < $threshold) {
                                 $size = Storage::disk($disk)->size($file);
-                                
-                                if (!$dryRun) {
+
+                                if (! $dryRun) {
                                     Storage::disk($disk)->delete($file);
-                                    
+
                                     Log::info('FileCleanupService: Temp file deleted', [
                                         'path' => $file,
                                         'disk' => $disk,
                                         'age_hours' => $lastModified->diffInHours(Carbon::now()),
                                     ]);
                                 }
-                                
+
                                 $filesDeleted++;
                                 $bytesFreed += $size;
                                 $deletedFiles[] = "{$disk}:{$file}";
@@ -245,7 +245,7 @@ class FileCleanupService implements FileCleanupServiceInterface
                     'path' => $tempPath,
                     'error' => $e->getMessage(),
                 ];
-                
+
                 Log::error('FileCleanupService: Failed to clean temp directory', [
                     'path' => $tempPath,
                     'error' => $e->getMessage(),
@@ -280,7 +280,7 @@ class FileCleanupService implements FileCleanupServiceInterface
     {
         // Clean orphan files
         $orphanResult = $this->cleanOrphanFiles($dryRun, $type);
-        
+
         // Clean temp files
         $tempResult = $this->cleanTempFiles(null, $dryRun);
 
@@ -301,8 +301,8 @@ class FileCleanupService implements FileCleanupServiceInterface
     public function getDatabaseReferences(string $type): Collection
     {
         $mapping = $this->typeModelMapping[$type] ?? null;
-        
-        if (!$mapping) {
+
+        if (! $mapping) {
             return collect();
         }
 
@@ -311,7 +311,7 @@ class FileCleanupService implements FileCleanupServiceInterface
         $includeDeleted = $mapping['include_deleted'] ?? false;
 
         $query = $modelClass::query();
-        
+
         // Include soft deleted records if applicable
         if ($includeDeleted && method_exists($modelClass, 'withTrashed')) {
             $query->withTrashed();
@@ -329,8 +329,8 @@ class FileCleanupService implements FileCleanupServiceInterface
     public function getStorageFiles(string $type): Collection
     {
         $config = config("filestorage.types.{$type}");
-        
-        if (!$config) {
+
+        if (! $config) {
             return collect();
         }
 
@@ -340,7 +340,7 @@ class FileCleanupService implements FileCleanupServiceInterface
         $files = collect();
 
         try {
-            if (!Storage::disk($disk)->exists($basePath)) {
+            if (! Storage::disk($disk)->exists($basePath)) {
                 return $files;
             }
 
@@ -389,7 +389,7 @@ class FileCleanupService implements FileCleanupServiceInterface
     protected function isVariantFile(string $path): bool
     {
         $variantDirs = ['thumbnail', 'thumbnails', 'medium', 'large', 'small', 'desktop', 'tablet', 'mobile'];
-        
+
         foreach ($variantDirs as $dir) {
             if (str_contains($path, "/{$dir}/")) {
                 return true;
@@ -406,10 +406,10 @@ class FileCleanupService implements FileCleanupServiceInterface
     {
         // Remove leading/trailing slashes
         $path = trim($path, '/\\');
-        
+
         // Normalize directory separators
         $path = str_replace('\\', '/', $path);
-        
+
         return $path;
     }
 
@@ -419,7 +419,7 @@ class FileCleanupService implements FileCleanupServiceInterface
     protected function deleteVariants(string $originalPath, string $type, string $disk): void
     {
         $config = config("filestorage.types.{$type}");
-        
+
         if (empty($config['variants'])) {
             return;
         }
@@ -427,7 +427,7 @@ class FileCleanupService implements FileCleanupServiceInterface
         foreach (array_keys($config['variants']) as $variantName) {
             try {
                 $variantPath = $this->storageOrganizer->getVariantPath($originalPath, $variantName);
-                
+
                 if (Storage::disk($disk)->exists($variantPath)) {
                     Storage::disk($disk)->delete($variantPath);
                 }
@@ -443,13 +443,13 @@ class FileCleanupService implements FileCleanupServiceInterface
         // Also delete thumbnails directory if exists
         try {
             $pathInfo = $this->storageOrganizer->parsePath($originalPath);
-            $thumbnailDir = dirname($originalPath) . '/thumbnails';
-            
+            $thumbnailDir = dirname($originalPath).'/thumbnails';
+
             if (Storage::disk($disk)->exists($thumbnailDir)) {
                 // Delete all thumbnails for this file
-                $thumbnailPattern = $pathInfo->filename . '_';
+                $thumbnailPattern = $pathInfo->filename.'_';
                 $thumbnailFiles = Storage::disk($disk)->files($thumbnailDir);
-                
+
                 foreach ($thumbnailFiles as $thumbFile) {
                     if (str_contains(basename($thumbFile), $thumbnailPattern)) {
                         Storage::disk($disk)->delete($thumbFile);

@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Livewire\Auth\LoginForm;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
@@ -17,7 +17,7 @@ class AuthenticationSecurityTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Clear rate limiter before each test
         RateLimiter::clear('test|127.0.0.1');
     }
@@ -123,7 +123,7 @@ class AuthenticationSecurityTest extends TestCase
             ->call('login');
 
         $component->assertHasErrors(['nim']);
-        
+
         // Verify the error mentions rate limiting
         $errors = $component->errors();
         $this->assertNotEmpty($errors->get('nim'));

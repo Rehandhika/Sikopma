@@ -22,7 +22,7 @@ return new class extends Migration
             $table->timestamp('expires_at')->nullable();
             $table->foreignId('created_by')->constrained('users');
             $table->timestamps();
-            
+
             // Indexes for performance
             $table->index(['is_active', 'published_at']);
             $table->index('expires_at');

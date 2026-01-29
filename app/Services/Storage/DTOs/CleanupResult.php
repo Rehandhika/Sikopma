@@ -52,7 +52,7 @@ class CleanupResult
      */
     public function hasErrors(): bool
     {
-        return !empty($this->errors);
+        return ! empty($this->errors);
     }
 
     /**
@@ -78,7 +78,7 @@ class CleanupResult
     {
         $action = $this->dryRun ? 'would be deleted' : 'deleted';
         $freed = $this->getBytesFreedMB();
-        
+
         return "Scanned {$this->filesScanned} files, {$this->filesDeleted} {$action}, {$freed} MB freed";
     }
 

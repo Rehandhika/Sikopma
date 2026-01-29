@@ -17,16 +17,11 @@ class CheckMenuAccess
     /**
      * Handle an incoming request.
      * Check if user has permission to access the menu/route.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
-     * @param  string  $menuKey
-     * @return \Symfony\Component\HttpFoundation\Response
      */
     public function handle(Request $request, Closure $next, string $menuKey): Response
     {
         // Check if user can access the menu
-        if (!$this->menuAccessService->canAccess($menuKey)) {
+        if (! $this->menuAccessService->canAccess($menuKey)) {
             // Log unauthorized access attempt for security auditing
             Log::warning('Unauthorized menu access attempt', [
                 'event' => 'unauthorized_menu_access',

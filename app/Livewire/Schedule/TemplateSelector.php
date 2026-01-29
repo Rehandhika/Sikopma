@@ -2,23 +2,27 @@
 
 namespace App\Livewire\Schedule;
 
-use Livewire\Component;
 use App\Models\ScheduleTemplate;
 use App\Models\User;
 use App\Services\ActivityLogService;
+use Livewire\Component;
 
 class TemplateSelector extends Component
 {
     // Props
     public $show = false;
+
     public $templates = [];
+
     public $selectedTemplateId = null;
+
     public $previewTemplate = null;
-    
+
     // Search and filter
     public $search = '';
+
     public $filterType = 'all'; // all, my, public
-    
+
     protected $listeners = [
         'open-template-selector' => 'openModal',
         'close-template-selector' => 'closeModal',
@@ -48,13 +52,13 @@ class TemplateSelector extends Component
     public function loadTemplates(): void
     {
         $query = ScheduleTemplate::with('creator')
-            ->when($this->search, function($q) {
-                $q->where(function($query) {
-                    $query->where('name', 'like', '%' . $this->search . '%')
-                          ->orWhere('description', 'like', '%' . $this->search . '%');
+            ->when($this->search, function ($q) {
+                $q->where(function ($query) {
+                    $query->where('name', 'like', '%'.$this->search.'%')
+                        ->orWhere('description', 'like', '%'.$this->search.'%');
                 });
             });
-        
+
         // Apply filter
         if ($this->filterType === 'my') {
             $query->where('created_by', auth()->id());
@@ -62,12 +66,12 @@ class TemplateSelector extends Component
             $query->where('is_public', true);
         } else {
             // Show user's templates and public templates
-            $query->where(function($q) {
+            $query->where(function ($q) {
                 $q->where('created_by', auth()->id())
-                  ->orWhere('is_public', true);
+                    ->orWhere('is_public', true);
             });
         }
-        
+
         $this->templates = $query->orderByDesc('usage_count')
             ->orderByDesc('created_at')
             ->get()
@@ -96,16 +100,16 @@ class TemplateSelector extends Component
     public function previewTemplate(int $templateId): void
     {
         $template = ScheduleTemplate::find($templateId);
-        
+
         if ($template) {
             $this->selectedTemplateId = $templateId;
             $this->previewTemplate = $template->toArray();
-            
+
             // Load user details for preview
             $pattern = $template->pattern;
             $userIds = array_unique(array_column($pattern, 'user_id'));
             $users = User::whereIn('id', $userIds)->get()->keyBy('id');
-            
+
             // Enhance pattern with user details
             foreach ($this->previewTemplate['pattern'] as &$item) {
                 $user = $users->get($item['user_id']);
@@ -137,17 +141,17 @@ class TemplateSelector extends Component
     public function deleteTemplate(int $templateId): void
     {
         $template = ScheduleTemplate::find($templateId);
-        
+
         if ($template && $template->created_by === auth()->id()) {
             $templateName = $template->name;
             $template->delete();
-            
+
             // Log activity
             ActivityLogService::log("Menghapus template jadwal '{$templateName}'");
-            
+
             $this->loadTemplates();
             $this->dispatch('toast', message: 'Template berhasil dihapus.', type: 'success');
-            
+
             // Clear preview if deleted template was being previewed
             if ($this->selectedTemplateId === $templateId) {
                 $this->selectedTemplateId = null;
@@ -168,6 +172,7 @@ class TemplateSelector extends Component
             2 => '10:20 - 12:50',
             3 => '13:30 - 16:00',
         ];
+
         return $times[$session] ?? '';
     }
 
@@ -182,6 +187,7 @@ class TemplateSelector extends Component
             'wednesday' => 'Rabu',
             'thursday' => 'Kamis',
         ];
+
         return $days[strtolower($day)] ?? $day;
     }
 
@@ -193,7 +199,7 @@ class TemplateSelector extends Component
         $totalAssignments = count($pattern);
         $uniqueUsers = count(array_unique(array_column($pattern, 'user_id')));
         $coverage = round(($totalAssignments / 12) * 100, 1);
-        
+
         return [
             'total_assignments' => $totalAssignments,
             'unique_users' => $uniqueUsers,

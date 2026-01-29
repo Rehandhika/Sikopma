@@ -2,17 +2,17 @@
 
 namespace App\Livewire\Leave;
 
-use Livewire\Component;
-use Livewire\WithFileUploads;
-use Livewire\Attributes\Title;
 use App\Models\LeaveRequest;
 use App\Models\ScheduleAssignment;
-use App\Services\Storage\FileStorageServiceInterface;
 use App\Services\ActivityLogService;
 use App\Services\LeaveService;
+use App\Services\Storage\FileStorageServiceInterface;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Attributes\Title;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 #[Title('Ajukan Cuti/Izin')]
 class CreateRequest extends Component
@@ -20,13 +20,19 @@ class CreateRequest extends Component
     use WithFileUploads;
 
     public $leave_type = 'permission';
+
     public $start_date;
+
     public $end_date;
+
     public $reason = '';
+
     public $attachment;
+
     public $affectedSchedules = [];
 
     protected FileStorageServiceInterface $fileStorageService;
+
     protected LeaveService $leaveService;
 
     protected $rules = [
@@ -52,7 +58,7 @@ class CreateRequest extends Component
     public function updated($propertyName)
     {
         $this->validateOnly($propertyName);
-        
+
         // Update affected schedules when dates change
         if (in_array($propertyName, ['start_date', 'end_date'])) {
             $this->updateAffectedSchedules();
@@ -65,12 +71,12 @@ class CreateRequest extends Component
     public function updateAffectedSchedules()
     {
         $this->affectedSchedules = [];
-        
+
         if ($this->start_date && $this->end_date) {
             try {
                 $startDate = Carbon::parse($this->start_date);
                 $endDate = Carbon::parse($this->end_date);
-                
+
                 // Get affected schedule assignments
                 $assignments = ScheduleAssignment::where('user_id', auth()->id())
                     ->whereBetween('date', [$startDate, $endDate])
@@ -79,7 +85,7 @@ class CreateRequest extends Component
                     ->orderBy('date')
                     ->orderBy('session')
                     ->get();
-                
+
                 $this->affectedSchedules = $assignments->map(function ($assignment) {
                     return [
                         'id' => $assignment->id,
@@ -104,7 +110,7 @@ class CreateRequest extends Component
      */
     private function getSessionName(int $session): string
     {
-        return match($session) {
+        return match ($session) {
             1 => 'Sesi 1',
             2 => 'Sesi 2',
             3 => 'Sesi 3',
@@ -117,7 +123,7 @@ class CreateRequest extends Component
      */
     private function getSessionTime(int $session): string
     {
-        return match($session) {
+        return match ($session) {
             1 => '08:00 - 12:00',
             2 => '12:00 - 16:00',
             3 => '16:00 - 20:00',
@@ -160,14 +166,14 @@ class CreateRequest extends Component
         );
 
         $this->dispatch('toast', message: 'Pengajuan cuti/izin berhasil dibuat dan menunggu persetujuan', type: 'success');
-        
+
         return $this->redirect(route('leave.my-requests'), navigate: true);
     }
 
     /**
      * Upload leave attachment using FileStorageService.
      * Uses private disk for sensitive files.
-     * 
+     *
      * @return string|null Attachment path or null on failure
      */
     protected function uploadAttachment(): ?string
@@ -199,8 +205,6 @@ class CreateRequest extends Component
     /**
      * Legacy method for uploading leave attachment.
      * Used as fallback when FileStorageService fails.
-     * 
-     * @return string|null
      */
     protected function uploadAttachmentLegacy(): ?string
     {
@@ -212,6 +216,7 @@ class CreateRequest extends Component
                 'user_id' => auth()->id(),
                 'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -219,9 +224,6 @@ class CreateRequest extends Component
     /**
      * Get attachment URL for display.
      * Handles both private and public disk files.
-     * 
-     * @param string|null $path
-     * @return string|null
      */
     public function getAttachmentUrl(?string $path): ?string
     {
@@ -237,13 +239,13 @@ class CreateRequest extends Component
             if (Storage::disk('public')->exists($path)) {
                 return Storage::disk('public')->url($path);
             }
-            
+
             // Try local disk for private files
             if (Storage::disk('local')->exists($path)) {
                 // For private files, we need to generate a temporary URL or route
                 return route('leave.attachment.download', ['path' => base64_encode($path)]);
             }
-            
+
             return null;
         }
     }
@@ -254,11 +256,13 @@ class CreateRequest extends Component
             try {
                 $start = Carbon::parse($this->start_date);
                 $end = Carbon::parse($this->end_date);
+
                 return $start->diffInDays($end) + 1;
             } catch (\Exception $e) {
                 return 0;
             }
         }
+
         return 0;
     }
 

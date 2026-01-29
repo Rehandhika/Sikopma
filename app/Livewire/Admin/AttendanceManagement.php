@@ -2,14 +2,16 @@
 
 namespace App\Livewire\Admin;
 
-use Livewire\Component;
-use Livewire\WithPagination;
-use Livewire\Attributes\{Lazy, Computed, Url, On};
-use App\Models\Attendance;
 use App\Exports\AttendanceExport;
+use App\Models\Attendance;
 use App\Services\ActivityLogService;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\{DB, Cache};
+use Illuminate\Support\Facades\Cache;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Lazy;
+use Livewire\Attributes\Url;
+use Livewire\Component;
+use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
 
 #[Lazy]
@@ -19,13 +21,13 @@ class AttendanceManagement extends Component
 
     #[Url(as: 'from')]
     public string $dateFrom = '';
-    
+
     #[Url(as: 'to')]
     public string $dateTo = '';
-    
+
     #[Url(as: 'status')]
     public string $filterStatus = '';
-    
+
     #[Url(as: 'q')]
     public string $search = '';
 
@@ -33,18 +35,25 @@ class AttendanceManagement extends Component
 
     // Photo Modal
     public bool $showPhotoModal = false;
+
     public ?string $selectedPhoto = null;
+
     public ?string $selectedUserName = null;
 
     // Detail Modal
     public bool $showDetailModal = false;
+
     public ?array $detailData = null;
 
     // Edit Modal
     public bool $showEditModal = false;
+
     public ?int $editId = null;
+
     public string $editStatus = '';
+
     public ?string $editCheckIn = null;
+
     public ?string $editCheckOut = null;
 
     public function mount(): void
@@ -149,8 +158,9 @@ class AttendanceManagement extends Component
             ->select(['id', 'user_id', 'schedule_assignment_id', 'date', 'check_in', 'check_in_photo', 'check_out', 'work_hours', 'status', 'notes', 'created_at'])
             ->find($id);
 
-        if (!$attendance) {
+        if (! $attendance) {
             $this->dispatch('toast', message: 'Data tidak ditemukan', type: 'error');
+
             return;
         }
 
@@ -187,8 +197,9 @@ class AttendanceManagement extends Component
     {
         $attendance = Attendance::select(['id', 'status', 'check_in', 'check_out'])->find($id);
 
-        if (!$attendance) {
+        if (! $attendance) {
             $this->dispatch('toast', message: 'Data tidak ditemukan', type: 'error');
+
             return;
         }
 
@@ -215,20 +226,21 @@ class AttendanceManagement extends Component
 
         $attendance = Attendance::find($this->editId);
 
-        if (!$attendance) {
+        if (! $attendance) {
             $this->dispatch('toast', message: 'Data tidak ditemukan', type: 'error');
+
             return;
         }
 
         $updateData = ['status' => $this->editStatus];
 
         if ($this->editCheckIn) {
-            $updateData['check_in'] = Carbon::parse($attendance->date->format('Y-m-d') . ' ' . $this->editCheckIn);
+            $updateData['check_in'] = Carbon::parse($attendance->date->format('Y-m-d').' '.$this->editCheckIn);
         }
 
         if ($this->editCheckOut) {
-            $updateData['check_out'] = Carbon::parse($attendance->date->format('Y-m-d') . ' ' . $this->editCheckOut);
-            
+            $updateData['check_out'] = Carbon::parse($attendance->date->format('Y-m-d').' '.$this->editCheckOut);
+
             if (isset($updateData['check_in']) || $attendance->check_in) {
                 $checkIn = $updateData['check_in'] ?? $attendance->check_in;
                 $updateData['work_hours'] = Carbon::parse($checkIn)->diffInMinutes($updateData['check_out']) / 60;
@@ -254,9 +266,9 @@ class AttendanceManagement extends Component
     {
         // Log activity
         ActivityLogService::logAttendanceExported($this->dateFrom, $this->dateTo);
-        
-        $filename = 'absensi_' . $this->dateFrom . '_' . $this->dateTo . '.xlsx';
-        
+
+        $filename = 'absensi_'.$this->dateFrom.'_'.$this->dateTo.'.xlsx';
+
         return Excel::download(
             new AttendanceExport($this->dateFrom, $this->dateTo, $this->filterStatus, $this->search),
             $filename
@@ -268,7 +280,7 @@ class AttendanceManagement extends Component
     {
         return Cache::remember($this->getStatsCacheKey(), 60, function () {
             $query = $this->buildBaseQuery();
-            
+
             $result = $query->selectRaw("
                 COUNT(*) as total,
                 SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present,
@@ -278,7 +290,7 @@ class AttendanceManagement extends Component
             ")->first();
 
             $total = $result->total ?: 1;
-            
+
             return [
                 'total' => (int) $result->total,
                 'present' => (int) $result->present,
@@ -293,13 +305,12 @@ class AttendanceManagement extends Component
     private function buildBaseQuery()
     {
         return Attendance::query()
-            ->when($this->dateFrom, fn($q) => $q->whereDate('date', '>=', $this->dateFrom))
-            ->when($this->dateTo, fn($q) => $q->whereDate('date', '<=', $this->dateTo))
-            ->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus))
+            ->when($this->dateFrom, fn ($q) => $q->whereDate('date', '>=', $this->dateFrom))
+            ->when($this->dateTo, fn ($q) => $q->whereDate('date', '<=', $this->dateTo))
+            ->when($this->filterStatus, fn ($q) => $q->where('status', $this->filterStatus))
             ->when($this->search, function ($q) {
-                $q->whereHas('user', fn($uq) => 
-                    $uq->where('name', 'like', "%{$this->search}%")
-                       ->orWhere('nim', 'like', "%{$this->search}%")
+                $q->whereHas('user', fn ($uq) => $uq->where('name', 'like', "%{$this->search}%")
+                    ->orWhere('nim', 'like', "%{$this->search}%")
                 );
             });
     }

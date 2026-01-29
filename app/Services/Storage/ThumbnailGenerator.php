@@ -6,12 +6,12 @@ use App\Services\Storage\DTOs\BatchResult;
 use App\Services\Storage\DTOs\ProcessedImage;
 use App\Services\Storage\Exceptions\FileNotFoundException;
 use App\Services\Storage\Exceptions\FileProcessingException;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * ThumbnailGenerator - Menangani pembuatan thumbnail on-demand dan batch processing.
- * 
+ *
  * Bertanggung jawab untuk:
  * - Generate WebP thumbnails on-demand saat pertama kali diminta
  * - Return cached version jika thumbnail sudah ada
@@ -53,9 +53,11 @@ class ThumbnailGenerator implements ThumbnailGeneratorInterface
         // Generate thumbnail on-demand
         try {
             $this->generate($originalPath, $width, $height, $disk);
+
             return Storage::disk($disk)->url($thumbnailPath);
         } catch (\Exception $e) {
-            Log::warning("Thumbnail generation failed for {$originalPath}: " . $e->getMessage());
+            Log::warning("Thumbnail generation failed for {$originalPath}: ".$e->getMessage());
+
             // Fallback to original if thumbnail generation fails
             return Storage::disk($disk)->url($originalPath);
         }
@@ -69,7 +71,7 @@ class ThumbnailGenerator implements ThumbnailGeneratorInterface
         $disk = $disk ?? $this->detectDisk($originalPath);
         $fullPath = Storage::disk($disk)->path($originalPath);
 
-        if (!file_exists($fullPath)) {
+        if (! file_exists($fullPath)) {
             throw FileNotFoundException::forPath($originalPath);
         }
 
@@ -115,7 +117,7 @@ class ThumbnailGenerator implements ThumbnailGeneratorInterface
 
             // Create thumbnail directory if not exists
             $thumbnailDir = dirname($thumbnailFullPath);
-            if (!is_dir($thumbnailDir)) {
+            if (! is_dir($thumbnailDir)) {
                 mkdir($thumbnailDir, 0755, true);
             }
 
@@ -206,21 +208,21 @@ class ThumbnailGenerator implements ThumbnailGeneratorInterface
     public function deleteAll(string $originalPath, ?string $disk = null): int
     {
         $disk = $disk ?? $this->detectDisk($originalPath);
-        
+
         // Get thumbnails directory
         $pathInfo = pathinfo($originalPath);
-        $thumbnailsDir = $pathInfo['dirname'] . '/thumbnails';
+        $thumbnailsDir = $pathInfo['dirname'].'/thumbnails';
         $filename = $pathInfo['filename'];
 
         $deleted = 0;
 
         if (Storage::disk($disk)->exists($thumbnailsDir)) {
             $files = Storage::disk($disk)->files($thumbnailsDir);
-            
+
             foreach ($files as $file) {
                 // Check if file belongs to this original (starts with filename_)
                 $thumbFilename = basename($file);
-                if (str_starts_with($thumbFilename, $filename . '_')) {
+                if (str_starts_with($thumbFilename, $filename.'_')) {
                     if (Storage::disk($disk)->delete($file)) {
                         $deleted++;
                     }
@@ -252,10 +254,10 @@ class ThumbnailGenerator implements ThumbnailGeneratorInterface
         int $targetHeight
     ): array {
         $ratio = max($targetWidth / $origWidth, $targetHeight / $origHeight);
-        
+
         $newWidth = (int) ($origWidth * $ratio);
         $newHeight = (int) ($origHeight * $ratio);
-        
+
         $srcX = (int) (($newWidth - $targetWidth) / 2 / $ratio);
         $srcY = (int) (($newHeight - $targetHeight) / 2 / $ratio);
         $srcWidth = (int) ($targetWidth / $ratio);
@@ -301,7 +303,7 @@ class ThumbnailGenerator implements ThumbnailGeneratorInterface
         try {
             $pathInfo = $this->storageOrganizer->parsePath($path);
             $typeConfig = config("filestorage.types.{$pathInfo->type}");
-            
+
             if ($typeConfig && isset($typeConfig['disk'])) {
                 return $typeConfig['disk'];
             }

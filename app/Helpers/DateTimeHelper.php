@@ -17,6 +17,7 @@ class DateTimeHelper
         if (static::$service === null) {
             static::$service = app(DateTimeSettingsService::class);
         }
+
         return static::$service;
     }
 

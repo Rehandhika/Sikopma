@@ -11,7 +11,7 @@ class AttendanceObserver
     public function __construct(
         protected StoreStatusService $storeStatusService
     ) {}
-    
+
     /**
      * Handle the Attendance "created" event.
      * Triggered when a staff member checks in.
@@ -23,10 +23,10 @@ class AttendanceObserver
             'time' => $attendance->check_in?->toDateTimeString(),
             'date' => $attendance->date?->toDateString(),
         ]);
-        
+
         $this->storeStatusService->forceUpdate();
     }
-    
+
     /**
      * Handle the Attendance "updated" event.
      * Triggered when a staff member checks out.
@@ -39,7 +39,7 @@ class AttendanceObserver
                 'time' => $attendance->check_out->toDateTimeString(),
                 'date' => $attendance->date?->toDateString(),
             ]);
-            
+
             $this->storeStatusService->forceUpdate();
         }
     }

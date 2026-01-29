@@ -5,15 +5,13 @@ namespace App\Services;
 use App\Models\Banner;
 use App\Services\Storage\FileStorageServiceInterface;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * BannerService - Service untuk mengelola banner.
- * 
+ *
  * Sekarang mendelegasikan operasi file ke FileStorageService untuk konsistensi.
  * Mempertahankan API yang sama untuk backward compatibility.
  */
@@ -25,17 +23,13 @@ class BannerService
 
     /**
      * Store a new banner.
-     *
-     * @param array $data
-     * @param UploadedFile $image
-     * @return Banner
      */
     public function store(array $data, UploadedFile $image): Banner
     {
         return DB::transaction(function () use ($data, $image) {
             // Process the image using FileStorageService
             $result = $this->fileStorageService->upload($image, 'banner');
-            
+
             // Create banner record
             $banner = Banner::create([
                 'title' => $data['title'] ?? null,
@@ -51,11 +45,6 @@ class BannerService
 
     /**
      * Update an existing banner.
-     *
-     * @param Banner $banner
-     * @param array $data
-     * @param UploadedFile|null $image
-     * @return Banner
      */
     public function update(Banner $banner, array $data, ?UploadedFile $image = null): Banner
     {
@@ -83,9 +72,6 @@ class BannerService
 
     /**
      * Delete a banner and its associated images.
-     *
-     * @param Banner $banner
-     * @return bool
      */
     public function delete(Banner $banner): bool
     {
@@ -99,7 +85,7 @@ class BannerService
                     $this->deleteImageFilesLegacy($banner->image_path);
                 }
             }
-            
+
             // Delete banner record
             return $banner->delete();
         });
@@ -107,14 +93,11 @@ class BannerService
 
     /**
      * Toggle banner active status.
-     *
-     * @param Banner $banner
-     * @return Banner
      */
     public function toggleStatus(Banner $banner): Banner
     {
         $banner->update([
-            'is_active' => !$banner->is_active,
+            'is_active' => ! $banner->is_active,
         ]);
 
         return $banner->fresh();
@@ -124,13 +107,12 @@ class BannerService
      * Process uploaded image - delegates to FileStorageService.
      * Kept for backward compatibility.
      *
-     * @param UploadedFile $image
      * @return array Array with paths to different image sizes
      */
     public function processImage(UploadedFile $image): array
     {
         $result = $this->fileStorageService->upload($image, 'banner');
-        
+
         // Return in legacy format for backward compatibility
         $paths = [
             'main' => $result->path,
@@ -146,8 +128,6 @@ class BannerService
 
     /**
      * Get active banners ordered by priority.
-     *
-     * @return Collection
      */
     public function getActiveBanners(): Collection
     {
@@ -156,10 +136,8 @@ class BannerService
 
     /**
      * Get banner image URL.
-     * 
-     * @param string|null $path
-     * @param string|null $size Variant size (desktop, tablet, mobile)
-     * @return string|null
+     *
+     * @param  string|null  $size  Variant size (desktop, tablet, mobile)
      */
     public function getImageUrl(?string $path, ?string $size = null): ?string
     {
@@ -174,6 +152,7 @@ class BannerService
             if (Storage::disk('public')->exists($path)) {
                 return Storage::disk('public')->url($path);
             }
+
             return null;
         }
     }
@@ -181,21 +160,18 @@ class BannerService
     /**
      * Delete image files for a given main image path (legacy method).
      * Kept for backward compatibility with old file structure.
-     *
-     * @param string $mainImagePath
-     * @return void
      */
     protected function deleteImageFilesLegacy(string $mainImagePath): void
     {
         // Extract UUID from main image path
         $pathInfo = pathinfo($mainImagePath);
         $filename = $pathInfo['filename'];
-        
+
         // Extract UUID (everything before the last underscore)
         $lastUnderscorePos = strrpos($filename, '_');
         if ($lastUnderscorePos !== false) {
             $uuid = substr($filename, 0, $lastUnderscorePos);
-            
+
             // Delete all variants
             $sizes = [1920, 768, 480];
             foreach ($sizes as $size) {

@@ -2,20 +2,21 @@
 
 namespace Tests\Unit;
 
-use PHPUnit\Framework\TestCase;
 use App\Services\ConflictDetectionService;
 use App\Services\ScheduleConfigurationService;
 use Mockery;
+use PHPUnit\Framework\TestCase;
 
 class ConflictDetectionServiceTest extends TestCase
 {
     protected ConflictDetectionService $service;
+
     protected $configService;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Mock the config service
         $this->configService = Mockery::mock(ScheduleConfigurationService::class);
         $this->service = new ConflictDetectionService($this->configService);

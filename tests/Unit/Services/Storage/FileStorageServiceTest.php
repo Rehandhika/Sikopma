@@ -5,8 +5,6 @@ namespace Tests\Unit\Services\Storage;
 use App\Services\Storage\CacheManager;
 use App\Services\Storage\CacheManagerInterface;
 use App\Services\Storage\DTOs\FileResult;
-use App\Services\Storage\DTOs\ProcessedImage;
-use App\Services\Storage\DTOs\ValidationResult;
 use App\Services\Storage\Exceptions\FileValidationException;
 use App\Services\Storage\FileStorageService;
 use App\Services\Storage\ImageProcessingService;
@@ -22,9 +20,13 @@ use Tests\TestCase;
 class FileStorageServiceTest extends TestCase
 {
     protected FileStorageService $service;
+
     protected StorageOrganizerInterface $storageOrganizer;
+
     protected CacheManagerInterface $cacheManager;
+
     protected ImageProcessingServiceInterface $imageProcessor;
+
     protected ThumbnailGeneratorInterface $thumbnailGenerator;
 
     protected function setUp(): void
@@ -34,9 +36,9 @@ class FileStorageServiceTest extends TestCase
         Storage::fake('public');
         Storage::fake('local');
 
-        $this->storageOrganizer = new StorageOrganizer();
+        $this->storageOrganizer = new StorageOrganizer;
         $this->cacheManager = new CacheManager($this->storageOrganizer);
-        $this->imageProcessor = new ImageProcessingService();
+        $this->imageProcessor = new ImageProcessingService;
         $this->thumbnailGenerator = new ThumbnailGenerator($this->storageOrganizer);
 
         $this->service = new FileStorageService(
@@ -46,7 +48,6 @@ class FileStorageServiceTest extends TestCase
             $this->thumbnailGenerator
         );
     }
-
 
     /** @test */
     public function it_can_upload_image_file()
@@ -113,7 +114,6 @@ class FileStorageServiceTest extends TestCase
         Storage::disk('public')->assertMissing($result->path);
     }
 
-
     /** @test */
     public function it_can_check_if_file_exists()
     {
@@ -151,13 +151,13 @@ class FileStorageServiceTest extends TestCase
         $image = imagecreatetruecolor(100, 100);
         $red = imagecolorallocate($image, 255, 0, 0);
         imagefill($image, 0, 0, $red);
-        
+
         ob_start();
         imagepng($image);
         $imageData = ob_get_clean();
         imagedestroy($image);
-        
-        $base64 = 'data:image/png;base64,' . base64_encode($imageData);
+
+        $base64 = 'data:image/png;base64,'.base64_encode($imageData);
 
         $result = $this->service->uploadFromBase64($base64, 'attendance');
 
@@ -172,7 +172,7 @@ class FileStorageServiceTest extends TestCase
         // Upload first file
         $file1 = UploadedFile::fake()->image('first.jpg', 400, 300);
         $result1 = $this->service->upload($file1, 'profile');
-        
+
         Storage::disk('public')->assertExists($result1->path);
 
         // Upload replacement with old_path option
@@ -184,7 +184,6 @@ class FileStorageServiceTest extends TestCase
         // New file should exist
         Storage::disk('public')->assertExists($result2->path);
     }
-
 
     /** @test */
     public function it_can_get_disk_for_type()

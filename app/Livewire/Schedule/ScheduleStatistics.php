@@ -8,16 +8,22 @@ class ScheduleStatistics extends Component
 {
     // Props from parent
     public $totalAssignments = 0;
+
     public $coverageRate = 0;
+
     public $assignmentsPerUser = [];
+
     public $conflicts = [];
+
     public $totalSlots = 12; // 4 days x 3 sessions
-    
+
     // Computed statistics
     public $unassignedSlots = 0;
+
     public $fairnessScore = 0;
+
     public $distributionPerSession = [];
-    
+
     protected $listeners = ['statisticsUpdated' => 'updateStatistics'];
 
     public function mount($totalAssignments = 0, $coverageRate = 0, $assignmentsPerUser = [], $conflicts = [])
@@ -26,7 +32,7 @@ class ScheduleStatistics extends Component
         $this->coverageRate = $coverageRate;
         $this->assignmentsPerUser = $assignmentsPerUser;
         $this->conflicts = $conflicts;
-        
+
         $this->computeStatistics();
     }
 
@@ -39,7 +45,7 @@ class ScheduleStatistics extends Component
         $this->coverageRate = $data['coverageRate'] ?? 0;
         $this->assignmentsPerUser = $data['assignmentsPerUser'] ?? [];
         $this->conflicts = $data['conflicts'] ?? [];
-        
+
         $this->computeStatistics();
     }
 
@@ -50,7 +56,7 @@ class ScheduleStatistics extends Component
     {
         // Calculate unassigned slots
         $this->unassignedSlots = $this->totalSlots - $this->totalAssignments;
-        
+
         // Calculate fairness score (based on standard deviation)
         $this->fairnessScore = $this->calculateFairnessScore();
     }
@@ -64,16 +70,16 @@ class ScheduleStatistics extends Component
         if (empty($this->assignmentsPerUser)) {
             return 0;
         }
-        
+
         $counts = array_column($this->assignmentsPerUser, 'count');
-        
+
         if (count($counts) === 0) {
             return 0;
         }
-        
+
         // Calculate mean
         $mean = array_sum($counts) / count($counts);
-        
+
         // Calculate standard deviation
         $variance = 0;
         foreach ($counts as $count) {
@@ -81,13 +87,13 @@ class ScheduleStatistics extends Component
         }
         $variance = $variance / count($counts);
         $stdDev = sqrt($variance);
-        
+
         // Convert to score (0-100)
         // Lower std dev = higher score
         // Assuming max reasonable std dev is 2 (very unfair)
         $maxStdDev = 2;
         $score = max(0, 100 - ($stdDev / $maxStdDev * 100));
-        
+
         return round($score, 1);
     }
 
@@ -132,8 +138,8 @@ class ScheduleStatistics extends Component
      */
     public function getTotalConflicts(): int
     {
-        return $this->getConflictCount('critical') + 
-               $this->getConflictCount('warning') + 
+        return $this->getConflictCount('critical') +
+               $this->getConflictCount('warning') +
                $this->getConflictCount('info');
     }
 
@@ -145,7 +151,7 @@ class ScheduleStatistics extends Component
         if (empty($this->assignmentsPerUser)) {
             return 1;
         }
-        
+
         return max(array_column($this->assignmentsPerUser, 'count'));
     }
 
@@ -158,7 +164,7 @@ class ScheduleStatistics extends Component
         if ($max === 0) {
             return 0;
         }
-        
+
         return ($count / $max) * 100;
     }
 
@@ -168,7 +174,7 @@ class ScheduleStatistics extends Component
     public function getBarColor(int $count): string
     {
         $avg = $this->totalAssignments > 0 ? $this->totalAssignments / max(1, count($this->assignmentsPerUser)) : 0;
-        
+
         if ($count > $avg * 1.5) {
             return 'bg-red-500'; // Overloaded
         } elseif ($count > $avg * 1.2) {

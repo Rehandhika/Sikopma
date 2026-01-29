@@ -2,19 +2,20 @@
 
 namespace App\Livewire\Auth;
 
-use Livewire\Component;
-use Livewire\Attributes\Title;
-use Livewire\Attributes\Layout;
+use App\Jobs\LogLoginActivity;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
-use App\Jobs\LogLoginActivity;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Component;
 
 #[Title('Login - SIKOPMA')]
 #[Layout('layouts.guest')]
 class LoginForm extends Component
 {
     public $nim = '';
+
     public $password = '';
 
     protected $rules = [
@@ -36,11 +37,12 @@ class LoginForm extends Component
 
         // Rate limiting
         $key = $this->throttleKey();
-        
+
         if (RateLimiter::tooManyAttempts($key, 5)) {
             $seconds = RateLimiter::availableIn($key);
-            
+
             $this->addError('nim', "Terlalu banyak percobaan login. Coba lagi dalam {$seconds} detik.");
+
             return;
         }
 
@@ -54,10 +56,10 @@ class LoginForm extends Component
         if (Auth::attempt($credentials, false)) {
             // Clear rate limiter
             RateLimiter::clear($key);
-            
+
             // Regenerate session
             session()->regenerate();
-            
+
             // Dispatch async logging job (non-blocking)
             LogLoginActivity::dispatch(
                 Auth::id(),
@@ -65,14 +67,14 @@ class LoginForm extends Component
                 request()->userAgent() ?? 'Unknown',
                 'success'
             );
-            
+
             // Redirect to dashboard immediately
             return redirect()->intended(route('admin.dashboard'));
         }
 
         // Increment rate limiter
         RateLimiter::hit($key, 60);
-        
+
         // Dispatch async logging for failed attempt (non-blocking)
         LogLoginActivity::dispatch(
             0,
@@ -87,7 +89,7 @@ class LoginForm extends Component
 
     protected function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->nim) . '|' . request()->ip());
+        return Str::transliterate(Str::lower($this->nim).'|'.request()->ip());
     }
 
     public function render()

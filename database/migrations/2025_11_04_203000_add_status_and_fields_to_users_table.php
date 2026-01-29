@@ -10,14 +10,14 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             // Add status column if it doesn't exist
-            if (!Schema::hasColumn('users', 'status')) {
+            if (! Schema::hasColumn('users', 'status')) {
                 $table->enum('status', ['active', 'inactive', 'suspended'])->default('active')->after('photo');
             }
             // Add phone and address if they don't exist
-            if (!Schema::hasColumn('users', 'phone')) {
+            if (! Schema::hasColumn('users', 'phone')) {
                 $table->string('phone', 20)->nullable()->after('email');
             }
-            if (!Schema::hasColumn('users', 'address')) {
+            if (! Schema::hasColumn('users', 'address')) {
                 $table->text('address')->nullable()->after('phone');
             }
         });

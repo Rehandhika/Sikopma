@@ -5,13 +5,13 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 /**
  * Route Access Tests
- * 
+ *
  * Tests basic route accessibility for different user roles.
  * Note: The application uses view-level permission checks rather than
  * route-level middleware for most admin routes.
@@ -61,13 +61,14 @@ class RouteAccessTest extends TestCase
     private function makeUserWithRole(string $role): User
     {
         $user = User::create([
-            'name' => ucfirst($role) . ' User',
-            'nim' => 'NIM' . strtoupper(substr($role, 0, 3)) . rand(1000, 9999),
-            'email' => strtolower($role) . rand(1000, 9999) . '@test.com',
+            'name' => ucfirst($role).' User',
+            'nim' => 'NIM'.strtoupper(substr($role, 0, 3)).rand(1000, 9999),
+            'email' => strtolower($role).rand(1000, 9999).'@test.com',
             'password' => Hash::make('password'),
             'status' => 'active',
         ]);
         $user->assignRole($role);
+
         return $user;
     }
 

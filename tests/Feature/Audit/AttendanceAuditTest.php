@@ -2,19 +2,18 @@
 
 namespace Tests\Feature\Audit;
 
-use App\Models\User;
+use App\Livewire\Attendance\CheckInOut;
+use App\Models\Attendance;
 use App\Models\Schedule;
 use App\Models\ScheduleAssignment;
-use App\Models\Attendance;
-use Carbon\Carbon;
+use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
-use App\Livewire\Attendance\CheckInOut;
 
 /**
  * Attendance Module Audit Tests
- * 
+ *
  * Tests attendance check-in/check-out functionality, validation, and status classification.
  * Requirements: 4.1, 4.2, 4.3, 4.4, 4.7, 4.8, 4.9, 4.10
  */
@@ -23,7 +22,7 @@ class AttendanceAuditTest extends AuditTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Set up fake storage for photo uploads
         Storage::fake('public');
     }
@@ -98,7 +97,7 @@ class AttendanceAuditTest extends AuditTestCase
 
     /**
      * Test check-in page displays schedule info.
-     * Requirement 4.1: WHEN a user with an active schedule accesses check-in page 
+     * Requirement 4.1: WHEN a user with an active schedule accesses check-in page
      * THEN the System SHALL display current schedule information and check-in form
      */
     public function test_check_in_page_displays_schedule_info(): void
@@ -110,13 +109,13 @@ class AttendanceAuditTest extends AuditTestCase
 
         // Verify schedule information is displayed
         $component->assertSee('Jadwal Hari Ini');
-        $component->assertSee('Sesi ' . $assignment->session);
+        $component->assertSee('Sesi '.$assignment->session);
         $component->assertSee($assignment->session_label);
     }
 
     /**
      * Test check-in page shows no schedule message when user has no schedule.
-     * Requirement 4.9: WHEN a user has no scheduled assignment for today 
+     * Requirement 4.9: WHEN a user has no scheduled assignment for today
      * THEN the System SHALL display a message indicating no active schedule
      */
     public function test_check_in_page_shows_no_schedule_message(): void
@@ -130,7 +129,7 @@ class AttendanceAuditTest extends AuditTestCase
 
     /**
      * Test early check-in is blocked with message.
-     * Requirement 4.2: WHEN a user attempts check-in before the allowed time window 
+     * Requirement 4.2: WHEN a user attempts check-in before the allowed time window
      * THEN the System SHALL display a message indicating when check-in becomes available
      */
     public function test_early_check_in_is_blocked_with_message(): void
@@ -142,14 +141,14 @@ class AttendanceAuditTest extends AuditTestCase
 
         // Should show upcoming status and message about when check-in is available
         $component->assertSee('Check-in dapat dilakukan 30 menit sebelum jadwal dimulai');
-        
+
         // The canCheckInNow method should return false
         $this->assertFalse($component->instance()->canCheckInNow());
     }
 
     /**
      * Test successful check-in with valid photo.
-     * Requirement 4.3: WHEN a user uploads a valid photo and submits check-in 
+     * Requirement 4.3: WHEN a user uploads a valid photo and submits check-in
      * THEN the System SHALL record the attendance with timestamp and photo path
      */
     public function test_successful_check_in_with_valid_photo(): void
@@ -172,7 +171,7 @@ class AttendanceAuditTest extends AuditTestCase
         $attendance = Attendance::where('user_id', $this->anggota->id)
             ->where('schedule_assignment_id', $assignment->id)
             ->first();
-        
+
         $this->assertNotNull($attendance);
         $this->assertNotNull($attendance->check_in);
         $this->assertNotNull($attendance->check_in_photo);
@@ -180,7 +179,7 @@ class AttendanceAuditTest extends AuditTestCase
 
     /**
      * Test check-in without photo fails validation.
-     * Requirement 4.4: WHEN a user attempts check-in without uploading a photo 
+     * Requirement 4.4: WHEN a user attempts check-in without uploading a photo
      * THEN the System SHALL display a validation error requiring photo upload
      */
     public function test_check_in_without_photo_fails_validation(): void
@@ -197,23 +196,23 @@ class AttendanceAuditTest extends AuditTestCase
 
     /**
      * Test check-in with file exceeding 5MB fails validation.
-     * Requirement 4.5: WHEN a user uploads a file exceeding 5MB 
+     * Requirement 4.5: WHEN a user uploads a file exceeding 5MB
      * THEN the System SHALL display a validation error about file size limit
-     * 
+     *
      * Note: This test verifies the validation rule exists in the component.
      * Livewire handles large file uploads at the framework level before component validation.
      */
     public function test_check_in_photo_has_max_size_validation_rule(): void
     {
         $assignment = $this->createActiveScheduleForUser($this->anggota);
-        
+
         // Verify the component has the correct validation rules
         $component = Livewire::actingAs($this->anggota)
             ->test(CheckInOut::class);
-        
+
         // Get the component instance and check its rules
         $rules = $component->instance()->getRules();
-        
+
         // Verify max:5120 rule exists for checkInPhoto (5MB = 5120KB)
         $this->assertArrayHasKey('checkInPhoto', $rules);
         $this->assertStringContainsString('max:5120', $rules['checkInPhoto']);
@@ -221,7 +220,7 @@ class AttendanceAuditTest extends AuditTestCase
 
     /**
      * Test check-in with non-image file fails validation.
-     * Requirement 4.6: WHEN a user uploads a non-image file 
+     * Requirement 4.6: WHEN a user uploads a non-image file
      * THEN the System SHALL display a validation error about file type
      */
     public function test_check_in_with_non_image_file_fails_validation(): void
@@ -244,7 +243,7 @@ class AttendanceAuditTest extends AuditTestCase
     public function test_user_cannot_check_in_twice(): void
     {
         $assignment = $this->createActiveScheduleForUser($this->anggota);
-        
+
         // Create existing attendance record
         Attendance::create([
             'user_id' => $this->anggota->id,
@@ -271,13 +270,13 @@ class AttendanceAuditTest extends AuditTestCase
 
     /**
      * Test successful check-out after check-in.
-     * Requirement 4.7: WHEN a checked-in user submits check-out 
+     * Requirement 4.7: WHEN a checked-in user submits check-out
      * THEN the System SHALL record check-out time and calculate work hours
      */
     public function test_successful_check_out_after_check_in(): void
     {
         $assignment = $this->createActiveScheduleForUser($this->anggota);
-        
+
         // Create check-in record from 2 hours ago
         $checkInTime = now()->subHours(2);
         $attendance = Attendance::create([
@@ -297,7 +296,7 @@ class AttendanceAuditTest extends AuditTestCase
 
         // Verify check-out was recorded
         $this->assertNotNull($attendance->check_out);
-        
+
         // Verify work hours were calculated (should be approximately 2 hours)
         $this->assertNotNull($attendance->work_hours);
         $this->assertGreaterThan(1.9, $attendance->work_hours);
@@ -306,7 +305,7 @@ class AttendanceAuditTest extends AuditTestCase
 
     /**
      * Test check-out without check-in fails.
-     * Requirement 4.8: WHEN a user attempts check-out without prior check-in 
+     * Requirement 4.8: WHEN a user attempts check-out without prior check-in
      * THEN the System SHALL display an appropriate error message
      */
     public function test_check_out_without_check_in_fails(): void
@@ -318,7 +317,7 @@ class AttendanceAuditTest extends AuditTestCase
 
         // Verify no attendance exists yet
         $this->assertNull($component->get('currentAttendance'));
-        
+
         // The check-out button should not be available when not checked in
         $this->assertNull($component->get('checkInTime'));
     }
@@ -329,7 +328,7 @@ class AttendanceAuditTest extends AuditTestCase
     public function test_user_cannot_check_out_twice(): void
     {
         $assignment = $this->createActiveScheduleForUser($this->anggota);
-        
+
         // Create attendance record with both check-in and check-out
         Attendance::create([
             'user_id' => $this->anggota->id,
@@ -351,7 +350,7 @@ class AttendanceAuditTest extends AuditTestCase
 
     /**
      * Test no schedule displays appropriate message.
-     * Requirement 4.9: WHEN a user has no scheduled assignment for today 
+     * Requirement 4.9: WHEN a user has no scheduled assignment for today
      * THEN the System SHALL display a message indicating no active schedule
      */
     public function test_no_schedule_displays_appropriate_message(): void
@@ -370,7 +369,7 @@ class AttendanceAuditTest extends AuditTestCase
     public function test_check_in_page_requires_authentication(): void
     {
         $response = $this->get('/admin/absensi/masuk-keluar');
-        
+
         $response->assertRedirect('/admin/masuk');
     }
 
@@ -381,7 +380,7 @@ class AttendanceAuditTest extends AuditTestCase
     {
         $response = $this->actingAs($this->anggota)
             ->get('/admin/absensi/masuk-keluar');
-        
+
         $response->assertStatus(200);
     }
 
@@ -391,7 +390,7 @@ class AttendanceAuditTest extends AuditTestCase
     public function test_notes_can_be_updated_after_check_in(): void
     {
         $assignment = $this->createActiveScheduleForUser($this->anggota);
-        
+
         // Create check-in record
         $attendance = Attendance::create([
             'user_id' => $this->anggota->id,
@@ -420,7 +419,7 @@ class AttendanceAuditTest extends AuditTestCase
     public function test_notes_has_max_length_validation_rule(): void
     {
         $assignment = $this->createActiveScheduleForUser($this->anggota);
-        
+
         // Create check-in record
         Attendance::create([
             'user_id' => $this->anggota->id,
@@ -433,10 +432,10 @@ class AttendanceAuditTest extends AuditTestCase
         // Verify the component has the correct validation rules for notes
         $component = Livewire::actingAs($this->anggota)
             ->test(CheckInOut::class);
-        
+
         // Get the component instance and check its rules
         $rules = $component->instance()->getRules();
-        
+
         // Verify max:500 rule exists for notes
         $this->assertArrayHasKey('notes', $rules);
         $this->assertStringContainsString('max:500', $rules['notes']);

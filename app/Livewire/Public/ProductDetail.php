@@ -3,21 +3,19 @@
 namespace App\Livewire\Public;
 
 use App\Models\Product;
-use Livewire\Component;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
-use Illuminate\Support\Collection;
+use Livewire\Component;
 
 class ProductDetail extends Component
 {
     public Product $product;
+
     public ?int $selectedVariantId = null;
 
     /**
      * Mount the component with product slug
-     * 
-     * @param string $slug
-     * @return void
      */
     public function mount(string $slug): void
     {
@@ -26,12 +24,12 @@ class ProductDetail extends Component
 
         $this->product = \Illuminate\Support\Facades\Cache::remember($cacheKey, 300, function () use ($slug) {
             return Product::select([
-                    'id', 'name', 'slug', 'sku', 'price', 'stock', 'min_stock', 
-                    'category', 'description', 'image', 'is_featured', 'status', 'is_public', 'has_variants'
-                ])
+                'id', 'name', 'slug', 'sku', 'price', 'stock', 'min_stock',
+                'category', 'description', 'image', 'is_featured', 'status', 'is_public', 'has_variants',
+            ])
                 ->with(['activeVariants' => function ($query) {
                     $query->select([
-                        'id', 'product_id', 'sku', 'variant_name', 'price', 'stock', 'min_stock', 'option_values', 'is_active'
+                        'id', 'product_id', 'sku', 'variant_name', 'price', 'stock', 'min_stock', 'option_values', 'is_active',
                     ])->orderBy('price');
                 }])
                 ->where('slug', $slug)
@@ -41,7 +39,7 @@ class ProductDetail extends Component
 
         // Auto-select first available variant
         if ($this->product->has_variants && $this->product->activeVariants->isNotEmpty()) {
-            $firstAvailable = $this->product->activeVariants->first(fn($v) => $v->stock > 0);
+            $firstAvailable = $this->product->activeVariants->first(fn ($v) => $v->stock > 0);
             $this->selectedVariantId = $firstAvailable?->id ?? $this->product->activeVariants->first()->id;
         }
     }
@@ -62,21 +60,20 @@ class ProductDetail extends Component
      */
     public function getSelectedVariantProperty()
     {
-        if (!$this->selectedVariantId) {
+        if (! $this->selectedVariantId) {
             return null;
         }
+
         return $this->product->activeVariants->find($this->selectedVariantId);
     }
 
     /**
      * Get variants grouped by option type
      * Requirements: 5.3
-     * 
-     * @return Collection
      */
     public function getGroupedVariantsProperty(): Collection
     {
-        if (!$this->product->has_variants) {
+        if (! $this->product->has_variants) {
             return collect();
         }
 
@@ -91,13 +88,13 @@ class ProductDetail extends Component
 
             foreach ($variant->option_values as $key => $optionData) {
                 $optionName = $optionData['option_name'] ?? $key;
-                
-                if (!$grouped->has($optionName)) {
+
+                if (! $grouped->has($optionName)) {
                     $grouped[$optionName] = collect();
                 }
 
                 $value = $optionData['value'] ?? '';
-                if (!$grouped[$optionName]->contains('value', $value)) {
+                if (! $grouped[$optionName]->contains('value', $value)) {
                     $grouped[$optionName]->push([
                         'value' => $value,
                         'option_id' => $optionData['option_id'] ?? null,
@@ -117,6 +114,7 @@ class ProductDetail extends Component
         if ($this->product->has_variants && $this->selectedVariant) {
             return (float) $this->selectedVariant->price;
         }
+
         return (float) $this->product->price;
     }
 
@@ -128,6 +126,7 @@ class ProductDetail extends Component
         if ($this->product->has_variants && $this->selectedVariant) {
             return (int) $this->selectedVariant->stock;
         }
+
         return $this->product->has_variants ? $this->product->total_stock : (int) $this->product->stock;
     }
 
@@ -139,6 +138,7 @@ class ProductDetail extends Component
         if ($this->product->has_variants && $this->selectedVariant) {
             return $this->selectedVariant->sku;
         }
+
         return $this->product->sku;
     }
 

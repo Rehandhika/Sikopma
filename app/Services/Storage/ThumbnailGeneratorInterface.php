@@ -14,10 +14,10 @@ interface ThumbnailGeneratorInterface
     /**
      * Get thumbnail URL (generate on-demand jika belum ada).
      *
-     * @param string $originalPath Path file original
-     * @param int $width Lebar thumbnail
-     * @param int $height Tinggi thumbnail
-     * @param string|null $disk Storage disk (null = auto-detect dari path)
+     * @param  string  $originalPath  Path file original
+     * @param  int  $width  Lebar thumbnail
+     * @param  int  $height  Tinggi thumbnail
+     * @param  string|null  $disk  Storage disk (null = auto-detect dari path)
      * @return string URL thumbnail
      */
     public function getThumbnailUrl(string $originalPath, int $width, int $height, ?string $disk = null): string;
@@ -25,10 +25,10 @@ interface ThumbnailGeneratorInterface
     /**
      * Generate thumbnail secara eksplisit.
      *
-     * @param string $originalPath Path file original
-     * @param int $width Lebar thumbnail
-     * @param int $height Tinggi thumbnail
-     * @param string|null $disk Storage disk (null = auto-detect dari path)
+     * @param  string  $originalPath  Path file original
+     * @param  int  $width  Lebar thumbnail
+     * @param  int  $height  Tinggi thumbnail
+     * @param  string|null  $disk  Storage disk (null = auto-detect dari path)
      * @return ProcessedImage Hasil thumbnail yang di-generate
      */
     public function generate(string $originalPath, int $width, int $height, ?string $disk = null): ProcessedImage;
@@ -36,10 +36,10 @@ interface ThumbnailGeneratorInterface
     /**
      * Batch generate thumbnails.
      *
-     * @param array $paths Array of original paths
-     * @param int $width Lebar thumbnail
-     * @param int $height Tinggi thumbnail
-     * @param string|null $disk Storage disk (null = auto-detect dari path)
+     * @param  array  $paths  Array of original paths
+     * @param  int  $width  Lebar thumbnail
+     * @param  int  $height  Tinggi thumbnail
+     * @param  string|null  $disk  Storage disk (null = auto-detect dari path)
      * @return BatchResult Hasil batch processing
      */
     public function generateBatch(array $paths, int $width, int $height, ?string $disk = null): BatchResult;
@@ -47,10 +47,10 @@ interface ThumbnailGeneratorInterface
     /**
      * Check apakah thumbnail sudah ada.
      *
-     * @param string $originalPath Path file original
-     * @param int $width Lebar thumbnail
-     * @param int $height Tinggi thumbnail
-     * @param string|null $disk Storage disk
+     * @param  string  $originalPath  Path file original
+     * @param  int  $width  Lebar thumbnail
+     * @param  int  $height  Tinggi thumbnail
+     * @param  string|null  $disk  Storage disk
      * @return bool True jika thumbnail exists
      */
     public function exists(string $originalPath, int $width, int $height, ?string $disk = null): bool;
@@ -58,10 +58,10 @@ interface ThumbnailGeneratorInterface
     /**
      * Delete thumbnail.
      *
-     * @param string $originalPath Path file original
-     * @param int $width Lebar thumbnail
-     * @param int $height Tinggi thumbnail
-     * @param string|null $disk Storage disk
+     * @param  string  $originalPath  Path file original
+     * @param  int  $width  Lebar thumbnail
+     * @param  int  $height  Tinggi thumbnail
+     * @param  string|null  $disk  Storage disk
      * @return bool True jika berhasil dihapus
      */
     public function delete(string $originalPath, int $width, int $height, ?string $disk = null): bool;
@@ -69,8 +69,8 @@ interface ThumbnailGeneratorInterface
     /**
      * Delete semua thumbnails untuk file original.
      *
-     * @param string $originalPath Path file original
-     * @param string|null $disk Storage disk
+     * @param  string  $originalPath  Path file original
+     * @param  string|null  $disk  Storage disk
      * @return int Jumlah thumbnails yang dihapus
      */
     public function deleteAll(string $originalPath, ?string $disk = null): int;
@@ -78,9 +78,9 @@ interface ThumbnailGeneratorInterface
     /**
      * Get thumbnail path dari original path.
      *
-     * @param string $originalPath Path file original
-     * @param int $width Lebar thumbnail
-     * @param int $height Tinggi thumbnail
+     * @param  string  $originalPath  Path file original
+     * @param  int  $width  Lebar thumbnail
+     * @param  int  $height  Tinggi thumbnail
      * @return string Path thumbnail
      */
     public function getThumbnailPath(string $originalPath, int $width, int $height): string;

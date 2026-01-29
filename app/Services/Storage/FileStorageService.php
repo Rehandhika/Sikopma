@@ -3,8 +3,6 @@
 namespace App\Services\Storage;
 
 use App\Services\Storage\DTOs\FileResult;
-use App\Services\Storage\DTOs\ProcessedImage;
-use App\Services\Storage\Exceptions\FileNotFoundException;
 use App\Services\Storage\Exceptions\FileProcessingException;
 use App\Services\Storage\Exceptions\FileStorageException;
 use App\Services\Storage\Exceptions\FileValidationException;
@@ -15,7 +13,7 @@ use Illuminate\Support\Str;
 
 /**
  * FileStorageService - Entry point utama untuk semua operasi penyimpanan file.
- * 
+ *
  * Bertanggung jawab untuk:
  * - Upload file dengan validasi dan processing otomatis
  * - Upload dari base64 (camera capture)
@@ -41,11 +39,11 @@ class FileStorageService implements FileStorageServiceInterface
     public function upload(UploadedFile $file, string $type, array $options = []): FileResult
     {
         // Validate type
-        if (!$this->storageOrganizer->isValidType($type)) {
+        if (! $this->storageOrganizer->isValidType($type)) {
             throw new FileValidationException(
                 __('filestorage.validation.invalid_file_type', [
                     'type' => $type,
-                    'valid_types' => implode(', ', $this->storageOrganizer->getValidTypes())
+                    'valid_types' => implode(', ', $this->storageOrganizer->getValidTypes()),
                 ])
             );
         }
@@ -69,7 +67,6 @@ class FileStorageService implements FileStorageServiceInterface
             'mime' => $file->getMimeType(),
         ]);
 
-
         // Delete old file if provided
         $oldPath = $options['old_path'] ?? null;
         if ($oldPath && $this->exists($oldPath)) {
@@ -92,9 +89,9 @@ class FileStorageService implements FileStorageServiceInterface
             // Get full path for processing
             $fullPath = Storage::disk($disk)->path($relativePath);
             $directory = dirname($fullPath);
-            
+
             // Ensure directory exists
-            if (!is_dir($directory)) {
+            if (! is_dir($directory)) {
                 mkdir($directory, 0755, true);
             }
 
@@ -102,7 +99,7 @@ class FileStorageService implements FileStorageServiceInterface
             $processedImage = null;
             $variants = [];
 
-            if ($isImage && ($convertToWebp || !empty($config['variants']))) {
+            if ($isImage && ($convertToWebp || ! empty($config['variants']))) {
                 // Process image (resize, convert to WebP if configured)
                 $processedImage = $this->imageProcessor->process(
                     $file->getRealPath(),
@@ -116,14 +113,13 @@ class FileStorageService implements FileStorageServiceInterface
                 }
 
                 // Generate variants if configured
-                if (!empty($config['variants'])) {
+                if (! empty($config['variants'])) {
                     $variants = $this->generateVariants($processedImage->path, $type, $disk);
                 }
             } else {
                 // Store file as-is (non-image or no processing needed)
                 $file->storeAs(dirname($relativePath), basename($relativePath), $disk);
             }
-
 
             // Get file info
             $storedPath = Storage::disk($disk)->path($relativePath);
@@ -177,11 +173,11 @@ class FileStorageService implements FileStorageServiceInterface
     public function uploadFromBase64(string $base64, string $type, array $options = []): FileResult
     {
         // Validate type
-        if (!$this->storageOrganizer->isValidType($type)) {
+        if (! $this->storageOrganizer->isValidType($type)) {
             throw new FileValidationException(
                 __('filestorage.validation.invalid_file_type', [
                     'type' => $type,
-                    'valid_types' => implode(', ', $this->storageOrganizer->getValidTypes())
+                    'valid_types' => implode(', ', $this->storageOrganizer->getValidTypes()),
                 ])
             );
         }
@@ -192,16 +188,15 @@ class FileStorageService implements FileStorageServiceInterface
             throw FileValidationException::invalidImage();
         }
 
-
         // Create temporary file
-        $tempPath = sys_get_temp_dir() . '/' . Str::uuid() . '.' . $imageData['extension'];
+        $tempPath = sys_get_temp_dir().'/'.Str::uuid().'.'.$imageData['extension'];
         file_put_contents($tempPath, $imageData['data']);
 
         try {
             // Create UploadedFile from temp file
             $uploadedFile = new UploadedFile(
                 $tempPath,
-                'camera_capture.' . $imageData['extension'],
+                'camera_capture.'.$imageData['extension'],
                 $imageData['mime'],
                 null,
                 true // test mode to skip validation
@@ -241,7 +236,7 @@ class FileStorageService implements FileStorageServiceInterface
                     $thumbConfig = $config['thumbnail'];
                     $width = $thumbConfig['width'] ?? 150;
                     $height = $thumbConfig['height'] ?? 150;
-                    
+
                     return $this->thumbnailGenerator->getThumbnailUrl($path, $width, $height, $disk);
                 }
 
@@ -252,7 +247,7 @@ class FileStorageService implements FileStorageServiceInterface
             }
 
             // Check if file exists before using cache
-            if (!Storage::disk($disk)->exists($actualPath)) {
+            if (! Storage::disk($disk)->exists($actualPath)) {
                 // Fallback to original if variant doesn't exist
                 if ($actualPath !== $path && Storage::disk($disk)->exists($path)) {
                     $actualPath = $path;
@@ -268,8 +263,9 @@ class FileStorageService implements FileStorageServiceInterface
             return $this->cacheManager->getUrl($actualPath, $size ?? 'original', function () use ($disk, $actualPath) {
                 // Use relative URL for public disk to work across different hosts
                 if ($disk === 'public') {
-                    return '/storage/' . ltrim($actualPath, '/');
+                    return '/storage/'.ltrim($actualPath, '/');
                 }
+
                 return Storage::disk($disk)->url($actualPath);
             });
         } catch (\Exception $e) {
@@ -278,7 +274,7 @@ class FileStorageService implements FileStorageServiceInterface
                 'size' => $size,
                 'error' => $e->getMessage(),
             ]);
-            
+
             return null;
         }
     }
@@ -286,9 +282,9 @@ class FileStorageService implements FileStorageServiceInterface
     /**
      * Get signed URL for private file access.
      *
-     * @param string $path File path
-     * @param string|null $size Size variant
-     * @param int|null $expirationMinutes URL expiration in minutes
+     * @param  string  $path  File path
+     * @param  string|null  $size  Size variant
+     * @param  int|null  $expirationMinutes  URL expiration in minutes
      * @return string|null Signed URL or null if file doesn't exist
      */
     public function getSignedUrl(string $path, ?string $size = null, ?int $expirationMinutes = null): ?string
@@ -308,7 +304,7 @@ class FileStorageService implements FileStorageServiceInterface
             }
 
             // Check if file exists
-            if (!Storage::disk($disk)->exists($actualPath)) {
+            if (! Storage::disk($disk)->exists($actualPath)) {
                 return null;
             }
 
@@ -325,7 +321,7 @@ class FileStorageService implements FileStorageServiceInterface
 
             // Fallback: generate signed URL manually
             $expirationMinutes = $expirationMinutes ?? config('filestorage.security.signed_url_expiration', 60);
-            
+
             return \Illuminate\Support\Facades\URL::temporarySignedRoute(
                 'file.download',
                 now()->addMinutes($expirationMinutes),
@@ -340,7 +336,7 @@ class FileStorageService implements FileStorageServiceInterface
                 'size' => $size,
                 'error' => $e->getMessage(),
             ]);
-            
+
             return null;
         }
     }
@@ -348,15 +344,15 @@ class FileStorageService implements FileStorageServiceInterface
     /**
      * Check if file type uses private storage.
      *
-     * @param string $type File type
+     * @param  string  $type  File type
      * @return bool True if private
      */
     public function isPrivateFile(string $type): bool
     {
         $config = $this->getTypeConfig($type);
+
         return ($config['disk'] ?? 'public') === 'local';
     }
-
 
     /**
      * {@inheritdoc}
@@ -378,7 +374,7 @@ class FileStorageService implements FileStorageServiceInterface
             }
 
             // Delete variants
-            if (!empty($config['variants'])) {
+            if (! empty($config['variants'])) {
                 foreach (array_keys($config['variants']) as $variantName) {
                     $variantPath = $this->storageOrganizer->getVariantPath($path, $variantName);
                     if (Storage::disk($disk)->exists($variantPath)) {
@@ -430,6 +426,7 @@ class FileStorageService implements FileStorageServiceInterface
     public function getDiskForType(string $type): string
     {
         $config = $this->getTypeConfig($type);
+
         return $config['disk'] ?? 'public';
     }
 
@@ -441,13 +438,12 @@ class FileStorageService implements FileStorageServiceInterface
         return config("filestorage.types.{$type}");
     }
 
-
     /**
      * Generate variants for an image.
      *
-     * @param string $originalFullPath Full filesystem path to original image
-     * @param string $type File type
-     * @param string $disk Storage disk
+     * @param  string  $originalFullPath  Full filesystem path to original image
+     * @param  string  $type  File type
+     * @param  string  $disk  Storage disk
      * @return array<string, array{path: string, url: string}> Variant info
      */
     protected function generateVariants(string $originalFullPath, string $type, string $disk): array
@@ -503,6 +499,7 @@ class FileStorageService implements FileStorageServiceInterface
     protected function isImageFile(UploadedFile $file): bool
     {
         $mime = $file->getMimeType();
+
         return $mime !== null && str_starts_with($mime, 'image/');
     }
 
@@ -532,14 +529,13 @@ class FileStorageService implements FileStorageServiceInterface
         $directory = $pathInfo['dirname'];
         $filename = $pathInfo['filename'];
 
-        return $directory . '/' . $filename . '.' . $newExtension;
+        return $directory.'/'.$filename.'.'.$newExtension;
     }
-
 
     /**
      * Parse base64 image data.
      *
-     * @param string $base64 Base64 encoded image
+     * @param  string  $base64  Base64 encoded image
      * @return array{data: string, mime: string, extension: string}|null
      */
     protected function parseBase64Image(string $base64): ?array
@@ -553,8 +549,8 @@ class FileStorageService implements FileStorageServiceInterface
                 return null;
             }
 
-            $mime = 'image/' . $extension;
-            
+            $mime = 'image/'.$extension;
+
             // Normalize extension
             if ($extension === 'jpeg') {
                 $extension = 'jpg';
@@ -577,7 +573,7 @@ class FileStorageService implements FileStorageServiceInterface
         $finfo = new \finfo(FILEINFO_MIME_TYPE);
         $mime = $finfo->buffer($data);
 
-        if ($mime === false || !str_starts_with($mime, 'image/')) {
+        if ($mime === false || ! str_starts_with($mime, 'image/')) {
             return null;
         }
 
@@ -599,9 +595,9 @@ class FileStorageService implements FileStorageServiceInterface
     /**
      * Log file access for audit purposes.
      *
-     * @param string $action Action performed
-     * @param string $type File type
-     * @param array $context Additional context
+     * @param  string  $action  Action performed
+     * @param  string  $type  File type
+     * @param  array  $context  Additional context
      */
     protected function logFileAccess(string $action, string $type, array $context = []): void
     {

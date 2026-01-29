@@ -2,16 +2,15 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class UserSeeder extends Seeder
 {
     /**
      * Wirus Angkatan 66 - Data Anggota
-     * 
+     *
      * Struktur Organisasi:
      * - Ketua: Pimpinan tertinggi
      * - Wakil Ketua: Pendamping ketua
@@ -162,7 +161,7 @@ class UserSeeder extends Seeder
             $user->syncRoles([$member['role']]);
         }
 
-        $this->command->info('✅ Wirus Angkatan 66 - ' . count($members) . ' anggota berhasil di-seed!');
+        $this->command->info('✅ Wirus Angkatan 66 - '.count($members).' anggota berhasil di-seed!');
         $this->command->info('');
         $this->command->info('📋 Struktur Organisasi:');
         $this->command->info('   Ketua: Diva Afdholia R.');

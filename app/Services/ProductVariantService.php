@@ -2,15 +2,14 @@
 
 namespace App\Services;
 
+use App\Exceptions\BusinessException;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\VariantOption;
-use App\Models\VariantOptionValue;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
-use App\Exceptions\BusinessException;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ProductVariantService
 {
@@ -18,6 +17,7 @@ class ProductVariantService
      * Cache TTL in minutes for product stats
      */
     protected const CACHE_TTL_MINUTES = 5;
+
     /**
      * Create a new variant for a product
      */
@@ -43,7 +43,7 @@ class ProductVariantService
             ]);
 
             // Ensure product is marked as has_variants
-            if (!$product->has_variants) {
+            if (! $product->has_variants) {
                 $product->update(['has_variants' => true]);
             }
 
@@ -60,6 +60,7 @@ class ProductVariantService
     public function updateVariant(ProductVariant $variant, array $data): ProductVariant
     {
         $variant->update($data);
+
         return $variant->fresh();
     }
 
@@ -74,16 +75,16 @@ class ProductVariantService
 
         // Add option value codes
         $optionCodes = collect($optionValues)
-            ->map(fn($opt) => Str::upper(Str::limit($opt['value'] ?? '', 3, '')))
+            ->map(fn ($opt) => Str::upper(Str::limit($opt['value'] ?? '', 3, '')))
             ->implode('-');
 
-        $sku = $baseSku . '-' . $optionCodes;
+        $sku = $baseSku.'-'.$optionCodes;
 
         // Ensure uniqueness
         $originalSku = $sku;
         $counter = 1;
         while (ProductVariant::where('sku', $sku)->exists()) {
-            $sku = $originalSku . '-' . $counter;
+            $sku = $originalSku.'-'.$counter;
             $counter++;
         }
 
@@ -96,11 +97,11 @@ class ProductVariantService
     public function buildVariantName(Product $product, array $optionValues): string
     {
         $optionString = collect($optionValues)
-            ->map(fn($opt) => $opt['value'] ?? '')
+            ->map(fn ($opt) => $opt['value'] ?? '')
             ->filter()
             ->implode(' / ');
 
-        return $product->name . ($optionString ? ' - ' . $optionString : '');
+        return $product->name.($optionString ? ' - '.$optionString : '');
     }
 
     /**
@@ -124,7 +125,7 @@ class ProductVariantService
 
         foreach ($variants as $variant) {
             foreach ($variant->option_values as $optionSlug => $optionData) {
-                if (!isset($grouped[$optionSlug])) {
+                if (! isset($grouped[$optionSlug])) {
                     $grouped[$optionSlug] = [
                         'option_name' => $optionData['option_name'] ?? ucfirst($optionSlug),
                         'values' => [],
@@ -132,7 +133,7 @@ class ProductVariantService
                 }
 
                 $valueKey = $optionData['value'] ?? '';
-                if (!isset($grouped[$optionSlug]['values'][$valueKey])) {
+                if (! isset($grouped[$optionSlug]['values'][$valueKey])) {
                     $grouped[$optionSlug]['values'][$valueKey] = [
                         'value' => $valueKey,
                         'value_id' => $optionData['value_id'] ?? null,
@@ -162,7 +163,7 @@ class ProductVariantService
         }
 
         $variant->decreaseStock($quantity);
-        
+
         // Auto-sync product total stock
         $this->syncProductTotalStock($variant->product);
     }
@@ -173,7 +174,7 @@ class ProductVariantService
     public function increaseStock(ProductVariant $variant, int $quantity): void
     {
         $variant->increaseStock($quantity);
-        
+
         // Auto-sync product total stock
         $this->syncProductTotalStock($variant->product);
     }
@@ -188,10 +189,11 @@ class ProductVariantService
             ->first(function ($variant) use ($selectedOptions) {
                 foreach ($selectedOptions as $optionSlug => $valueId) {
                     $variantOption = $variant->option_values[$optionSlug] ?? null;
-                    if (!$variantOption || ($variantOption['value_id'] ?? null) != $valueId) {
+                    if (! $variantOption || ($variantOption['value_id'] ?? null) != $valueId) {
                         return false;
                     }
                 }
+
                 return true;
             });
     }
@@ -228,10 +230,10 @@ class ProductVariantService
      * Generate all combinations of option values
      * Returns array of combinations where each combination is an associative array
      * keyed by option slug containing option/value data
-     * 
+     *
      * Requirements: 4.1
-     * 
-     * @param Collection $options Collection of VariantOption with loaded values
+     *
+     * @param  Collection  $options  Collection of VariantOption with loaded values
      * @return array Array of combinations
      */
     public function generateCombinations(Collection $options): array
@@ -261,11 +263,11 @@ class ProductVariantService
     /**
      * Generate all variant combinations from selected option value IDs
      * This method generates combinations from specific value selections per option
-     * 
+     *
      * Requirements: 4.1
-     * 
-     * @param array $selectedValuesByOption Array keyed by option_id containing arrays of value_ids
-     *                                       e.g., [1 => [1, 2], 2 => [5, 6, 7]]
+     *
+     * @param  array  $selectedValuesByOption  Array keyed by option_id containing arrays of value_ids
+     *                                         e.g., [1 => [1, 2], 2 => [5, 6, 7]]
      * @return array Array of combinations with full option/value data
      */
     public function generateCombinationsFromSelectedValues(array $selectedValuesByOption): array
@@ -291,7 +293,7 @@ class ProductVariantService
 
             // Filter to only selected values
             $selectedValues = $option->values->whereIn('id', $selectedValueIds);
-            
+
             $newResult = [];
             foreach ($result as $combination) {
                 foreach ($selectedValues as $value) {
@@ -314,15 +316,15 @@ class ProductVariantService
     /**
      * Bulk generate variants from option combinations with default price and stock
      * Creates all possible combinations from selected options and values
-     * 
+     *
      * Requirements: 4.1
-     * 
-     * @param Product $product The product to create variants for
-     * @param array $selectedValuesByOption Array keyed by option_id containing arrays of value_ids
-     * @param float $defaultPrice Default price for all generated variants
-     * @param float $defaultCostPrice Default cost price for all generated variants
-     * @param int $defaultStock Default stock for all generated variants
-     * @param int $defaultMinStock Default minimum stock for all generated variants
+     *
+     * @param  Product  $product  The product to create variants for
+     * @param  array  $selectedValuesByOption  Array keyed by option_id containing arrays of value_ids
+     * @param  float  $defaultPrice  Default price for all generated variants
+     * @param  float  $defaultCostPrice  Default cost price for all generated variants
+     * @param  int  $defaultStock  Default stock for all generated variants
+     * @param  int  $defaultMinStock  Default minimum stock for all generated variants
      * @return Collection Collection of created ProductVariant models
      */
     public function bulkGenerateVariants(
@@ -340,10 +342,11 @@ class ProductVariantService
             foreach ($combinations as $combination) {
                 // Check if variant with same option values already exists
                 $existingVariant = $this->findExistingVariantByCombination($product, $combination);
-                
+
                 if ($existingVariant) {
                     // Skip existing variants
                     $variants->push($existingVariant);
+
                     continue;
                 }
 
@@ -360,7 +363,7 @@ class ProductVariantService
             }
 
             // Ensure product is marked as has_variants
-            if (!$product->has_variants) {
+            if (! $product->has_variants) {
                 $product->update(['has_variants' => true]);
             }
 
@@ -377,10 +380,6 @@ class ProductVariantService
 
     /**
      * Find existing variant by combination of option values
-     * 
-     * @param Product $product
-     * @param array $combination
-     * @return ProductVariant|null
      */
     protected function findExistingVariantByCombination(Product $product, array $combination): ?ProductVariant
     {
@@ -388,15 +387,15 @@ class ProductVariantService
             ->get()
             ->first(function ($variant) use ($combination) {
                 $variantOptions = $variant->option_values ?? [];
-                
+
                 // Check if all combination options match
                 foreach ($combination as $optionSlug => $valueData) {
                     $variantOption = $variantOptions[$optionSlug] ?? null;
-                    if (!$variantOption || ($variantOption['value_id'] ?? null) != $valueData['value_id']) {
+                    if (! $variantOption || ($variantOption['value_id'] ?? null) != $valueData['value_id']) {
                         return false;
                     }
                 }
-                
+
                 // Also check that variant doesn't have extra options
                 return count($variantOptions) === count($combination);
             });
@@ -405,16 +404,16 @@ class ProductVariantService
     /**
      * Preview variant combinations without creating them
      * Useful for showing user what will be generated
-     * 
+     *
      * Requirements: 4.1
-     * 
-     * @param array $selectedValuesByOption Array keyed by option_id containing arrays of value_ids
+     *
+     * @param  array  $selectedValuesByOption  Array keyed by option_id containing arrays of value_ids
      * @return array Array with 'count' and 'combinations' keys
      */
     public function previewCombinations(array $selectedValuesByOption): array
     {
         $combinations = $this->generateCombinationsFromSelectedValues($selectedValuesByOption);
-        
+
         return [
             'count' => count($combinations),
             'combinations' => collect($combinations)->map(function ($combination) {
@@ -429,10 +428,10 @@ class ProductVariantService
     /**
      * Calculate expected combination count from selected values
      * Uses multiplication of value counts per option
-     * 
+     *
      * Requirements: 4.1
-     * 
-     * @param array $selectedValuesByOption Array keyed by option_id containing arrays of value_ids
+     *
+     * @param  array  $selectedValuesByOption  Array keyed by option_id containing arrays of value_ids
      * @return int Expected number of combinations
      */
     public function calculateCombinationCount(array $selectedValuesByOption): int
@@ -465,15 +464,12 @@ class ProductVariantService
 
     /**
      * Check if product can be activated (has at least one variant if has_variants is true)
-     * 
+     *
      * Requirements: 4.4
-     * 
-     * @param Product $product
-     * @return bool
      */
     public function canActivate(Product $product): bool
     {
-        if (!$product->has_variants) {
+        if (! $product->has_variants) {
             return true;
         }
 
@@ -482,15 +478,14 @@ class ProductVariantService
 
     /**
      * Validate product can be activated and return detailed result
-     * 
+     *
      * Requirements: 4.4
-     * 
-     * @param Product $product
+     *
      * @return array{can_activate: bool, message: string|null}
      */
     public function validateActivation(Product $product): array
     {
-        if (!$product->has_variants) {
+        if (! $product->has_variants) {
             return [
                 'can_activate' => true,
                 'message' => null,
@@ -498,7 +493,7 @@ class ProductVariantService
         }
 
         $activeVariantCount = $product->activeVariants()->count();
-        
+
         if ($activeVariantCount === 0) {
             return [
                 'can_activate' => false,
@@ -515,12 +510,12 @@ class ProductVariantService
     /**
      * Sync total stock dari variants ke product
      * Dipanggil setelah setiap perubahan stock variant
-     * 
+     *
      * Requirements: 2.1, 6.3
      */
     public function syncProductTotalStock(Product $product): void
     {
-        if (!$product->has_variants) {
+        if (! $product->has_variants) {
             return;
         }
 
@@ -543,7 +538,7 @@ class ProductVariantService
         Cache::forget("product:{$product->id}:price_range");
         Cache::forget("product:{$product->id}:variant_count");
         Cache::forget("product:{$product->id}:stats");
-        
+
         // Also clear general product caches
         CacheService::clearProducts();
     }
@@ -551,26 +546,26 @@ class ProductVariantService
     /**
      * Validate stock sebelum sale
      * Returns true if stock is sufficient, throws exception otherwise
-     * 
+     *
      * Requirements: 3.5, 3.6
-     * 
+     *
      * @throws BusinessException
      */
     public function validateStockForSale(int $variantId, int $quantity): bool
     {
         $variant = ProductVariant::find($variantId);
 
-        if (!$variant) {
-            throw new BusinessException("Varian produk tidak ditemukan.");
+        if (! $variant) {
+            throw new BusinessException('Varian produk tidak ditemukan.');
         }
 
-        if (!$variant->is_active) {
+        if (! $variant->is_active) {
             throw new BusinessException("Varian '{$variant->variant_name}' tidak aktif.");
         }
 
         if ($variant->stock < $quantity) {
             throw new BusinessException(
-                "Stok varian '{$variant->variant_name}' tidak mencukupi. " .
+                "Stok varian '{$variant->variant_name}' tidak mencukupi. ".
                 "Tersedia: {$variant->stock}, Diminta: {$quantity}"
             );
         }
@@ -580,14 +575,14 @@ class ProductVariantService
 
     /**
      * Get detailed stock validation result (non-throwing version)
-     * 
+     *
      * @return array{valid: bool, message: string|null, available_stock: int|null}
      */
     public function checkStockAvailability(int $variantId, int $quantity): array
     {
         $variant = ProductVariant::find($variantId);
 
-        if (!$variant) {
+        if (! $variant) {
             return [
                 'valid' => false,
                 'message' => 'Varian produk tidak ditemukan.',
@@ -595,7 +590,7 @@ class ProductVariantService
             ];
         }
 
-        if (!$variant->is_active) {
+        if (! $variant->is_active) {
             return [
                 'valid' => false,
                 'message' => "Varian '{$variant->variant_name}' tidak aktif.",
@@ -621,10 +616,10 @@ class ProductVariantService
     /**
      * Bulk update stock untuk multiple variants dalam single transaction
      * Auto-sync product total stock setelah bulk update
-     * 
+     *
      * Requirements: 4.3
-     * 
-     * @param array $variantStockData Array of ['variant_id' => int, 'stock' => int]
+     *
+     * @param  array  $variantStockData  Array of ['variant_id' => int, 'stock' => int]
      * @return Collection Updated variants
      */
     public function bulkUpdateStock(array $variantStockData): Collection
@@ -649,13 +644,13 @@ class ProductVariantService
                 }
 
                 $variant = ProductVariant::find($variantId);
-                if (!$variant) {
+                if (! $variant) {
                     continue;
                 }
 
                 $variant->update(['stock' => $newStock]);
                 $updatedVariants->push($variant->fresh());
-                
+
                 // Track affected products for sync
                 $affectedProductIds[$variant->product_id] = true;
             }
@@ -678,7 +673,7 @@ class ProductVariantService
     public function getVariantsOptimized(Product $product): Collection
     {
         $cacheKey = "product:{$product->id}:variants";
-        
+
         return Cache::remember($cacheKey, now()->addMinutes(self::CACHE_TTL_MINUTES), function () use ($product) {
             return $product->activeVariants()
                 ->orderBy('variant_name')
@@ -691,12 +686,12 @@ class ProductVariantService
      */
     public function getCachedTotalStock(Product $product): int
     {
-        if (!$product->has_variants) {
+        if (! $product->has_variants) {
             return (int) $product->stock;
         }
 
         $cacheKey = "product:{$product->id}:total_stock";
-        
+
         return Cache::remember($cacheKey, now()->addMinutes(self::CACHE_TTL_MINUTES), function () use ($product) {
             return (int) $product->activeVariants()->sum('stock');
         });
@@ -707,14 +702,15 @@ class ProductVariantService
      */
     public function getCachedPriceRange(Product $product): array
     {
-        if (!$product->has_variants) {
+        if (! $product->has_variants) {
             return ['min' => (float) $product->price, 'max' => (float) $product->price];
         }
 
         $cacheKey = "product:{$product->id}:price_range";
-        
+
         return Cache::remember($cacheKey, now()->addMinutes(self::CACHE_TTL_MINUTES), function () use ($product) {
             $variants = $product->activeVariants();
+
             return [
                 'min' => (float) ($variants->min('price') ?? $product->price),
                 'max' => (float) ($variants->max('price') ?? $product->price),

@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\{Model, SoftDeletes};
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Cache;
 use App\Services\ProductImageService;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 class Product extends Model
 {
@@ -55,30 +56,30 @@ class Product extends Model
     protected static function boot()
     {
         parent::boot();
-        
+
         static::creating(function ($product) {
             if (empty($product->slug)) {
                 $product->slug = Str::slug($product->name);
-                
+
                 // Ensure slug is unique
                 $originalSlug = $product->slug;
                 $count = 1;
                 while (static::where('slug', $product->slug)->exists()) {
-                    $product->slug = $originalSlug . '-' . $count;
+                    $product->slug = $originalSlug.'-'.$count;
                     $count++;
                 }
             }
         });
-        
+
         static::updating(function ($product) {
             if ($product->isDirty('name') && empty($product->slug)) {
                 $product->slug = Str::slug($product->name);
-                
+
                 // Ensure slug is unique
                 $originalSlug = $product->slug;
                 $count = 1;
                 while (static::where('slug', $product->slug)->where('id', '!=', $product->id)->exists()) {
-                    $product->slug = $originalSlug . '-' . $count;
+                    $product->slug = $originalSlug.'-'.$count;
                     $count++;
                 }
             }
@@ -95,7 +96,7 @@ class Product extends Model
     /**
      * Invalidate all variant-related cache for this product
      * Called when product or its variants change
-     * 
+     *
      * Requirements: 1.2
      */
     public function invalidateVariantCache(): void
@@ -176,10 +177,10 @@ class Product extends Model
 
     /**
      * Scope untuk filter products yang memiliki variants dengan low stock
-     * 
+     *
      * Requirements: 2.4
-     * 
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeWithLowStockVariants($query)
@@ -193,10 +194,10 @@ class Product extends Model
     /**
      * Scope untuk eager loading variant statistics
      * Menggunakan withCount, withSum, withMin, withMax untuk menghindari N+1 queries
-     * 
+     *
      * Requirements: 1.1, 1.3
-     * 
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeWithVariantStats($query)
@@ -226,10 +227,8 @@ class Product extends Model
     /**
      * Check if product is out of stock
      * For variant products: returns true if ALL variants are out of stock
-     * 
+     *
      * Requirements: 2.5
-     * 
-     * @return bool
      */
     public function isOutOfStock(): bool
     {
@@ -237,26 +236,24 @@ class Product extends Model
             // For variant products, check if all active variants have zero stock
             // This ensures product is only marked out of stock when ALL variants are depleted
             $totalStock = $this->getTotalStockAttribute();
-            
+
             // Also check if there are any active variants at all
             $hasActiveVariants = $this->activeVariants()->exists();
-            
+
             // Out of stock if no active variants OR all variants have zero stock
-            return !$hasActiveVariants || $totalStock <= 0;
+            return ! $hasActiveVariants || $totalStock <= 0;
         }
-        
+
         return (int) ($this->attributes['stock'] ?? 0) <= 0;
     }
 
     /**
      * Check if any variant is out of stock (for variant products)
      * Useful for showing partial out-of-stock warnings
-     * 
-     * @return bool
      */
     public function hasOutOfStockVariants(): bool
     {
-        if (!$this->has_variants) {
+        if (! $this->has_variants) {
             return false;
         }
 
@@ -267,12 +264,10 @@ class Product extends Model
 
     /**
      * Get count of out-of-stock variants
-     * 
-     * @return int
      */
     public function getOutOfStockVariantsCount(): int
     {
-        if (!$this->has_variants) {
+        if (! $this->has_variants) {
             return 0;
         }
 
@@ -317,13 +312,14 @@ class Product extends Model
         if (empty($this->image)) {
             return null;
         }
+
         // Use relative URL for cross-device compatibility
-        return '/storage/' . ltrim($this->image, '/');
+        return '/storage/'.ltrim($this->image, '/');
     }
 
     public function hasImage(): bool
     {
-        return !empty($this->image);
+        return ! empty($this->image);
     }
 
     // Profit Calculations
@@ -337,6 +333,7 @@ class Product extends Model
         if ($this->price <= 0) {
             return 0;
         }
+
         return round((($this->price - $this->cost_price) / $this->price) * 100, 2);
     }
 
@@ -356,14 +353,12 @@ class Product extends Model
     }
 
     // Variant-aware accessors with caching
-    
+
     /**
      * Get total stock with caching for variant products
      * Cache dengan TTL 5 menit, auto-invalidate saat variant berubah
-     * 
+     *
      * Requirements: 1.2, 2.1
-     * 
-     * @return int
      */
     public function getTotalStockAttribute(): int
     {
@@ -372,7 +367,7 @@ class Product extends Model
             return (int) ($this->attributes['variants_total_stock'] ?? 0);
         }
 
-        if (!$this->has_variants) {
+        if (! $this->has_variants) {
             return (int) ($this->attributes['stock'] ?? 0);
         }
 
@@ -382,19 +377,17 @@ class Product extends Model
 
     /**
      * Get cached total stock for variant products
-     * 
+     *
      * Requirements: 1.2
-     * 
-     * @return int
      */
     public function getCachedTotalStock(): int
     {
-        if (!$this->has_variants) {
+        if (! $this->has_variants) {
             return (int) ($this->attributes['stock'] ?? 0);
         }
 
         $cacheKey = "product:{$this->id}:total_stock";
-        
+
         return Cache::remember($cacheKey, now()->addMinutes(self::CACHE_TTL_MINUTES), function () {
             return (int) $this->activeVariants()->sum('stock');
         });
@@ -403,9 +396,9 @@ class Product extends Model
     /**
      * Get price range with caching for variant products
      * Cache dengan TTL 5 menit, auto-invalidate saat variant berubah
-     * 
+     *
      * Requirements: 1.2, 4.2, 5.1
-     * 
+     *
      * @return array{min: float, max: float}
      */
     public function getPriceRangeAttribute(): array
@@ -418,7 +411,7 @@ class Product extends Model
             ];
         }
 
-        if (!$this->has_variants) {
+        if (! $this->has_variants) {
             return ['min' => (float) $this->price, 'max' => (float) $this->price];
         }
 
@@ -428,24 +421,24 @@ class Product extends Model
 
     /**
      * Get cached price range for variant products
-     * 
+     *
      * Requirements: 1.2
-     * 
+     *
      * @return array{min: float, max: float}
      */
     public function getCachedPriceRange(): array
     {
-        if (!$this->has_variants) {
+        if (! $this->has_variants) {
             return ['min' => (float) $this->price, 'max' => (float) $this->price];
         }
 
         $cacheKey = "product:{$this->id}:price_range";
-        
+
         return Cache::remember($cacheKey, now()->addMinutes(self::CACHE_TTL_MINUTES), function () {
             $variants = $this->activeVariants();
             $minPrice = $variants->min('price');
             $maxPrice = $variants->max('price');
-            
+
             return [
                 'min' => (float) ($minPrice ?? $this->price),
                 'max' => (float) ($maxPrice ?? $this->price),
@@ -455,8 +448,6 @@ class Product extends Model
 
     /**
      * Get variant count with caching
-     * 
-     * @return int
      */
     public function getVariantCountAttribute(): int
     {
@@ -465,12 +456,12 @@ class Product extends Model
             return (int) $this->attributes['active_variants_count'];
         }
 
-        if (!$this->has_variants) {
+        if (! $this->has_variants) {
             return 0;
         }
 
         $cacheKey = "product:{$this->id}:variant_count";
-        
+
         return Cache::remember($cacheKey, now()->addMinutes(self::CACHE_TTL_MINUTES), function () {
             return $this->activeVariants()->count();
         });
@@ -480,8 +471,9 @@ class Product extends Model
     {
         $range = $this->price_range;
         if ($range['min'] === $range['max']) {
-            return 'Rp' . number_format($range['min'], 0, ',', '.');
+            return 'Rp'.number_format($range['min'], 0, ',', '.');
         }
-        return 'Rp' . number_format($range['min'], 0, ',', '.') . ' - Rp' . number_format($range['max'], 0, ',', '.');
+
+        return 'Rp'.number_format($range['min'], 0, ',', '.').' - Rp'.number_format($range['max'], 0, ',', '.');
     }
 }

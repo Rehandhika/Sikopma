@@ -8,7 +8,9 @@ namespace App\Services\Storage\DTOs;
 class ThresholdResult
 {
     public const STATUS_OK = 'ok';
+
     public const STATUS_WARNING = 'warning';
+
     public const STATUS_CRITICAL = 'critical';
 
     public function __construct(

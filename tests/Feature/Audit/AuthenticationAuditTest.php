@@ -2,15 +2,15 @@
 
 namespace Tests\Feature\Audit;
 
+use App\Livewire\Auth\LoginForm;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Livewire;
-use App\Livewire\Auth\LoginForm;
 
 /**
  * Authentication System Audit Tests
- * 
+ *
  * Tests login flow, session management, and authentication security.
  * Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8
  */
@@ -19,7 +19,7 @@ class AuthenticationAuditTest extends AuditTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Clear rate limiter before each test
         RateLimiter::clear('test|127.0.0.1');
     }
@@ -31,13 +31,13 @@ class AuthenticationAuditTest extends AuditTestCase
 
     /**
      * Test login page renders correctly with NIM and password fields.
-     * Requirement 2.1: WHEN a guest accesses the login page (/admin/masuk) 
+     * Requirement 2.1: WHEN a guest accesses the login page (/admin/masuk)
      * THEN the System SHALL display the login form with NIM and password fields
      */
     public function test_login_page_renders_correctly(): void
     {
         $response = $this->get('/admin/masuk');
-        
+
         $response->assertStatus(200);
         // Verify the page contains login form elements
         $response->assertSee('NIM');
@@ -46,7 +46,7 @@ class AuthenticationAuditTest extends AuditTestCase
 
     /**
      * Test successful login with valid credentials.
-     * Requirement 2.2: WHEN a user submits valid credentials (NIM and password) 
+     * Requirement 2.2: WHEN a user submits valid credentials (NIM and password)
      * THEN the System SHALL authenticate the user and redirect to the dashboard within 2 seconds
      */
     public function test_successful_login_with_valid_credentials(): void
@@ -70,7 +70,7 @@ class AuthenticationAuditTest extends AuditTestCase
 
     /**
      * Test failed login with invalid credentials shows appropriate error.
-     * Requirement 2.3: WHEN a user submits invalid credentials 
+     * Requirement 2.3: WHEN a user submits invalid credentials
      * THEN the System SHALL display an appropriate error message without revealing which field is incorrect
      */
     public function test_failed_login_with_invalid_credentials(): void
@@ -109,7 +109,7 @@ class AuthenticationAuditTest extends AuditTestCase
 
     /**
      * Test rate limiting after 5 failed attempts.
-     * Requirement 2.4: WHEN a user attempts more than 5 failed logins within 1 minute 
+     * Requirement 2.4: WHEN a user attempts more than 5 failed logins within 1 minute
      * THEN the System SHALL implement rate limiting and display the remaining lockout time
      */
     public function test_rate_limiting_after_5_failed_attempts(): void
@@ -138,11 +138,11 @@ class AuthenticationAuditTest extends AuditTestCase
 
         // Check that rate limiting error is shown
         $component->assertHasErrors(['nim']);
-        
+
         // The error message should contain rate limiting info
         $errors = $component->errors();
         $this->assertNotEmpty($errors->get('nim'));
-        
+
         // Verify the error mentions "Terlalu banyak" (too many attempts)
         $errorMessage = $errors->first('nim');
         $this->assertStringContainsString('Terlalu banyak', $errorMessage);
@@ -150,7 +150,7 @@ class AuthenticationAuditTest extends AuditTestCase
 
     /**
      * Test inactive user cannot login.
-     * Requirement 2.5: WHEN an inactive user attempts to login 
+     * Requirement 2.5: WHEN an inactive user attempts to login
      * THEN the System SHALL reject the login and display an appropriate message
      */
     public function test_inactive_user_cannot_login(): void
@@ -250,7 +250,7 @@ class AuthenticationAuditTest extends AuditTestCase
 
     /**
      * Test logout terminates session.
-     * Requirement 2.6: WHEN an authenticated user clicks logout 
+     * Requirement 2.6: WHEN an authenticated user clicks logout
      * THEN the System SHALL terminate the session and redirect to the login page
      */
     public function test_logout_terminates_session(): void
@@ -282,7 +282,7 @@ class AuthenticationAuditTest extends AuditTestCase
 
     /**
      * Test guest redirect to login for protected routes.
-     * Requirement 2.7: WHEN a guest attempts to access any protected route (/admin/*) 
+     * Requirement 2.7: WHEN a guest attempts to access any protected route (/admin/*)
      * THEN the System SHALL redirect to the login page
      */
     public function test_guest_redirect_to_login_for_protected_routes(): void
@@ -309,7 +309,7 @@ class AuthenticationAuditTest extends AuditTestCase
     public function test_authenticated_user_can_access_dashboard(): void
     {
         $response = $this->actingAs($this->anggota)->get('/admin/beranda');
-        
+
         $response->assertStatus(200);
     }
 
@@ -319,7 +319,7 @@ class AuthenticationAuditTest extends AuditTestCase
     public function test_authenticated_user_redirected_from_login_page(): void
     {
         $response = $this->actingAs($this->anggota)->get('/admin/masuk');
-        
+
         $response->assertRedirect('/admin/beranda');
     }
 

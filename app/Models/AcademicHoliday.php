@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class AcademicHoliday extends Model
 {
@@ -38,28 +38,30 @@ class AcademicHoliday extends Model
     public function scopeCurrent(Builder $query): Builder
     {
         $today = Carbon::today();
+
         return $query->where('start_date', '<=', $today)
-                     ->where('end_date', '>=', $today);
+            ->where('end_date', '>=', $today);
     }
 
     public function scopeUpcoming(Builder $query): Builder
     {
         return $query->where('start_date', '>', Carbon::today())
-                     ->orderBy('start_date');
+            ->orderBy('start_date');
     }
 
     public function scopeInRange(Builder $query, Carbon $date): Builder
     {
         return $query->where('start_date', '<=', $date)
-                     ->where('end_date', '>=', $date);
+            ->where('end_date', '>=', $date);
     }
 
     // Helpers
     public function isCurrentlyActive(): bool
     {
         $today = Carbon::today();
-        return $this->is_active 
-            && $this->start_date->lte($today) 
+
+        return $this->is_active
+            && $this->start_date->lte($today)
             && $this->end_date->gte($today);
     }
 
@@ -73,13 +75,13 @@ class AcademicHoliday extends Model
         if ($this->start_date->isSameDay($this->end_date)) {
             return $this->start_date->locale('id')->isoFormat('D MMMM YYYY');
         }
-        
+
         if ($this->start_date->isSameMonth($this->end_date)) {
-            return $this->start_date->locale('id')->isoFormat('D') . ' - ' . 
+            return $this->start_date->locale('id')->isoFormat('D').' - '.
                    $this->end_date->locale('id')->isoFormat('D MMMM YYYY');
         }
-        
-        return $this->start_date->locale('id')->isoFormat('D MMMM') . ' - ' . 
+
+        return $this->start_date->locale('id')->isoFormat('D MMMM').' - '.
                $this->end_date->locale('id')->isoFormat('D MMMM YYYY');
     }
 }

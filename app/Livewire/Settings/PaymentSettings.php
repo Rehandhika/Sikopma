@@ -2,11 +2,11 @@
 
 namespace App\Livewire\Settings;
 
+use App\Services\ActivityLogService;
+use App\Services\PaymentConfigurationService;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use App\Services\PaymentConfigurationService;
-use App\Services\ActivityLogService;
-use Illuminate\Support\Facades\Storage;
 
 class PaymentSettings extends Component
 {
@@ -14,22 +14,30 @@ class PaymentSettings extends Component
 
     // Payment method toggles
     public bool $cashEnabled = true;
+
     public bool $transferEnabled = false;
+
     public bool $qrisEnabled = false;
 
     // Multiple bank accounts
     public array $bankAccounts = [];
-    
+
     // Form for adding/editing bank
     public bool $showBankForm = false;
+
     public ?string $editingBankId = null;
+
     public string $bankName = '';
+
     public string $accountNumber = '';
+
     public string $accountHolder = '';
 
     // QRIS
     public $qrisImage; // Livewire file upload
+
     public ?string $currentQrisImage = null;
+
     public ?string $qrisImagePreview = null;
 
     protected PaymentConfigurationService $paymentService;
@@ -61,7 +69,7 @@ class PaymentSettings extends Component
     public function mount(): void
     {
         // Authorization check
-        if (!auth()->user()->hasAnyRole(['Super Admin', 'Ketua', 'Wakil Ketua'])) {
+        if (! auth()->user()->hasAnyRole(['Super Admin', 'Ketua', 'Wakil Ketua'])) {
             abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
 
@@ -90,7 +98,7 @@ class PaymentSettings extends Component
     public function editBank(string $bankId): void
     {
         $bank = collect($this->bankAccounts)->firstWhere('id', $bankId);
-        
+
         if ($bank) {
             $this->editingBankId = $bankId;
             $this->bankName = $bank['bank_name'];
@@ -158,7 +166,7 @@ class PaymentSettings extends Component
             ActivityLogService::logSettingsUpdated('Pembayaran - Rekening Bank');
 
         } catch (\Exception $e) {
-            $this->dispatch('toast', message: 'Gagal menyimpan rekening bank: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal menyimpan rekening bank: '.$e->getMessage(), type: 'error');
         }
     }
 
@@ -172,7 +180,7 @@ class PaymentSettings extends Component
             $this->bankAccounts = $this->paymentService->getBankAccounts();
             $this->dispatch('toast', message: 'Status rekening bank berhasil diubah', type: 'success');
         } catch (\Exception $e) {
-            $this->dispatch('toast', message: 'Gagal mengubah status: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal mengubah status: '.$e->getMessage(), type: 'error');
         }
     }
 
@@ -185,14 +193,13 @@ class PaymentSettings extends Component
             $this->paymentService->deleteBankAccount($bankId);
             $this->bankAccounts = $this->paymentService->getBankAccounts();
             $this->dispatch('toast', message: 'Rekening bank berhasil dihapus', type: 'success');
-            
+
             // Log activity
             ActivityLogService::logSettingsUpdated('Pembayaran - Hapus Rekening Bank');
         } catch (\Exception $e) {
-            $this->dispatch('toast', message: 'Gagal menghapus rekening bank: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal menghapus rekening bank: '.$e->getMessage(), type: 'error');
         }
     }
-
 
     public function updatedQrisImage(): void
     {
@@ -239,12 +246,12 @@ class PaymentSettings extends Component
      */
     protected function validateQrisConfiguration(): bool
     {
-        if (!$this->qrisEnabled) {
+        if (! $this->qrisEnabled) {
             return true;
         }
 
         // QRIS requires an image (either new upload or existing)
-        return $this->qrisImage !== null || !empty($this->currentQrisImage);
+        return $this->qrisImage !== null || ! empty($this->currentQrisImage);
     }
 
     /**
@@ -252,13 +259,14 @@ class PaymentSettings extends Component
      */
     protected function validateTransferConfiguration(): bool
     {
-        if (!$this->transferEnabled) {
+        if (! $this->transferEnabled) {
             return true;
         }
 
         // Transfer requires at least one active bank account
-        $activeBanks = array_filter($this->bankAccounts, fn($bank) => $bank['is_active'] ?? true);
-        return !empty($activeBanks);
+        $activeBanks = array_filter($this->bankAccounts, fn ($bank) => $bank['is_active'] ?? true);
+
+        return ! empty($activeBanks);
     }
 
     public function save(): void
@@ -267,23 +275,26 @@ class PaymentSettings extends Component
         $this->validateOnly('qrisImage');
 
         // Custom validation: at least one method must be enabled
-        if (!$this->validateAtLeastOneEnabled()) {
+        if (! $this->validateAtLeastOneEnabled()) {
             $this->addError('general', 'Minimal satu metode pembayaran harus aktif');
             $this->dispatch('toast', message: 'Minimal satu metode pembayaran harus aktif', type: 'error');
+
             return;
         }
 
         // Custom validation: QRIS requires image when enabled
-        if (!$this->validateQrisConfiguration()) {
+        if (! $this->validateQrisConfiguration()) {
             $this->addError('qrisImage', 'Gambar QRIS wajib diupload');
             $this->dispatch('toast', message: 'Gambar QRIS wajib diupload jika QRIS diaktifkan', type: 'error');
+
             return;
         }
 
         // Custom validation: Transfer requires at least one active bank when enabled
-        if (!$this->validateTransferConfiguration()) {
+        if (! $this->validateTransferConfiguration()) {
             $this->addError('general', 'Minimal satu rekening bank aktif diperlukan jika Transfer diaktifkan');
             $this->dispatch('toast', message: 'Tambahkan minimal satu rekening bank aktif jika Transfer diaktifkan', type: 'error');
+
             return;
         }
 
@@ -318,7 +329,7 @@ class PaymentSettings extends Component
             $this->dispatch('toast', message: 'Pengaturan pembayaran berhasil disimpan', type: 'success');
 
         } catch (\Exception $e) {
-            $this->dispatch('toast', message: 'Gagal menyimpan pengaturan: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal menyimpan pengaturan: '.$e->getMessage(), type: 'error');
         }
     }
 

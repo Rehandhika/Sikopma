@@ -2,19 +2,22 @@
 
 namespace App\Livewire\Penalty;
 
-use Livewire\Component;
-use Livewire\WithPagination;
 use App\Models\Penalty;
 use App\Services\PenaltyService;
 use Illuminate\Support\Facades\Log;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class ManagePenalties extends Component
 {
     use WithPagination;
 
     public $selectedPenalty;
+
     public $reviewNotes = '';
+
     public $showReviewModal = false;
+
     public $filterStatus = 'all';
 
     protected PenaltyService $penaltyService;
@@ -35,9 +38,10 @@ class ManagePenalties extends Component
     {
         $this->selectedPenalty = Penalty::with(['user', 'penaltyType', 'reference'])
             ->findOrFail($penaltyId);
-        
+
         if ($this->selectedPenalty->status !== 'appealed') {
             $this->dispatch('toast', message: 'Penalti ini tidak dalam status banding', type: 'error');
+
             return;
         }
 
@@ -62,7 +66,7 @@ class ManagePenalties extends Component
 
             $this->dispatch('toast', message: 'Banding disetujui, penalti telah dibatalkan', type: 'success');
             $this->reset(['showReviewModal', 'reviewNotes', 'selectedPenalty']);
-            
+
             // Refresh the page data
             $this->resetPage();
         } catch (\Exception $e) {
@@ -70,7 +74,7 @@ class ManagePenalties extends Component
                 'penalty_id' => $this->selectedPenalty->id,
                 'error' => $e->getMessage(),
             ]);
-            $this->dispatch('toast', message: 'Gagal menyetujui banding: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal menyetujui banding: '.$e->getMessage(), type: 'error');
         }
     }
 
@@ -91,7 +95,7 @@ class ManagePenalties extends Component
 
             $this->dispatch('toast', message: 'Banding ditolak, penalti tetap aktif', type: 'success');
             $this->reset(['showReviewModal', 'reviewNotes', 'selectedPenalty']);
-            
+
             // Refresh the page data
             $this->resetPage();
         } catch (\Exception $e) {
@@ -99,7 +103,7 @@ class ManagePenalties extends Component
                 'penalty_id' => $this->selectedPenalty->id,
                 'error' => $e->getMessage(),
             ]);
-            $this->dispatch('toast', message: 'Gagal menolak banding: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal menolak banding: '.$e->getMessage(), type: 'error');
         }
     }
 

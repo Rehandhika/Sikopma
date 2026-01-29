@@ -14,13 +14,13 @@ return new class extends Migration
         Schema::table('store_settings', function (Blueprint $table) {
             // Next Open Info Mode: 'default' or 'custom'
             $table->string('next_open_mode', 20)->default('default')->after('operating_hours');
-            
+
             // Custom message when store is closed (for academic holidays, etc.)
             $table->text('custom_closed_message')->nullable()->after('next_open_mode');
-            
+
             // Custom next open date (for academic holidays)
             $table->date('custom_next_open_date')->nullable()->after('custom_closed_message');
-            
+
             // Academic holiday period
             $table->date('academic_holiday_start')->nullable()->after('custom_next_open_date');
             $table->date('academic_holiday_end')->nullable()->after('academic_holiday_start');
@@ -37,7 +37,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
-            
+
             $table->index(['start_date', 'end_date', 'is_active'], 'idx_holiday_dates');
         });
     }

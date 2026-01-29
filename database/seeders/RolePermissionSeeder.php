@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class RolePermissionSeeder extends Seeder
 {
@@ -154,7 +154,7 @@ class RolePermissionSeeder extends Seeder
             // Attendance
             'view.attendance.all', 'manage.attendance',
             // Schedule
-            'view.schedule.all', 'create.schedule', 'edit.schedule', 'delete.schedule', 
+            'view.schedule.all', 'create.schedule', 'edit.schedule', 'delete.schedule',
             'generate.schedule', 'publish.schedule',
             // Swap & Leave
             'view.swap.all', 'approve.swap.admin',
@@ -166,12 +166,12 @@ class RolePermissionSeeder extends Seeder
             // Purchases
             'view.purchases',
             // Reports
-            'view.reports', 'view.reports.finance', 'view.reports.sales', 
+            'view.reports', 'view.reports.finance', 'view.reports.sales',
             'view.reports.attendance', 'export.reports',
             // Finance
             'view.finance', 'approve.finance',
             // All divisions overview
-            'view.toko.reports', 'view.psda.reports', 'view.humsar.reports', 
+            'view.toko.reports', 'view.psda.reports', 'view.humsar.reports',
             'view.produksi.reports',
             // Settings & Audit
             'manage.settings', 'view.audit.logs',
@@ -198,12 +198,12 @@ class RolePermissionSeeder extends Seeder
             // Purchases
             'view.purchases',
             // Reports
-            'view.reports', 'view.reports.finance', 'view.reports.sales', 
+            'view.reports', 'view.reports.finance', 'view.reports.sales',
             'view.reports.attendance', 'export.reports',
             // Finance (view only)
             'view.finance',
             // All divisions overview
-            'view.toko.reports', 'view.psda.reports', 'view.humsar.reports', 
+            'view.toko.reports', 'view.psda.reports', 'view.humsar.reports',
             'view.produksi.reports',
             // Notifications
             'send.notifications',
@@ -308,7 +308,7 @@ class RolePermissionSeeder extends Seeder
             // Attendance
             'view.attendance.all', 'manage.attendance',
             // Schedule - Full for toko
-            'view.schedule.all', 'create.schedule', 'edit.schedule', 
+            'view.schedule.all', 'create.schedule', 'edit.schedule',
             'generate.schedule', 'publish.schedule', 'input.availability',
             // Swap & Leave
             'view.swap.all', 'approve.swap.admin',
@@ -412,7 +412,7 @@ class RolePermissionSeeder extends Seeder
             // Schedule
             'view.schedule.all',
             // All reports
-            'view.reports', 'view.reports.finance', 'view.reports.sales', 
+            'view.reports', 'view.reports.finance', 'view.reports.sales',
             'view.reports.attendance', 'export.reports',
             // IT & System - Full access
             'manage.it', 'manage.system', 'view.system.logs',

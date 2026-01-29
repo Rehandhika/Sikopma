@@ -2,22 +2,25 @@
 
 namespace App\Livewire\Leave;
 
+use App\Models\LeaveRequest;
+use App\Services\ActivityLogService;
+use App\Services\LeaveService;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\LeaveRequest;
-use App\Services\LeaveService;
-use App\Services\ActivityLogService;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class Approval extends Component
 {
     use WithPagination;
 
     public $selectedLeave;
+
     public $approvalNotes = '';
+
     public $showModal = false;
+
     public $action = '';
+
     public $affectedSchedules = [];
 
     protected LeaveService $leaveService;
@@ -31,7 +34,7 @@ class Approval extends Component
     {
         $this->selectedLeave = LeaveRequest::with(['user'])->find($id);
         $this->showModal = true;
-        
+
         // Load affected schedules
         if ($this->selectedLeave) {
             $this->loadAffectedSchedules();
@@ -45,7 +48,7 @@ class Approval extends Component
     {
         try {
             $assignments = $this->leaveService->getAffectedAssignments($this->selectedLeave);
-            
+
             $this->affectedSchedules = $assignments->map(function ($assignment) {
                 return [
                     'id' => $assignment->id,
@@ -70,7 +73,7 @@ class Approval extends Component
      */
     private function getSessionName(int $session): string
     {
-        return match($session) {
+        return match ($session) {
             1 => 'Sesi 1',
             2 => 'Sesi 2',
             3 => 'Sesi 3',
@@ -83,7 +86,7 @@ class Approval extends Component
      */
     private function getSessionTime(int $session): string
     {
-        return match($session) {
+        return match ($session) {
             1 => '08:00 - 12:00',
             2 => '12:00 - 16:00',
             3 => '16:00 - 20:00',
@@ -94,7 +97,7 @@ class Approval extends Component
     public function approve($id)
     {
         $leave = LeaveRequest::with('user')->find($id);
-        
+
         if ($leave && $leave->status === 'pending') {
             try {
                 // Use LeaveService to handle approval with automatic schedule updates
@@ -117,7 +120,7 @@ class Approval extends Component
                     'leave_id' => $id,
                     'error' => $e->getMessage(),
                 ]);
-                $this->dispatch('toast', message: 'Gagal menyetujui cuti: ' . $e->getMessage(), type: 'error');
+                $this->dispatch('toast', message: 'Gagal menyetujui cuti: '.$e->getMessage(), type: 'error');
             }
         }
     }
@@ -125,7 +128,7 @@ class Approval extends Component
     public function reject($id)
     {
         $leave = LeaveRequest::with('user')->find($id);
-        
+
         if ($leave && $leave->status === 'pending') {
             try {
                 // Use LeaveService to handle rejection
@@ -148,7 +151,7 @@ class Approval extends Component
                     'leave_id' => $id,
                     'error' => $e->getMessage(),
                 ]);
-                $this->dispatch('toast', message: 'Gagal menolak cuti: ' . $e->getMessage(), type: 'error');
+                $this->dispatch('toast', message: 'Gagal menolak cuti: '.$e->getMessage(), type: 'error');
             }
         }
     }

@@ -2,15 +2,12 @@
 
 namespace Tests\Unit\Services;
 
-use Tests\TestCase;
-use App\Services\LeaveService;
 use App\Models\LeaveRequest;
-use App\Models\ScheduleAssignment;
-use App\Models\LeaveAffectedSchedule;
 use App\Models\User;
-use App\Models\Schedule;
+use App\Services\LeaveService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class LeaveServiceTest extends TestCase
 {
@@ -21,7 +18,7 @@ class LeaveServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->leaveService = new LeaveService();
+        $this->leaveService = new LeaveService;
     }
 
     /**
@@ -111,4 +108,3 @@ class LeaveServiceTest extends TestCase
         );
     }
 }
-

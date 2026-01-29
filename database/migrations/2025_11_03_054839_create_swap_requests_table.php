@@ -15,7 +15,7 @@ return new class extends Migration
         if (Schema::hasTable('swap_requests')) {
             return;
         }
-        
+
         Schema::create('swap_requests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('requester_id')->constrained('users');
@@ -29,7 +29,7 @@ return new class extends Migration
                 'target_rejected',
                 'admin_approved',
                 'admin_rejected',
-                'cancelled'
+                'cancelled',
             ])->default('pending');
             $table->text('target_response')->nullable();
             $table->timestamp('target_responded_at')->nullable();

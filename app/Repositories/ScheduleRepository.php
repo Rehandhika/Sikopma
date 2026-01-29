@@ -81,8 +81,8 @@ class ScheduleRepository
             })
             ->whereDoesntHave('scheduleAssignments', function ($query) use ($date, $session) {
                 $query->where('date', $date)
-                      ->where('session', $session)
-                      ->where('status', 'scheduled');
+                    ->where('session', $session)
+                    ->where('status', 'scheduled');
             })
             ->orderBy('name')
             ->get(['id', 'name', 'nim']);
@@ -133,6 +133,7 @@ class ScheduleRepository
     {
         try {
             ScheduleAssignment::insert($assignments);
+
             return true;
         } catch (\Exception $e) {
             return false;

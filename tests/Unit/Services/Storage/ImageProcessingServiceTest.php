@@ -13,13 +13,14 @@ use Tests\TestCase;
 class ImageProcessingServiceTest extends TestCase
 {
     protected ImageProcessingService $service;
+
     protected string $tempDir;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new ImageProcessingService();
-        $this->tempDir = sys_get_temp_dir() . '/image_processing_test_' . uniqid();
+        $this->service = new ImageProcessingService;
+        $this->tempDir = sys_get_temp_dir().'/image_processing_test_'.uniqid();
         mkdir($this->tempDir, 0755, true);
     }
 
@@ -35,13 +36,13 @@ class ImageProcessingServiceTest extends TestCase
      */
     protected function recursiveDelete(string $dir): void
     {
-        if (!is_dir($dir)) {
+        if (! is_dir($dir)) {
             return;
         }
 
         $files = array_diff(scandir($dir), ['.', '..']);
         foreach ($files as $file) {
-            $path = $dir . '/' . $file;
+            $path = $dir.'/'.$file;
             is_dir($path) ? $this->recursiveDelete($path) : unlink($path);
         }
         rmdir($dir);
@@ -64,7 +65,7 @@ class ImageProcessingServiceTest extends TestCase
             default => 'jpg',
         };
 
-        $path = $this->tempDir . '/test_image.' . $extension;
+        $path = $this->tempDir.'/test_image.'.$extension;
 
         match ($format) {
             'jpeg', 'jpg' => imagejpeg($image, $path, 90),
@@ -85,6 +86,7 @@ class ImageProcessingServiceTest extends TestCase
     protected function createUploadedFile(string $path, ?string $mimeType = null): UploadedFile
     {
         $mimeType = $mimeType ?? mime_content_type($path);
+
         return new UploadedFile(
             $path,
             basename($path),
@@ -176,7 +178,7 @@ class ImageProcessingServiceTest extends TestCase
             $result = $this->service->validate($file, 'product');
 
             $this->assertTrue($result->isValid(), "Format {$format} should be valid for product");
-            
+
             // Clean up
             unlink($imagePath);
         }
@@ -190,7 +192,7 @@ class ImageProcessingServiceTest extends TestCase
     public function test_process_creates_output_file(): void
     {
         $sourcePath = $this->createTestImage(100, 100, 'jpeg');
-        $targetPath = $this->tempDir . '/output/processed.jpg';
+        $targetPath = $this->tempDir.'/output/processed.jpg';
 
         $result = $this->service->process($sourcePath, 'product', $targetPath);
 
@@ -204,7 +206,7 @@ class ImageProcessingServiceTest extends TestCase
     public function test_process_converts_to_webp_when_configured(): void
     {
         $sourcePath = $this->createTestImage(100, 100, 'jpeg');
-        $targetPath = $this->tempDir . '/output/processed.jpg';
+        $targetPath = $this->tempDir.'/output/processed.jpg';
 
         // Product type has convert_to_webp = true
         $result = $this->service->process($sourcePath, 'product', $targetPath);
@@ -221,7 +223,7 @@ class ImageProcessingServiceTest extends TestCase
     public function test_process_keeps_original_format_when_webp_disabled(): void
     {
         $sourcePath = $this->createTestImage(100, 100, 'jpeg');
-        $targetPath = $this->tempDir . '/output/processed.jpg';
+        $targetPath = $this->tempDir.'/output/processed.jpg';
 
         // Banner type has convert_to_webp = false
         $result = $this->service->process($sourcePath, 'banner', $targetPath);
@@ -238,7 +240,7 @@ class ImageProcessingServiceTest extends TestCase
     {
         // Create image larger than max_width (1920)
         $sourcePath = $this->createTestImage(2500, 1500, 'jpeg');
-        $targetPath = $this->tempDir . '/output/processed.jpg';
+        $targetPath = $this->tempDir.'/output/processed.jpg';
 
         $result = $this->service->process($sourcePath, 'product', $targetPath);
 
@@ -253,7 +255,7 @@ class ImageProcessingServiceTest extends TestCase
     {
         // Create image with 2:1 aspect ratio, larger than max_width
         $sourcePath = $this->createTestImage(2400, 1200, 'jpeg');
-        $targetPath = $this->tempDir . '/output/processed.jpg';
+        $targetPath = $this->tempDir.'/output/processed.jpg';
 
         $result = $this->service->process($sourcePath, 'product', $targetPath);
 
@@ -271,7 +273,7 @@ class ImageProcessingServiceTest extends TestCase
     public function test_process_does_not_resize_small_images(): void
     {
         $sourcePath = $this->createTestImage(800, 600, 'jpeg');
-        $targetPath = $this->tempDir . '/output/processed.jpg';
+        $targetPath = $this->tempDir.'/output/processed.jpg';
 
         $result = $this->service->process($sourcePath, 'product', $targetPath);
 
@@ -287,7 +289,7 @@ class ImageProcessingServiceTest extends TestCase
     {
         $this->expectException(FileProcessingException::class);
 
-        $this->service->process('/non/existent/file.jpg', 'product', $this->tempDir . '/output.jpg');
+        $this->service->process('/non/existent/file.jpg', 'product', $this->tempDir.'/output.jpg');
     }
 
     /**
@@ -299,7 +301,7 @@ class ImageProcessingServiceTest extends TestCase
 
         $this->expectException(FileValidationException::class);
 
-        $this->service->process($sourcePath, 'invalid_type', $this->tempDir . '/output.jpg');
+        $this->service->process($sourcePath, 'invalid_type', $this->tempDir.'/output.jpg');
     }
 
     // ==================== Generate Variants Tests ====================
@@ -310,7 +312,7 @@ class ImageProcessingServiceTest extends TestCase
     public function test_generate_variants_creates_all_configured_variants(): void
     {
         $sourcePath = $this->createTestImage(1000, 1000, 'jpeg');
-        $baseTargetPath = $this->tempDir . '/variants/image.jpg';
+        $baseTargetPath = $this->tempDir.'/variants/image.jpg';
 
         // Product has thumbnail, medium, large variants
         $results = $this->service->generateVariants($sourcePath, 'product', $baseTargetPath);
@@ -331,7 +333,7 @@ class ImageProcessingServiceTest extends TestCase
     public function test_generate_variants_creates_correct_dimensions(): void
     {
         $sourcePath = $this->createTestImage(1000, 1000, 'jpeg');
-        $baseTargetPath = $this->tempDir . '/variants/image.jpg';
+        $baseTargetPath = $this->tempDir.'/variants/image.jpg';
 
         $results = $this->service->generateVariants($sourcePath, 'product', $baseTargetPath);
 
@@ -354,7 +356,7 @@ class ImageProcessingServiceTest extends TestCase
     public function test_generate_variants_returns_empty_for_type_without_variants(): void
     {
         $sourcePath = $this->createTestImage(100, 100, 'jpeg');
-        $baseTargetPath = $this->tempDir . '/variants/image.jpg';
+        $baseTargetPath = $this->tempDir.'/variants/image.jpg';
 
         // Leave type has no variants
         $results = $this->service->generateVariants($sourcePath, 'leave', $baseTargetPath);
@@ -369,7 +371,7 @@ class ImageProcessingServiceTest extends TestCase
     {
         $this->expectException(FileProcessingException::class);
 
-        $this->service->generateVariants('/non/existent/file.jpg', 'product', $this->tempDir . '/output.jpg');
+        $this->service->generateVariants('/non/existent/file.jpg', 'product', $this->tempDir.'/output.jpg');
     }
 
     // ==================== Helper Method Tests ====================
@@ -383,9 +385,9 @@ class ImageProcessingServiceTest extends TestCase
 
         foreach ($formats as $format) {
             $imagePath = $this->createTestImage(100, 100, $format);
-            
+
             $this->assertTrue($this->service->isValidImage($imagePath), "Format {$format} should be valid");
-            
+
             unlink($imagePath);
         }
     }
@@ -403,7 +405,7 @@ class ImageProcessingServiceTest extends TestCase
      */
     public function test_is_valid_image_returns_false_for_non_image_file(): void
     {
-        $textFile = $this->tempDir . '/test.txt';
+        $textFile = $this->tempDir.'/test.txt';
         file_put_contents($textFile, 'This is not an image');
 
         $this->assertFalse($this->service->isValidImage($textFile));
@@ -453,7 +455,7 @@ class ImageProcessingServiceTest extends TestCase
     {
         // Create landscape image (16:9 ratio)
         $sourcePath = $this->createTestImage(1600, 900, 'jpeg');
-        $baseTargetPath = $this->tempDir . '/variants/image.jpg';
+        $baseTargetPath = $this->tempDir.'/variants/image.jpg';
 
         $results = $this->service->generateVariants($sourcePath, 'product', $baseTargetPath);
 
@@ -477,7 +479,7 @@ class ImageProcessingServiceTest extends TestCase
     {
         // Create portrait image (9:16 ratio)
         $sourcePath = $this->createTestImage(900, 1600, 'jpeg');
-        $baseTargetPath = $this->tempDir . '/variants/image.jpg';
+        $baseTargetPath = $this->tempDir.'/variants/image.jpg';
 
         $results = $this->service->generateVariants($sourcePath, 'product', $baseTargetPath);
 

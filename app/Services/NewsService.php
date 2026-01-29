@@ -5,13 +5,13 @@ namespace App\Services;
 use App\Models\News;
 use App\Services\Storage\FileStorageServiceInterface;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Collection;
 
 /**
  * NewsService - Service untuk mengelola berita/pengumuman.
- * 
+ *
  * Mengikuti pola yang sama dengan BannerService untuk konsistensi.
  */
 class NewsService
@@ -22,10 +22,6 @@ class NewsService
 
     /**
      * Store a new news item.
-     *
-     * @param array $data
-     * @param UploadedFile|null $image
-     * @return News
      */
     public function store(array $data, ?UploadedFile $image = null): News
     {
@@ -46,7 +42,7 @@ class NewsService
                 $result = $this->fileStorageService->upload($image, 'news');
                 $newsData['image_path'] = $result->path;
             }
-            
+
             // Create news record
             $news = News::create($newsData);
 
@@ -59,11 +55,6 @@ class NewsService
 
     /**
      * Update an existing news item.
-     *
-     * @param News $news
-     * @param array $data
-     * @param UploadedFile|null $image
-     * @return News
      */
     public function update(News $news, array $data, ?UploadedFile $image = null): News
     {
@@ -98,9 +89,6 @@ class NewsService
 
     /**
      * Delete a news item and its associated images.
-     *
-     * @param News $news
-     * @return bool
      */
     public function delete(News $news): bool
     {
@@ -112,10 +100,10 @@ class NewsService
                 try {
                     $this->fileStorageService->delete($news->image_path);
                 } catch (\Exception $e) {
-                    Log::warning('Failed to delete news image: ' . $e->getMessage());
+                    Log::warning('Failed to delete news image: '.$e->getMessage());
                 }
             }
-            
+
             // Delete news record
             $deleted = $news->delete();
 
@@ -130,14 +118,11 @@ class NewsService
 
     /**
      * Toggle news active status.
-     *
-     * @param News $news
-     * @return News
      */
     public function toggleStatus(News $news): News
     {
         $news->update([
-            'is_active' => !$news->is_active,
+            'is_active' => ! $news->is_active,
         ]);
 
         // Log activity
@@ -149,8 +134,7 @@ class NewsService
     /**
      * Get active news ordered by priority and published date.
      *
-     * @param int $limit Maximum number of news items to return
-     * @return Collection
+     * @param  int  $limit  Maximum number of news items to return
      */
     public function getActiveNews(int $limit = 10): Collection
     {
@@ -162,4 +146,3 @@ class NewsService
             ->get();
     }
 }
-

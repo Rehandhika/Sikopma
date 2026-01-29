@@ -86,7 +86,7 @@ class ScheduleTemplate extends Model
     public function getPatternSummary(): array
     {
         $pattern = $this->pattern ?? [];
-        
+
         return [
             'total_assignments' => count($pattern),
             'unique_users' => count(array_unique(array_column($pattern, 'user_id'))),

@@ -2,24 +2,24 @@
 
 namespace Tests\Feature\Audit;
 
-use App\Models\User;
-use App\Models\Product;
-use App\Models\Schedule;
-use App\Models\ScheduleAssignment;
 use App\Models\Attendance;
+use App\Models\LeaveRequest;
 use App\Models\Notification;
 use App\Models\Penalty;
 use App\Models\PenaltyType;
+use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
-use App\Models\SwapRequest;
-use App\Models\LeaveRequest;
+use App\Models\Schedule;
+use App\Models\ScheduleAssignment;
 use App\Models\StoreSetting;
+use App\Models\SwapRequest;
 use App\Models\SystemSetting;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 /**
@@ -48,9 +48,13 @@ abstract class AuditTestCase extends TestCase
      * Test users for each role
      */
     protected User $superAdmin;
+
     protected User $ketua;
+
     protected User $wakilKetua;
+
     protected User $bph;
+
     protected User $anggota;
 
     /**
@@ -64,7 +68,7 @@ abstract class AuditTestCase extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->setUpRolesAndPermissions();
         $this->createTestUsers();
     }
@@ -137,6 +141,7 @@ abstract class AuditTestCase extends TestCase
     {
         $role = Role::firstOrCreate(['name' => 'Super Admin']);
         $role->givePermissionTo(Permission::all());
+
         return $role;
     }
 
@@ -160,6 +165,7 @@ abstract class AuditTestCase extends TestCase
             'manage.settings',
             'view.audit.logs',
         ]);
+
         return $role;
     }
 
@@ -180,6 +186,7 @@ abstract class AuditTestCase extends TestCase
             'view.products', 'edit.products',
             'view.reports',
         ]);
+
         return $role;
     }
 
@@ -199,6 +206,7 @@ abstract class AuditTestCase extends TestCase
             'view.products',
             'view.reports',
         ]);
+
         return $role;
     }
 
@@ -223,6 +231,7 @@ abstract class AuditTestCase extends TestCase
             'view.sales.own',
             'create.sales',
         ]);
+
         return $role;
     }
 
@@ -268,7 +277,7 @@ abstract class AuditTestCase extends TestCase
     protected function createUserWithRole(string $roleName, array $attributes = []): User
     {
         $defaultAttributes = [
-            'nim' => 'NIM' . fake()->unique()->numerify('########'),
+            'nim' => 'NIM'.fake()->unique()->numerify('########'),
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'password' => Hash::make($this->defaultPassword),
@@ -324,6 +333,7 @@ abstract class AuditTestCase extends TestCase
                 'is_public' => $public,
             ]);
         }
+
         return $products;
     }
 
@@ -396,7 +406,7 @@ abstract class AuditTestCase extends TestCase
     /**
      * Seed an attendance record.
      */
-    protected function seedAttendance(User $user, ScheduleAssignment $assignment = null, array $attributes = []): Attendance
+    protected function seedAttendance(User $user, ?ScheduleAssignment $assignment = null, array $attributes = []): Attendance
     {
         $defaults = [
             'user_id' => $user->id,
@@ -431,9 +441,9 @@ abstract class AuditTestCase extends TestCase
     /**
      * Seed a penalty for a user.
      */
-    protected function seedPenalty(User $user, PenaltyType $type = null, array $attributes = []): Penalty
+    protected function seedPenalty(User $user, ?PenaltyType $type = null, array $attributes = []): Penalty
     {
-        if (!$type) {
+        if (! $type) {
             $type = PenaltyType::first() ?? $this->seedPenaltyTypes()[0];
         }
 
@@ -541,7 +551,7 @@ abstract class AuditTestCase extends TestCase
         $startDate = now()->addDays(1);
         $endDate = now()->addDays(3);
         $totalDays = $startDate->diffInDays($endDate) + 1;
-        
+
         $defaults = [
             'user_id' => $user->id,
             'leave_type' => 'permission',

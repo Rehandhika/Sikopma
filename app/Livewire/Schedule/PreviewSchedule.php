@@ -2,27 +2,33 @@
 
 namespace App\Livewire\Schedule;
 
-use Livewire\Component;
 use App\Models\Schedule;
 use Carbon\Carbon;
+use Livewire\Component;
 
 class PreviewSchedule extends Component
 {
     // Props
     public $scheduleId = null;
+
     public $schedule = null;
+
     public $assignments = [];
+
     public $show = false;
+
     public $isEditable = false;
-    
+
     // Statistics
     public $totalAssignments = 0;
+
     public $coverageRate = 0;
+
     public $assignmentsPerUser = [];
-    
+
     // View mode
     public $viewMode = 'calendar'; // calendar, list
-    
+
     protected $listeners = [
         'open-preview' => 'openPreview',
         'close-preview' => 'closePreview',
@@ -37,7 +43,7 @@ class PreviewSchedule extends Component
         $this->assignments = $assignments;
         $this->isEditable = $isEditable;
         $this->show = true;
-        
+
         if ($scheduleId) {
             $this->loadSchedule();
         } else {
@@ -60,22 +66,22 @@ class PreviewSchedule extends Component
     private function loadSchedule(): void
     {
         $this->schedule = Schedule::with(['assignments.user'])->find($this->scheduleId);
-        
+
         if ($this->schedule) {
             // Convert assignments to array format
             $this->assignments = [];
             $startDate = Carbon::parse($this->schedule->week_start_date);
-            
+
             for ($day = 0; $day < 4; $day++) {
                 $date = $startDate->copy()->addDays($day);
                 $dateStr = $date->format('Y-m-d');
                 $this->assignments[$dateStr] = [];
-                
+
                 for ($session = 1; $session <= 3; $session++) {
-                    $assignment = $this->schedule->assignments->first(function($a) use ($dateStr, $session) {
+                    $assignment = $this->schedule->assignments->first(function ($a) use ($dateStr, $session) {
                         return $a->date === $dateStr && $a->session == $session;
                     });
-                    
+
                     if ($assignment) {
                         $this->assignments[$dateStr][$session] = [
                             'user_id' => $assignment->user_id,
@@ -90,7 +96,7 @@ class PreviewSchedule extends Component
                     }
                 }
             }
-            
+
             $this->calculateStatistics();
         }
     }
@@ -101,13 +107,13 @@ class PreviewSchedule extends Component
     private function calculateStatistics(): void
     {
         $allAssignments = collect($this->assignments)->flatten(1)->filter();
-        
+
         $this->totalAssignments = $allAssignments->count();
         $this->coverageRate = round(($this->totalAssignments / 12) * 100, 2);
-        
+
         // Count per user
         $this->assignmentsPerUser = $allAssignments->groupBy('user_id')
-            ->map(function($group) {
+            ->map(function ($group) {
                 return [
                     'user_name' => $group->first()['user_name'],
                     'count' => $group->count(),
@@ -134,12 +140,12 @@ class PreviewSchedule extends Component
         if (empty($this->assignments)) {
             return '';
         }
-        
+
         $dates = array_keys($this->assignments);
         $startDate = Carbon::parse(min($dates))->locale('id');
         $endDate = Carbon::parse(max($dates))->locale('id');
-        
-        return $startDate->isoFormat('D MMMM YYYY') . ' - ' . $endDate->isoFormat('D MMMM YYYY');
+
+        return $startDate->isoFormat('D MMMM YYYY').' - '.$endDate->isoFormat('D MMMM YYYY');
     }
 
     /**
@@ -152,6 +158,7 @@ class PreviewSchedule extends Component
             2 => '10:20 - 12:50',
             3 => '13:30 - 16:00',
         ];
+
         return $times[$session] ?? '';
     }
 
@@ -161,11 +168,11 @@ class PreviewSchedule extends Component
     public function getUserInitials(string $name): string
     {
         $words = explode(' ', $name);
-        
+
         if (count($words) >= 2) {
-            return strtoupper(substr($words[0], 0, 1) . substr($words[1], 0, 1));
+            return strtoupper(substr($words[0], 0, 1).substr($words[1], 0, 1));
         }
-        
+
         return strtoupper(substr($name, 0, 2));
     }
 
@@ -182,11 +189,12 @@ class PreviewSchedule extends Component
      */
     public function editAssignment(string $date, int $session): void
     {
-        if (!$this->isEditable) {
+        if (! $this->isEditable) {
             $this->dispatch('toast', message: 'Preview ini tidak dapat diedit.', type: 'warning');
+
             return;
         }
-        
+
         // Dispatch to parent to open user selector
         $this->dispatch('edit-from-preview', date: $date, session: $session);
     }

@@ -2,12 +2,13 @@
 
 namespace App\Livewire\Schedule;
 
+use App\Models\Schedule;
+use App\Models\ScheduleAssignment;
+use Carbon\Carbon;
+use Livewire\Attributes\On;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Livewire\Attributes\Title;
-use Livewire\Attributes\On;
-use App\Models\{Schedule, ScheduleAssignment};
-use Carbon\Carbon;
 
 #[Title('Jadwal Saya')]
 class MySchedule extends Component
@@ -15,7 +16,9 @@ class MySchedule extends Component
     use WithPagination;
 
     public $weekOffset = 0;
+
     public $currentWeekStart;
+
     public $currentWeekEnd;
 
     /**
@@ -63,7 +66,7 @@ class MySchedule extends Component
 
     public function getMySchedulesProperty()
     {
-        if (!$this->currentWeekStart || !$this->currentWeekEnd) {
+        if (! $this->currentWeekStart || ! $this->currentWeekEnd) {
             $this->updateWeekDates();
         }
 
@@ -71,20 +74,20 @@ class MySchedule extends Component
             ->where('user_id', auth()->id())
             ->whereBetween('date', [
                 $this->currentWeekStart->toDateString(),
-                $this->currentWeekEnd->toDateString()
+                $this->currentWeekEnd->toDateString(),
             ])
             ->with(['schedule', 'user'])
             ->orderBy('date', 'asc')
             ->orderBy('session', 'asc')
             ->get()
-            ->groupBy(function($assignment) {
+            ->groupBy(function ($assignment) {
                 return $assignment->date->format('Y-m-d');
             });
     }
 
     public function getWeekDaysProperty()
     {
-        if (!$this->currentWeekStart) {
+        if (! $this->currentWeekStart) {
             $this->updateWeekDates();
         }
 
@@ -95,9 +98,10 @@ class MySchedule extends Component
                 'date' => $date,
                 'dayName' => $date->locale('id')->dayName,
                 'isToday' => $date->isToday(),
-                'isPast' => $date->isPast() && !$date->isToday(),
+                'isPast' => $date->isPast() && ! $date->isToday(),
             ];
         }
+
         return $days;
     }
 
@@ -114,11 +118,9 @@ class MySchedule extends Component
             ->get();
     }
 
-
-
     public function render()
     {
-        if (!$this->currentWeekStart || !$this->currentWeekEnd) {
+        if (! $this->currentWeekStart || ! $this->currentWeekEnd) {
             $this->updateWeekDates();
         }
 

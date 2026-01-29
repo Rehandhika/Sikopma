@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\PenaltyType;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -104,7 +102,7 @@ class Penalty extends Model
      */
     public function isAppealed(): bool
     {
-        return !is_null($this->appealed_at);
+        return ! is_null($this->appealed_at);
     }
 
     /**

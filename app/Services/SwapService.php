@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\SwapRequest;
 use App\Models\ScheduleAssignment;
+use App\Models\SwapRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -50,7 +50,7 @@ class SwapService
         ScheduleAssignment $targetAssignment
     ): void {
         // Check both are scheduled
-        if (!$requesterAssignment->isScheduled() || !$targetAssignment->isScheduled()) {
+        if (! $requesterAssignment->isScheduled() || ! $targetAssignment->isScheduled()) {
             throw new \Exception('Both schedules must be in scheduled status');
         }
 

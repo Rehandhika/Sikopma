@@ -28,9 +28,9 @@ class AttendanceCheckInRequest extends FormRequest
                 'integer',
                 Rule::exists('schedule_assignments', 'id')->where(function ($query) {
                     $query->where('user_id', auth()->id())
-                          ->where('date', today())
-                          ->where('status', 'scheduled');
-                })
+                        ->where('date', today())
+                        ->where('status', 'scheduled');
+                }),
             ],
             'notes' => [
                 'nullable',
@@ -43,8 +43,6 @@ class AttendanceCheckInRequest extends FormRequest
 
     /**
      * Get custom error messages
-     *
-     * @return array
      */
     public function messages(): array
     {
@@ -64,7 +62,7 @@ class AttendanceCheckInRequest extends FormRequest
     public function getValidatedData(): array
     {
         $data = $this->validated();
-        
+
         // Sanitize notes to prevent XSS
         if (isset($data['notes'])) {
             $data['notes'] = strip_tags($data['notes']);

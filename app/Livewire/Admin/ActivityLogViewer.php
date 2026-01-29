@@ -2,13 +2,16 @@
 
 namespace App\Livewire\Admin;
 
-use Livewire\Component;
-use Livewire\WithPagination;
-use Livewire\Attributes\{Lazy, Computed, Url, Title};
 use App\Models\ActivityLog;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Lazy;
+use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 #[Lazy]
 #[Title('Log Aktivitas')]
@@ -18,13 +21,13 @@ class ActivityLogViewer extends Component
 
     #[Url(as: 'from')]
     public string $dateFrom = '';
-    
+
     #[Url(as: 'to')]
     public string $dateTo = '';
-    
+
     #[Url(as: 'user')]
     public string $userId = '';
-    
+
     #[Url(as: 'q')]
     public string $search = '';
 
@@ -114,12 +117,12 @@ class ActivityLogViewer extends Component
     public function stats(): array
     {
         $cacheKey = "activity_stats_{$this->dateFrom}_{$this->dateTo}_{$this->userId}";
-        
+
         return Cache::remember($cacheKey, 60, function () {
             $query = ActivityLog::query()
-                ->when($this->dateFrom, fn($q) => $q->where('created_at', '>=', Carbon::parse($this->dateFrom)->startOfDay()))
-                ->when($this->dateTo, fn($q) => $q->where('created_at', '<=', Carbon::parse($this->dateTo)->endOfDay()))
-                ->when($this->userId, fn($q) => $q->byUser((int) $this->userId));
+                ->when($this->dateFrom, fn ($q) => $q->where('created_at', '>=', Carbon::parse($this->dateFrom)->startOfDay()))
+                ->when($this->dateTo, fn ($q) => $q->where('created_at', '<=', Carbon::parse($this->dateTo)->endOfDay()))
+                ->when($this->userId, fn ($q) => $q->byUser((int) $this->userId));
 
             return [
                 'total' => (clone $query)->count(),
@@ -134,10 +137,10 @@ class ActivityLogViewer extends Component
     private function buildBaseQuery()
     {
         return ActivityLog::query()
-            ->when($this->dateFrom, fn($q) => $q->where('created_at', '>=', Carbon::parse($this->dateFrom)->startOfDay()))
-            ->when($this->dateTo, fn($q) => $q->where('created_at', '<=', Carbon::parse($this->dateTo)->endOfDay()))
-            ->when($this->userId, fn($q) => $q->byUser((int) $this->userId))
-            ->when($this->search, fn($q) => $q->search($this->search));
+            ->when($this->dateFrom, fn ($q) => $q->where('created_at', '>=', Carbon::parse($this->dateFrom)->startOfDay()))
+            ->when($this->dateTo, fn ($q) => $q->where('created_at', '<=', Carbon::parse($this->dateTo)->endOfDay()))
+            ->when($this->userId, fn ($q) => $q->byUser((int) $this->userId))
+            ->when($this->search, fn ($q) => $q->search($this->search));
     }
 
     public function render()

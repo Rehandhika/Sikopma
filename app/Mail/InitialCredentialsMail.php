@@ -6,18 +6,16 @@ use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Mail\Mailables\Address;
 use Illuminate\Queue\SerializesModels;
 
 /**
  * InitialCredentialsMail
- * 
+ *
  * Email untuk mengirim kredensial awal (NIM & password) ke user baru.
  * Implements ShouldQueue untuk pengiriman async via queue.
- * 
- * @package App\Mail
  */
 class InitialCredentialsMail extends Mailable implements ShouldQueue
 {
@@ -39,7 +37,9 @@ class InitialCredentialsMail extends Mailable implements ShouldQueue
     public int $backoff = 30;
 
     public User $user;
+
     public string $plainPassword;
+
     public string $loginUrl;
 
     /**
@@ -49,8 +49,8 @@ class InitialCredentialsMail extends Mailable implements ShouldQueue
     {
         $this->user = $user;
         $this->plainPassword = $plainPassword;
-        $this->loginUrl = config('app.url') . '/login';
-        
+        $this->loginUrl = config('app.url').'/login';
+
         // Set queue name untuk prioritas
         $this->onQueue('emails');
     }
@@ -62,7 +62,7 @@ class InitialCredentialsMail extends Mailable implements ShouldQueue
     {
         return new Envelope(
             from: new Address(config('mail.from.address'), config('mail.from.name')),
-            subject: 'Selamat Datang! Kredensial Akun ' . config('app.name') . ' Anda',
+            subject: 'Selamat Datang! Kredensial Akun '.config('app.name').' Anda',
         );
     }
 

@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Purchase extends Model
 {
@@ -83,8 +84,8 @@ class Purchase extends Model
         $date = now()->format('Ymd');
         $lastPurchase = static::whereDate('created_at', today())->latest('id')->first();
         $sequence = $lastPurchase ? (int) substr($lastPurchase->invoice_number, -4) + 1 : 1;
-        
-        return 'PO-' . $date . '-' . str_pad($sequence, 4, '0', STR_PAD_LEFT);
+
+        return 'PO-'.$date.'-'.str_pad($sequence, 4, '0', STR_PAD_LEFT);
     }
 
     /**

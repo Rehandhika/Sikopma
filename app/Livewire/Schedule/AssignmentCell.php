@@ -2,24 +2,30 @@
 
 namespace App\Livewire\Schedule;
 
-use Livewire\Component;
 use App\Models\User;
 use Carbon\Carbon;
+use Livewire\Component;
 
 class AssignmentCell extends Component
 {
     // Props
     public $date;
+
     public $session;
+
     public $assignment = null;
+
     public $isEditable = true;
-    
+
     // Computed properties
     public $hasAssignment = false;
+
     public $hasConflict = false;
+
     public $hasAvailabilityWarning = false;
+
     public $availabilityStatus = 'unknown'; // available, not_available, unknown
-    
+
     protected $listeners = ['assignmentUpdated' => '$refresh'];
 
     public function mount($date, $session, $assignment = null, $isEditable = true)
@@ -28,7 +34,7 @@ class AssignmentCell extends Component
         $this->session = $session;
         $this->assignment = $assignment;
         $this->isEditable = $isEditable;
-        
+
         $this->computeStatus();
     }
 
@@ -37,8 +43,8 @@ class AssignmentCell extends Component
      */
     private function computeStatus(): void
     {
-        $this->hasAssignment = !is_null($this->assignment);
-        
+        $this->hasAssignment = ! is_null($this->assignment);
+
         if ($this->hasAssignment) {
             $this->hasAvailabilityWarning = $this->assignment['has_availability_warning'] ?? false;
             $this->availabilityStatus = $this->hasAvailabilityWarning ? 'not_available' : 'available';
@@ -50,11 +56,12 @@ class AssignmentCell extends Component
      */
     public function selectCell(): void
     {
-        if (!$this->isEditable) {
+        if (! $this->isEditable) {
             $this->dispatch('toast', message: 'Jadwal ini tidak dapat diedit.', type: 'warning');
+
             return;
         }
-        
+
         // Dispatch event to parent component to open user selector
         $this->dispatch('cell-selected', date: $this->date, session: $this->session);
     }
@@ -64,11 +71,12 @@ class AssignmentCell extends Component
      */
     public function removeAssignment(): void
     {
-        if (!$this->isEditable) {
+        if (! $this->isEditable) {
             $this->dispatch('toast', message: 'Jadwal ini tidak dapat diedit.', type: 'warning');
+
             return;
         }
-        
+
         // Dispatch event to parent component to remove assignment
         $this->dispatch('remove-assignment', date: $this->date, session: $this->session);
     }
@@ -91,6 +99,7 @@ class AssignmentCell extends Component
             2 => '10:20 - 12:50',
             3 => '13:30 - 16:00',
         ];
+
         return $times[$this->session] ?? '';
     }
 
@@ -99,17 +108,17 @@ class AssignmentCell extends Component
      */
     public function getUserInitials(): string
     {
-        if (!$this->hasAssignment) {
+        if (! $this->hasAssignment) {
             return '';
         }
-        
+
         $name = $this->assignment['user_name'] ?? '';
         $words = explode(' ', $name);
-        
+
         if (count($words) >= 2) {
-            return strtoupper(substr($words[0], 0, 1) . substr($words[1], 0, 1));
+            return strtoupper(substr($words[0], 0, 1).substr($words[1], 0, 1));
         }
-        
+
         return strtoupper(substr($name, 0, 2));
     }
 

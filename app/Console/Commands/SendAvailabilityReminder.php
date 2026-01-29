@@ -2,16 +2,17 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use App\Models\User;
-use App\Models\Schedule;
 use App\Models\Availability;
+use App\Models\Schedule;
+use App\Models\User;
 use App\Services\NotificationService;
 use Carbon\Carbon;
+use Illuminate\Console\Command;
 
 class SendAvailabilityReminder extends Command
 {
     protected $signature = 'schedule:send-reminder';
+
     protected $description = 'Send reminder to users who haven\'t submitted availability';
 
     public function handle()
@@ -22,8 +23,9 @@ class SendAvailabilityReminder extends Command
             ->where('status', 'draft')
             ->first();
 
-        if (!$schedule) {
+        if (! $schedule) {
             $this->info('No schedule found for next week');
+
             return;
         }
 

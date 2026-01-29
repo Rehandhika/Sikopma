@@ -2,12 +2,12 @@
 
 namespace App\Livewire\Report;
 
-use Livewire\Component;
-use Livewire\WithPagination;
-use Livewire\Attributes\Title;
-use Livewire\Attributes\Computed;
 use App\Models\Attendance;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Title;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 #[Title('Laporan Kehadiran')]
 class AttendanceReport extends Component
@@ -15,9 +15,13 @@ class AttendanceReport extends Component
     use WithPagination;
 
     public string $dateFrom = '';
+
     public string $dateTo = '';
+
     public string $userFilter = 'all';
+
     public string $statusFilter = 'all';
+
     public string $period = 'month';
 
     public function mount()
@@ -57,6 +61,7 @@ class AttendanceReport extends Component
     {
         if (empty($this->dateFrom) || empty($this->dateTo)) {
             $this->period = 'custom';
+
             return;
         }
 
@@ -65,16 +70,16 @@ class AttendanceReport extends Component
         $dateTo = \Carbon\Carbon::parse($this->dateTo);
 
         // Check if dates match predefined periods
-        if ($dateFrom->format('Y-m-d') === $now->format('Y-m-d') && 
+        if ($dateFrom->format('Y-m-d') === $now->format('Y-m-d') &&
             $dateTo->format('Y-m-d') === $now->format('Y-m-d')) {
             $this->period = 'today';
-        } elseif ($dateFrom->format('Y-m-d') === $now->copy()->startOfWeek()->format('Y-m-d') && 
+        } elseif ($dateFrom->format('Y-m-d') === $now->copy()->startOfWeek()->format('Y-m-d') &&
                   $dateTo->format('Y-m-d') === $now->copy()->endOfWeek()->format('Y-m-d')) {
             $this->period = 'week';
-        } elseif ($dateFrom->format('Y-m-d') === $now->copy()->startOfMonth()->format('Y-m-d') && 
+        } elseif ($dateFrom->format('Y-m-d') === $now->copy()->startOfMonth()->format('Y-m-d') &&
                   $dateTo->format('Y-m-d') === $now->copy()->endOfMonth()->format('Y-m-d')) {
             $this->period = 'month';
-        } elseif ($dateFrom->format('Y-m-d') === $now->copy()->startOfYear()->format('Y-m-d') && 
+        } elseif ($dateFrom->format('Y-m-d') === $now->copy()->startOfYear()->format('Y-m-d') &&
                   $dateTo->format('Y-m-d') === $now->copy()->endOfYear()->format('Y-m-d')) {
             $this->period = 'year';
         } else {
@@ -98,9 +103,9 @@ class AttendanceReport extends Component
     #[Computed]
     public function stats()
     {
-        $userCondition = $this->userFilter !== 'all' ? "AND user_id = ?" : "";
+        $userCondition = $this->userFilter !== 'all' ? 'AND user_id = ?' : '';
         $params = [$this->dateFrom, $this->dateTo];
-        
+
         if ($this->userFilter !== 'all') {
             $params[] = $this->userFilter;
         }
@@ -115,7 +120,7 @@ class AttendanceReport extends Component
             WHERE date BETWEEN ? AND ? {$userCondition}
         ", $params);
 
-        return $result[0] ?? (object)['total' => 0, 'present' => 0, 'late' => 0, 'absent' => 0];
+        return $result[0] ?? (object) ['total' => 0, 'present' => 0, 'late' => 0, 'absent' => 0];
     }
 
     /**
@@ -124,15 +129,15 @@ class AttendanceReport extends Component
     #[Computed]
     public function users()
     {
-        return DB::select("SELECT id, name FROM users WHERE deleted_at IS NULL ORDER BY name");
+        return DB::select('SELECT id, name FROM users WHERE deleted_at IS NULL ORDER BY name');
     }
 
     public function render()
     {
         $attendances = Attendance::query()
             ->whereBetween('date', [$this->dateFrom, $this->dateTo])
-            ->when($this->userFilter !== 'all', fn($q) => $q->where('user_id', $this->userFilter))
-            ->when($this->statusFilter !== 'all', fn($q) => $q->where('status', $this->statusFilter))
+            ->when($this->userFilter !== 'all', fn ($q) => $q->where('user_id', $this->userFilter))
+            ->when($this->statusFilter !== 'all', fn ($q) => $q->where('status', $this->statusFilter))
             ->with('user:id,name')
             ->select('id', 'user_id', 'date', 'check_in', 'check_out', 'work_hours', 'status')
             ->latest('date')

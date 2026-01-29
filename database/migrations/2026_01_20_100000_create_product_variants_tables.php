@@ -63,14 +63,14 @@ return new class extends Migration
 
         // Add has_variants column to products
         Schema::table('products', function (Blueprint $table) {
-            if (!Schema::hasColumn('products', 'has_variants')) {
+            if (! Schema::hasColumn('products', 'has_variants')) {
                 $table->boolean('has_variants')->default(false)->after('status');
             }
         });
 
         // Add variant_id to sale_items for tracking which variant was sold
         Schema::table('sale_items', function (Blueprint $table) {
-            if (!Schema::hasColumn('sale_items', 'variant_id')) {
+            if (! Schema::hasColumn('sale_items', 'variant_id')) {
                 $table->foreignId('variant_id')->nullable()->after('product_id')
                     ->constrained('product_variants')->nullOnDelete();
             }

@@ -2,21 +2,26 @@
 
 namespace App\Livewire\Swap;
 
+use App\Models\SwapRequest;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\{SwapRequest, ScheduleAssignment, User};
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class MyRequests extends Component
 {
     use WithPagination;
 
     public $filter = 'all'; // all, pending, approved, rejected, completed
+
     public $search = '';
+
     public $selectedRequest = null;
+
     public $showDetailModal = false;
+
     public $cancelReason = '';
+
     public $showCancelModal = false;
 
     protected $queryString = ['filter', 'search'];
@@ -44,8 +49,9 @@ class MyRequests extends Component
             ->where('status', 'pending')
             ->first();
 
-        if (!$request) {
+        if (! $request) {
             $this->dispatch('toast', message: 'Permintaan tidak ditemukan atau tidak dapat dibatalkan.', type: 'error');
+
             return;
         }
 
@@ -53,9 +59,10 @@ class MyRequests extends Component
         $deadline = $request->requesterAssignment->date->copy()
             ->setTimeFromTimeString($request->requesterAssignment->time_start)
             ->subHours(24);
-        
+
         if (now()->greaterThan($deadline)) {
             $this->dispatch('toast', message: 'Tidak dapat membatalkan permintaan dalam 24 jam sebelum shift.', type: 'error');
+
             return;
         }
 
@@ -65,7 +72,7 @@ class MyRequests extends Component
 
     public function confirmCancel()
     {
-        if (!$this->selectedRequest) {
+        if (! $this->selectedRequest) {
             return;
         }
 
@@ -74,7 +81,7 @@ class MyRequests extends Component
 
             $this->selectedRequest->update([
                 'status' => 'cancelled',
-                'admin_response' => 'Dibatalkan oleh pemohon: ' . $this->cancelReason,
+                'admin_response' => 'Dibatalkan oleh pemohon: '.$this->cancelReason,
                 'admin_responded_by' => auth()->id(),
                 'admin_responded_at' => now(),
             ]);
@@ -82,7 +89,7 @@ class MyRequests extends Component
             // Create notification for target user
             $this->createNotification($this->selectedRequest->target_id, 'swap_cancelled', [
                 'title' => 'Permintaan Tukar Shift Dibatalkan',
-                'message' => auth()->user()->name . ' membatalkan permintaan tukar shift.',
+                'message' => auth()->user()->name.' membatalkan permintaan tukar shift.',
                 'swap_request_id' => $this->selectedRequest->id,
             ]);
 
@@ -93,7 +100,7 @@ class MyRequests extends Component
 
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->dispatch('toast', message: 'Gagal membatalkan permintaan: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal membatalkan permintaan: '.$e->getMessage(), type: 'error');
         }
     }
 
@@ -104,7 +111,7 @@ class MyRequests extends Component
             'target:id,name,nim',
             'requesterAssignment.schedule',
             'targetAssignment.schedule',
-            'adminResponder:id,name'
+            'adminResponder:id,name',
         ])->find($id);
 
         if ($this->selectedRequest && $this->selectedRequest->requester_id === auth()->id()) {
@@ -121,7 +128,7 @@ class MyRequests extends Component
 
     public function getStatusColor($status)
     {
-        return match($status) {
+        return match ($status) {
             'pending' => 'yellow',
             'target_approved' => 'blue',
             'admin_approved' => 'green',
@@ -133,7 +140,7 @@ class MyRequests extends Component
 
     public function getStatusText($status)
     {
-        return match($status) {
+        return match ($status) {
             'pending' => 'Menunggu Persetujuan',
             'target_approved' => 'Disetujui Target',
             'admin_approved' => 'Disetujui Admin',
@@ -150,7 +157,7 @@ class MyRequests extends Component
             ->with([
                 'target:id,name,nim',
                 'requesterAssignment.schedule',
-                'targetAssignment.schedule'
+                'targetAssignment.schedule',
             ]);
 
         // Apply filter
@@ -167,7 +174,7 @@ class MyRequests extends Component
                     break;
                 case 'completed':
                     $query->where('status', 'admin_approved')
-                          ->whereNotNull('completed_at');
+                        ->whereNotNull('completed_at');
                     break;
             }
         }
@@ -175,8 +182,8 @@ class MyRequests extends Component
         // Apply search
         if ($this->search) {
             $query->whereHas('target', function ($q) {
-                $q->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('nim', 'like', '%' . $this->search . '%');
+                $q->where('name', 'like', '%'.$this->search.'%')
+                    ->orWhere('nim', 'like', '%'.$this->search.'%');
             });
         }
 

@@ -11,23 +11,32 @@ class PaymentConfigurationService
 {
     // Cache configuration
     const CACHE_KEY = 'payment_configuration';
+
     const CACHE_TTL = 3600; // 1 hour
 
     // Setting keys
     const KEY_CASH_ENABLED = 'payment_cash_enabled';
+
     const KEY_TRANSFER_ENABLED = 'payment_transfer_enabled';
+
     const KEY_QRIS_ENABLED = 'payment_qris_enabled';
+
     const KEY_TRANSFER_BANKS = 'payment_transfer_banks'; // JSON array of bank accounts
+
     const KEY_QRIS_IMAGE = 'payment_qris_image';
 
     // Legacy keys (for migration)
     const KEY_TRANSFER_BANK_NAME = 'payment_transfer_bank_name';
+
     const KEY_TRANSFER_ACCOUNT_NUMBER = 'payment_transfer_account_number';
+
     const KEY_TRANSFER_ACCOUNT_HOLDER = 'payment_transfer_account_holder';
 
     // Payment method identifiers
     const METHOD_CASH = 'cash';
+
     const METHOD_TRANSFER = 'transfer';
+
     const METHOD_QRIS = 'qris';
 
     /**
@@ -38,7 +47,7 @@ class PaymentConfigurationService
         return Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
             // Get banks from new JSON format, or migrate from legacy format
             $banks = $this->getBankAccounts();
-            
+
             return [
                 'cash_enabled' => $this->toBool(Setting::get(self::KEY_CASH_ENABLED, '1')),
                 'transfer_enabled' => $this->toBool(Setting::get(self::KEY_TRANSFER_ENABLED, '0')),
@@ -55,9 +64,10 @@ class PaymentConfigurationService
     public function getBankAccounts(): array
     {
         $banksJson = Setting::get(self::KEY_TRANSFER_BANKS);
-        
+
         if ($banksJson) {
             $banks = json_decode($banksJson, true);
+
             return is_array($banks) ? $banks : [];
         }
 
@@ -74,10 +84,10 @@ class PaymentConfigurationService
                 'account_holder' => $legacyAccountHolder,
                 'is_active' => true,
             ]];
-            
+
             // Save to new format
             Setting::set(self::KEY_TRANSFER_BANKS, json_encode($banks));
-            
+
             return $banks;
         }
 
@@ -90,7 +100,8 @@ class PaymentConfigurationService
     public function getActiveBankAccounts(): array
     {
         $banks = $this->getBankAccounts();
-        return array_values(array_filter($banks, fn($bank) => $bank['is_active'] ?? true));
+
+        return array_values(array_filter($banks, fn ($bank) => $bank['is_active'] ?? true));
     }
 
     /**
@@ -99,7 +110,7 @@ class PaymentConfigurationService
     public function addBankAccount(array $bankData): array
     {
         $banks = $this->getBankAccounts();
-        
+
         $newBank = [
             'id' => Str::uuid()->toString(),
             'bank_name' => trim($bankData['bank_name']),
@@ -107,12 +118,12 @@ class PaymentConfigurationService
             'account_holder' => trim($bankData['account_holder']),
             'is_active' => $bankData['is_active'] ?? true,
         ];
-        
+
         $banks[] = $newBank;
-        
+
         Setting::set(self::KEY_TRANSFER_BANKS, json_encode($banks));
         $this->clearCache();
-        
+
         return $newBank;
     }
 
@@ -122,24 +133,24 @@ class PaymentConfigurationService
     public function updateBankAccount(string $bankId, array $bankData): ?array
     {
         $banks = $this->getBankAccounts();
-        
+
         foreach ($banks as &$bank) {
             if ($bank['id'] === $bankId) {
                 $bank['bank_name'] = trim($bankData['bank_name'] ?? $bank['bank_name']);
                 $bank['account_number'] = trim($bankData['account_number'] ?? $bank['account_number']);
                 $bank['account_holder'] = trim($bankData['account_holder'] ?? $bank['account_holder']);
-                
+
                 if (isset($bankData['is_active'])) {
                     $bank['is_active'] = (bool) $bankData['is_active'];
                 }
-                
+
                 Setting::set(self::KEY_TRANSFER_BANKS, json_encode($banks));
                 $this->clearCache();
-                
+
                 return $bank;
             }
         }
-        
+
         return null;
     }
 
@@ -150,15 +161,16 @@ class PaymentConfigurationService
     {
         $banks = $this->getBankAccounts();
         $originalCount = count($banks);
-        
-        $banks = array_values(array_filter($banks, fn($bank) => $bank['id'] !== $bankId));
-        
+
+        $banks = array_values(array_filter($banks, fn ($bank) => $bank['id'] !== $bankId));
+
         if (count($banks) < $originalCount) {
             Setting::set(self::KEY_TRANSFER_BANKS, json_encode($banks));
             $this->clearCache();
+
             return true;
         }
-        
+
         return false;
     }
 
@@ -168,18 +180,18 @@ class PaymentConfigurationService
     public function toggleBankAccount(string $bankId): ?array
     {
         $banks = $this->getBankAccounts();
-        
+
         foreach ($banks as &$bank) {
             if ($bank['id'] === $bankId) {
-                $bank['is_active'] = !($bank['is_active'] ?? true);
-                
+                $bank['is_active'] = ! ($bank['is_active'] ?? true);
+
                 Setting::set(self::KEY_TRANSFER_BANKS, json_encode($banks));
                 $this->clearCache();
-                
+
                 return $bank;
             }
         }
-        
+
         return null;
     }
 
@@ -240,12 +252,12 @@ class PaymentConfigurationService
     {
         $config = $this->getAll();
 
-        if (!$config['transfer_enabled']) {
+        if (! $config['transfer_enabled']) {
             return null;
         }
 
         $activeBanks = $this->getActiveBankAccounts();
-        
+
         if (empty($activeBanks)) {
             return null;
         }
@@ -259,7 +271,8 @@ class PaymentConfigurationService
     public function hasActiveBankAccount(): bool
     {
         $activeBanks = $this->getActiveBankAccounts();
-        return !empty($activeBanks);
+
+        return ! empty($activeBanks);
     }
 
     /**
@@ -269,7 +282,7 @@ class PaymentConfigurationService
     {
         $config = $this->getAll();
 
-        if (!$config['qris_enabled'] || empty($config['qris_image'])) {
+        if (! $config['qris_enabled'] || empty($config['qris_image'])) {
             return null;
         }
 

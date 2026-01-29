@@ -2,9 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 
 class LeaveRequest extends Model
 {
@@ -96,7 +95,7 @@ class LeaveRequest extends Model
 
     public function getLeaveTypeLabel(): string
     {
-        return match($this->leave_type) {
+        return match ($this->leave_type) {
             'sick' => 'Sakit',
             'permission' => 'Izin',
             'emergency' => 'Darurat',
@@ -107,7 +106,7 @@ class LeaveRequest extends Model
 
     public function getStatusColor(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'pending' => 'yellow',
             'approved' => 'green',
             'rejected' => 'red',

@@ -72,7 +72,7 @@ class AssignmentHistory extends Model
             DB::beginTransaction();
 
             $data = $this->assignment_data;
-            
+
             switch ($this->action) {
                 case 'create':
                     // If this was a create action, delete the assignment
@@ -80,12 +80,12 @@ class AssignmentHistory extends Model
                         ScheduleAssignment::find($data['id'])?->delete();
                     }
                     break;
-                    
+
                 case 'delete':
                     // If this was a delete action, recreate the assignment
                     ScheduleAssignment::create($data);
                     break;
-                    
+
                 case 'update':
                     // If this was an update action, restore previous state
                     if (isset($data['id'])) {
@@ -95,13 +95,15 @@ class AssignmentHistory extends Model
             }
 
             DB::commit();
+
             return true;
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Failed to revert assignment history', [
                 'history_id' => $this->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -111,7 +113,7 @@ class AssignmentHistory extends Model
      */
     public function getActionLabelAttribute(): string
     {
-        return match($this->action) {
+        return match ($this->action) {
             'create' => 'Ditambahkan',
             'update' => 'Diubah',
             'delete' => 'Dihapus',
@@ -127,10 +129,10 @@ class AssignmentHistory extends Model
         $data = $this->assignment_data;
         $user = User::find($data['user_id'] ?? null);
         $userName = $user ? $user->name : 'Unknown';
-        
+
         $date = $data['date'] ?? 'Unknown date';
         $session = $data['session'] ?? 'Unknown session';
-        
+
         return "{$this->action_label}: {$userName} - {$date} Sesi {$session}";
     }
 }

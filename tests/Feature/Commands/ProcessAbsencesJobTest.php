@@ -2,16 +2,16 @@
 
 namespace Tests\Feature\Commands;
 
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Schedule;
-use App\Models\ScheduleAssignment;
 use App\Models\Attendance;
+use App\Models\LeaveRequest;
 use App\Models\Penalty;
 use App\Models\PenaltyType;
-use App\Models\LeaveRequest;
+use App\Models\Schedule;
+use App\Models\ScheduleAssignment;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class ProcessAbsencesJobTest extends TestCase
 {

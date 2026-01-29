@@ -22,13 +22,13 @@ class SanitizeInput
         if ($request->header('X-Livewire') || Str::startsWith($request->path(), 'livewire')) {
             return $next($request);
         }
-        
+
         // Get all input data
         $input = $request->all();
-        
+
         // Sanitize string inputs (but preserve passwords exactly)
         $sanitized = $this->sanitizeArray($input);
-        
+
         // Replace request input with sanitized data
         $request->merge($sanitized);
 
@@ -62,16 +62,16 @@ class SanitizeInput
     {
         // Remove potential XSS threats
         $value = strip_tags($value);
-        
+
         // Remove control characters
         $value = preg_replace('/[\x00-\x1F\x7F]/', '', $value);
-        
+
         // Normalize whitespace
         $value = preg_replace('/\s+/', ' ', $value);
-        
+
         // Trim
         $value = trim($value);
-        
+
         return $value;
     }
 }

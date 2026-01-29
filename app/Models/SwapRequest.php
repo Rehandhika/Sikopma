@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * @deprecated Use ScheduleChangeRequest instead
@@ -97,7 +97,7 @@ class SwapRequest extends Model
 
     public function getChangeTypeLabel(): string
     {
-        return match($this->change_type) {
+        return match ($this->change_type) {
             'reschedule' => 'Pindah Jadwal',
             'cancel' => 'Batalkan Jadwal',
             default => $this->change_type ?? '-',
@@ -106,7 +106,7 @@ class SwapRequest extends Model
 
     public function getStatusLabel(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'pending' => 'Menunggu',
             'approved' => 'Disetujui',
             'rejected' => 'Ditolak',

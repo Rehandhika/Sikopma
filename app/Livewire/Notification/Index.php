@@ -2,9 +2,9 @@
 
 namespace App\Livewire\Notification;
 
+use App\Models\Notification;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\Notification;
 
 class Index extends Component
 {

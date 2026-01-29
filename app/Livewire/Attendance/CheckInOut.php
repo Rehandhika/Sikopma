@@ -2,28 +2,35 @@
 
 namespace App\Livewire\Attendance;
 
-use Livewire\Component;
-use Livewire\WithFileUploads;
-use App\Models\ScheduleAssignment;
 use App\Models\Attendance;
-use App\Services\NotificationService;
+use App\Models\ScheduleAssignment;
 use App\Services\ActivityLogService;
+use App\Services\NotificationService;
 use App\Services\Storage\FileStorageServiceInterface;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class CheckInOut extends Component
 {
     use WithFileUploads;
 
     public $currentSchedule;
+
     public $currentAttendance;
+
     public $checkInTime;
+
     public $checkOutTime;
+
     public $checkInPhoto;
+
     public $checkInPhotoPreview = null;
+
     public $scheduleStatus; // 'active', 'upcoming', 'past'
+
     public $showPhotoPreview = false;
 
     protected FileStorageServiceInterface $fileStorageService;
@@ -71,7 +78,7 @@ class CheckInOut extends Component
         $this->currentSchedule = ScheduleAssignment::where('user_id', $user->id)
             ->where('date', $today)
             ->where('status', 'scheduled')
-            ->whereHas('schedule', function($query) {
+            ->whereHas('schedule', function ($query) {
                 $query->where('status', 'published');
             })
             ->where('time_start', '<=', $currentTime)
@@ -80,11 +87,11 @@ class CheckInOut extends Component
             ->first();
 
         // Priority 2: If no active assignment, find today's next upcoming assignment
-        if (!$this->currentSchedule) {
+        if (! $this->currentSchedule) {
             $this->currentSchedule = ScheduleAssignment::where('user_id', $user->id)
                 ->where('date', $today)
                 ->where('status', 'scheduled')
-                ->whereHas('schedule', function($query) {
+                ->whereHas('schedule', function ($query) {
                     $query->where('status', 'published');
                 })
                 ->where('time_start', '>', $currentTime)
@@ -94,11 +101,11 @@ class CheckInOut extends Component
         }
 
         // Priority 3: If no upcoming, check if there's a past assignment today (for late check-in)
-        if (!$this->currentSchedule) {
+        if (! $this->currentSchedule) {
             $this->currentSchedule = ScheduleAssignment::where('user_id', $user->id)
                 ->where('date', $today)
                 ->where('status', 'scheduled')
-                ->whereHas('schedule', function($query) {
+                ->whereHas('schedule', function ($query) {
                     $query->where('status', 'published');
                 })
                 ->with(['schedule', 'user'])
@@ -111,7 +118,7 @@ class CheckInOut extends Component
             // Determine schedule status
             $scheduleStart = $this->currentSchedule->date->copy()->setTimeFromTimeString($this->currentSchedule->time_start);
             $scheduleEnd = $this->currentSchedule->date->copy()->setTimeFromTimeString($this->currentSchedule->time_end);
-            
+
             if ($now->between($scheduleStart, $scheduleEnd)) {
                 $this->scheduleStatus = 'active';
             } elseif ($now->lt($scheduleStart)) {
@@ -140,7 +147,7 @@ class CheckInOut extends Component
     {
         try {
             // Validate schedule exists
-            if (!$this->currentSchedule) {
+            if (! $this->currentSchedule) {
                 throw new \Exception('Tidak ada jadwal aktif saat ini.');
             }
 
@@ -158,7 +165,7 @@ class CheckInOut extends Component
             $scheduleStart = $this->currentSchedule->date->copy()->setTimeFromTimeString($this->currentSchedule->time_start);
             $now = now();
             $tolerance = config('sikopma.attendance.allow_early_checkin_minutes', 30);
-            
+
             if ($now->lt($scheduleStart->copy()->subMinutes($tolerance))) {
                 throw new \Exception("Belum waktunya check-in. Check-in dapat dilakukan {$tolerance} menit sebelum jadwal dimulai.");
             }
@@ -182,7 +189,7 @@ class CheckInOut extends Component
             $this->checkInTime = $now->format('H:i');
 
             // Log activity
-            $sessionLabel = $this->currentSchedule->session_label ?? 'Sesi ' . $this->currentSchedule->session;
+            $sessionLabel = $this->currentSchedule->session_label ?? 'Sesi '.$this->currentSchedule->session;
             ActivityLogService::logCheckIn($sessionLabel, $now->format('H:i'));
 
             // Send notification
@@ -193,11 +200,11 @@ class CheckInOut extends Component
                 "Check-in berhasil pada {$now->format('H:i')} untuk jadwal {$this->currentSchedule->day_label} {$this->currentSchedule->session_label}"
             );
 
-            $this->dispatch('toast', message: 'Check-in berhasil! Waktu: ' . $now->format('H:i'), type: 'success');
-            
+            $this->dispatch('toast', message: 'Check-in berhasil! Waktu: '.$now->format('H:i'), type: 'success');
+
             // Reset form
             $this->reset(['checkInPhoto', 'checkInPhotoPreview', 'showPhotoPreview']);
-            
+
             // Reload schedule data
             $this->loadCurrentSchedule();
 
@@ -206,7 +213,7 @@ class CheckInOut extends Component
             throw $e;
         } catch (\Exception $e) {
             $this->dispatch('toast', message: $e->getMessage(), type: 'error');
-            Log::error('Check-in error: ' . $e->getMessage(), [
+            Log::error('Check-in error: '.$e->getMessage(), [
                 'user_id' => auth()->id(),
                 'schedule_id' => $this->currentSchedule?->id,
             ]);
@@ -215,7 +222,7 @@ class CheckInOut extends Component
 
     /**
      * Store check-in photo using FileStorageService.
-     * 
+     *
      * @return string Photo path
      */
     protected function storeCheckInPhoto(): string
@@ -244,7 +251,7 @@ class CheckInOut extends Component
     {
         try {
             // Validate attendance exists
-            if (!$this->currentAttendance || !$this->currentAttendance->check_in) {
+            if (! $this->currentAttendance || ! $this->currentAttendance->check_in) {
                 throw new \Exception('Anda belum check-in.');
             }
 
@@ -269,7 +276,7 @@ class CheckInOut extends Component
             $this->checkOutTime = $now->format('H:i');
 
             // Log activity
-            $sessionLabel = $this->currentSchedule->session_label ?? 'Sesi ' . $this->currentSchedule->session;
+            $sessionLabel = $this->currentSchedule->session_label ?? 'Sesi '.$this->currentSchedule->session;
             ActivityLogService::logCheckOut($sessionLabel, $now->format('H:i'), number_format($workingHours, 2));
 
             // Send notification
@@ -277,17 +284,17 @@ class CheckInOut extends Component
                 auth()->user(),
                 'check_out_success',
                 'Check-out Berhasil',
-                "Check-out berhasil pada {$now->format('H:i')}. Total jam kerja: " . number_format($workingHours, 2) . " jam"
+                "Check-out berhasil pada {$now->format('H:i')}. Total jam kerja: ".number_format($workingHours, 2).' jam'
             );
 
-            $this->dispatch('toast', message: 'Check-out berhasil! Total jam kerja: ' . number_format($workingHours, 2) . ' jam', type: 'success');
-            
+            $this->dispatch('toast', message: 'Check-out berhasil! Total jam kerja: '.number_format($workingHours, 2).' jam', type: 'success');
+
             // Reload schedule data
             $this->loadCurrentSchedule();
 
         } catch (\Exception $e) {
             $this->dispatch('toast', message: $e->getMessage(), type: 'error');
-            Log::error('Check-out error: ' . $e->getMessage(), [
+            Log::error('Check-out error: '.$e->getMessage(), [
                 'user_id' => auth()->id(),
                 'attendance_id' => $this->currentAttendance?->id,
             ]);
@@ -337,7 +344,7 @@ class CheckInOut extends Component
      */
     public function canCheckInNow(): bool
     {
-        if (!$this->currentSchedule) {
+        if (! $this->currentSchedule) {
             return false;
         }
 
@@ -349,7 +356,7 @@ class CheckInOut extends Component
         $scheduleStart = $this->currentSchedule->date->copy()->setTimeFromTimeString($this->currentSchedule->time_start);
         $now = now();
         $tolerance = config('sikopma.attendance.allow_early_checkin_minutes', 30);
-        
+
         return $now->gte($scheduleStart->copy()->subMinutes($tolerance));
     }
 
@@ -358,25 +365,23 @@ class CheckInOut extends Component
      */
     public function getTimeUntilCheckIn(): ?string
     {
-        if (!$this->currentSchedule || $this->scheduleStatus !== 'upcoming') {
+        if (! $this->currentSchedule || $this->scheduleStatus !== 'upcoming') {
             return null;
         }
 
         $scheduleStart = $this->currentSchedule->date->copy()->setTimeFromTimeString($this->currentSchedule->time_start);
         $tolerance = config('sikopma.attendance.allow_early_checkin_minutes', 30);
         $checkInAvailable = $scheduleStart->copy()->subMinutes($tolerance);
-        
+
         return $checkInAvailable->diffForHumans();
     }
 
     /**
      * Get check-in photo URL.
-     * 
-     * @return string|null
      */
     public function getCheckInPhotoUrl(): ?string
     {
-        if (!$this->currentAttendance || !$this->currentAttendance->check_in_photo) {
+        if (! $this->currentAttendance || ! $this->currentAttendance->check_in_photo) {
             return null;
         }
 
@@ -387,6 +392,7 @@ class CheckInOut extends Component
             if (Storage::disk('public')->exists($this->currentAttendance->check_in_photo)) {
                 return Storage::disk('public')->url($this->currentAttendance->check_in_photo);
             }
+
             return null;
         }
     }

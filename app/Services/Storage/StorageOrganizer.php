@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 /**
  * StorageOrganizer - Mengatur struktur direktori dan path file.
- * 
+ *
  * Bertanggung jawab untuk:
  * - Generate path dengan format konsisten: {type}/{year}/{month}/{uuid}.{ext}
  * - Generate path untuk variants dan thumbnails
@@ -33,21 +33,21 @@ class StorageOrganizer implements StorageOrganizerInterface
     public function generatePath(string $type, string $extension, array $options = []): string
     {
         $this->validateType($type);
-        
+
         $extension = $this->sanitizeExtension($extension);
         $uuid = Str::uuid()->toString();
         $year = date('Y');
         $month = date('m');
-        
+
         $parts = [$type, $year, $month];
-        
+
         // Untuk attendance, tambahkan day
         if ($type === 'attendance' && isset($options['day'])) {
             $parts[] = str_pad((string) $options['day'], 2, '0', STR_PAD_LEFT);
         }
-        
+
         $parts[] = "{$uuid}.{$extension}";
-        
+
         return implode('/', $parts);
     }
 
@@ -57,16 +57,16 @@ class StorageOrganizer implements StorageOrganizerInterface
     public function getVariantPath(string $originalPath, string $size): string
     {
         $pathInfo = $this->parsePath($originalPath);
-        
+
         $parts = [$pathInfo->type, $pathInfo->year, $pathInfo->month];
-        
+
         if ($pathInfo->day !== null) {
             $parts[] = $pathInfo->day;
         }
-        
+
         $parts[] = $size;
         $parts[] = "{$pathInfo->filename}.{$pathInfo->extension}";
-        
+
         return implode('/', $parts);
     }
 
@@ -76,16 +76,16 @@ class StorageOrganizer implements StorageOrganizerInterface
     public function getThumbnailPath(string $originalPath, int $width, int $height): string
     {
         $pathInfo = $this->parsePath($originalPath);
-        
+
         $parts = [$pathInfo->type, $pathInfo->year, $pathInfo->month];
-        
+
         if ($pathInfo->day !== null) {
             $parts[] = $pathInfo->day;
         }
-        
+
         $parts[] = 'thumbnails';
         $parts[] = "{$pathInfo->filename}_{$width}x{$height}.{$pathInfo->extension}";
-        
+
         return implode('/', $parts);
     }
 
@@ -96,35 +96,35 @@ class StorageOrganizer implements StorageOrganizerInterface
     {
         // Sanitize path terlebih dahulu
         $path = $this->sanitizePath($path);
-        
+
         // Split path menjadi parts
         $parts = explode('/', $path);
-        
+
         if (count($parts) < 4) {
             throw new FileValidationException(
                 __('filestorage.validation.invalid_path', ['path' => $path])
             );
         }
-        
+
         $type = $parts[0];
         $year = $parts[1];
         $month = $parts[2];
-        
+
         // Determine if there's a day component (for attendance)
         // and/or variant component
         $day = null;
         $variant = null;
         $filenameWithExt = null;
-        
+
         // Pattern: type/year/month/filename.ext (4 parts)
         // Pattern: type/year/month/day/filename.ext (5 parts, attendance)
         // Pattern: type/year/month/variant/filename.ext (5 parts, with variant)
         // Pattern: type/year/month/day/variant/filename.ext (6 parts, attendance with variant)
         // Pattern: type/year/month/thumbnails/filename_WxH.ext (5 parts, thumbnail)
         // Pattern: type/year/month/day/thumbnails/filename_WxH.ext (6 parts, attendance thumbnail)
-        
+
         $remainingParts = array_slice($parts, 3);
-        
+
         if (count($remainingParts) === 1) {
             // Simple case: type/year/month/filename.ext
             $filenameWithExt = $remainingParts[0];
@@ -147,7 +147,7 @@ class StorageOrganizer implements StorageOrganizerInterface
                 __('filestorage.validation.invalid_path', ['path' => $path])
             );
         }
-        
+
         // Parse filename and extension
         $lastDotPos = strrpos($filenameWithExt, '.');
         if ($lastDotPos === false) {
@@ -155,10 +155,10 @@ class StorageOrganizer implements StorageOrganizerInterface
                 __('filestorage.validation.invalid_path', ['path' => $path])
             );
         }
-        
+
         $filename = substr($filenameWithExt, 0, $lastDotPos);
         $extension = substr($filenameWithExt, $lastDotPos + 1);
-        
+
         return new PathInfo(
             type: $type,
             year: $year,
@@ -177,21 +177,21 @@ class StorageOrganizer implements StorageOrganizerInterface
     {
         // Remove path traversal characters
         $filename = str_replace(['../', '..\\', '../', '..\\'], '', $filename);
-        
+
         // Remove null bytes
         $filename = str_replace("\0", '', $filename);
-        
+
         // Remove other dangerous characters
         $filename = preg_replace('/[\/\\\\:*?"<>|]/', '', $filename);
-        
+
         // Remove leading/trailing dots and spaces
         $filename = trim($filename, '. ');
-        
+
         // If filename is empty after sanitization, generate a random one
         if (empty($filename)) {
             $filename = Str::uuid()->toString();
         }
-        
+
         return $filename;
     }
 
@@ -218,11 +218,11 @@ class StorageOrganizer implements StorageOrganizerInterface
      */
     protected function validateType(string $type): void
     {
-        if (!$this->isValidType($type)) {
+        if (! $this->isValidType($type)) {
             throw new FileValidationException(
                 __('filestorage.validation.invalid_file_type', [
                     'type' => $type,
-                    'valid_types' => implode(', ', $this->validTypes)
+                    'valid_types' => implode(', ', $this->validTypes),
                 ])
             );
         }
@@ -235,10 +235,10 @@ class StorageOrganizer implements StorageOrganizerInterface
     {
         // Remove leading dot if present
         $extension = ltrim($extension, '.');
-        
+
         // Only allow alphanumeric characters
         $extension = preg_replace('/[^a-zA-Z0-9]/', '', $extension);
-        
+
         // Convert to lowercase
         return strtolower($extension);
     }
@@ -250,19 +250,19 @@ class StorageOrganizer implements StorageOrganizerInterface
     {
         // Remove path traversal sequences
         $path = str_replace(['../', '..\\', '..'], '', $path);
-        
+
         // Remove null bytes
         $path = str_replace("\0", '', $path);
-        
+
         // Normalize slashes
         $path = str_replace('\\', '/', $path);
-        
+
         // Remove leading slash
         $path = ltrim($path, '/');
-        
+
         // Remove double slashes
         $path = preg_replace('#/+#', '/', $path);
-        
+
         return $path;
     }
 
@@ -272,11 +272,12 @@ class StorageOrganizer implements StorageOrganizerInterface
     protected function isDay(string $value): bool
     {
         // Day is 2 digits between 01 and 31
-        if (!preg_match('/^[0-3][0-9]$/', $value)) {
+        if (! preg_match('/^[0-3][0-9]$/', $value)) {
             return false;
         }
-        
+
         $day = (int) $value;
+
         return $day >= 1 && $day <= 31;
     }
 }

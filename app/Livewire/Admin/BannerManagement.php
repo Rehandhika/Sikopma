@@ -3,29 +3,31 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Banner;
-use App\Services\BannerService;
 use App\Services\ActivityLogService;
-use Livewire\Component;
-use Livewire\WithPagination;
-use Livewire\WithFileUploads;
+use App\Services\BannerService;
 use Livewire\Attributes\Validate;
+use Livewire\Component;
+use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 
 class BannerManagement extends Component
 {
-    use WithPagination, WithFileUploads;
+    use WithFileUploads, WithPagination;
 
     // Form properties
     #[Validate('nullable|string|max:255')]
     public $title = '';
-    
+
     #[Validate('required_without:editingBannerId|image|mimes:jpg,jpeg,png|max:5120')]
     public $image;
-    
+
     #[Validate('required|integer|min:0')]
     public $priority = 0;
-    
+
     public $editingBannerId = null;
+
     public $showForm = false;
+
     public $imagePreview = null;
 
     protected BannerService $bannerService;
@@ -38,7 +40,7 @@ class BannerManagement extends Component
     public function mount()
     {
         // Check authorization
-        if (!auth()->user()->hasAnyRole(['Super Admin', 'Ketua'])) {
+        if (! auth()->user()->hasAnyRole(['Super Admin', 'Ketua'])) {
             abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
     }
@@ -52,7 +54,7 @@ class BannerManagement extends Component
     public function edit(int $id)
     {
         $banner = Banner::findOrFail($id);
-        
+
         $this->editingBannerId = $banner->id;
         $this->title = $banner->title;
         $this->priority = $banner->priority;
@@ -64,7 +66,7 @@ class BannerManagement extends Component
     public function updatedImage()
     {
         $this->validateOnly('image');
-        
+
         if ($this->image) {
             $this->imagePreview = $this->image->temporaryUrl();
         }
@@ -88,10 +90,10 @@ class BannerManagement extends Component
                     'title' => $this->title,
                     'priority' => $this->priority,
                 ], $this->image);
-                
+
                 // Log activity
                 ActivityLogService::logBannerUpdated($this->title);
-                
+
                 $this->dispatch('toast', message: 'Banner berhasil diperbarui', type: 'success');
             } else {
                 // Create new banner
@@ -99,18 +101,18 @@ class BannerManagement extends Component
                     'title' => $this->title,
                     'priority' => $this->priority,
                 ], $this->image);
-                
+
                 // Log activity
                 ActivityLogService::logBannerCreated($this->title);
-                
+
                 $this->dispatch('toast', message: 'Banner berhasil dibuat', type: 'success');
             }
 
             $this->resetForm();
             $this->showForm = false;
-            
+
         } catch (\Exception $e) {
-            $this->dispatch('toast', message: 'Gagal menyimpan banner: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal menyimpan banner: '.$e->getMessage(), type: 'error');
         }
     }
 
@@ -120,14 +122,14 @@ class BannerManagement extends Component
             $banner = Banner::findOrFail($id);
             $bannerTitle = $banner->title;
             $this->bannerService->delete($banner);
-            
+
             // Log activity
             ActivityLogService::logBannerDeleted($bannerTitle);
-            
+
             $this->dispatch('toast', message: 'Banner berhasil dihapus', type: 'success');
-            
+
         } catch (\Exception $e) {
-            $this->dispatch('toast', message: 'Gagal menghapus banner: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal menghapus banner: '.$e->getMessage(), type: 'error');
         }
     }
 
@@ -136,17 +138,17 @@ class BannerManagement extends Component
         try {
             $banner = Banner::findOrFail($id);
             $this->bannerService->toggleStatus($banner);
-            
+
             $freshBanner = $banner->fresh();
-            
+
             // Log activity
             ActivityLogService::logBannerStatusChanged($freshBanner->title, $freshBanner->is_active);
-            
+
             $statusText = $freshBanner->is_active ? 'diaktifkan' : 'dinonaktifkan';
             $this->dispatch('toast', message: "Banner berhasil {$statusText}", type: 'success');
-            
+
         } catch (\Exception $e) {
-            $this->dispatch('toast', message: 'Gagal mengubah status banner: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal mengubah status banner: '.$e->getMessage(), type: 'error');
         }
     }
 
@@ -176,7 +178,7 @@ class BannerManagement extends Component
         return view('livewire.admin.banner-management', [
             'banners' => $banners,
         ])
-        ->layout('layouts.app')
-        ->title('Kelola Banner');
+            ->layout('layouts.app')
+            ->title('Kelola Banner');
     }
 }

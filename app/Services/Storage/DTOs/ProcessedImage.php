@@ -26,7 +26,7 @@ class ProcessedImage
         if ($this->height === 0) {
             return 0;
         }
-        
+
         return round($this->width / $this->height, 4);
     }
 

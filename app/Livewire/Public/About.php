@@ -8,15 +8,16 @@ use Livewire\Component;
 class About extends Component
 {
     public $storeSetting;
+
     public $operatingDays = [];
 
     public function mount()
     {
         // Load store settings
         $this->storeSetting = StoreSetting::first();
-        
+
         // If no settings exist, create default
-        if (!$this->storeSetting) {
+        if (! $this->storeSetting) {
             $this->storeSetting = new StoreSetting([
                 'contact_phone' => '-',
                 'contact_email' => '-',
@@ -26,7 +27,7 @@ class About extends Component
                 'operating_hours' => $this->getDefaultOperatingHours(),
             ]);
         }
-        
+
         // Format operating hours for display
         $this->formatOperatingHours();
     }
@@ -60,7 +61,7 @@ class About extends Component
 
         foreach ($dayNames as $key => $name) {
             $hours = $operatingHours[$key] ?? ['is_open' => false];
-            
+
             $this->operatingDays[] = [
                 'name' => $name,
                 'is_open' => $hours['is_open'] ?? false,
@@ -89,7 +90,7 @@ class About extends Component
 
         return view('livewire.public.about', [
             'storeSetting' => $storeSetting,
-            'operatingDays' => $operatingDays
+            'operatingDays' => $operatingDays,
         ])->layout('layouts.public');
     }
 }

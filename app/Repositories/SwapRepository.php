@@ -11,14 +11,14 @@ class SwapRepository
     /**
      * Get swap requests for user
      */
-    public function getUserSwapRequests(int $userId, string $status = null): Collection
+    public function getUserSwapRequests(int $userId, ?string $status = null): Collection
     {
         $query = SwapRequest::where('requester_id', $userId)
             ->with([
                 'requester:id,name,nim',
                 'target:id,name,nim',
                 'requesterAssignment.schedule',
-                'targetAssignment.schedule'
+                'targetAssignment.schedule',
             ]);
 
         if ($status) {
@@ -31,14 +31,14 @@ class SwapRepository
     /**
      * Get swap requests where user is target
      */
-    public function getReceivedSwapRequests(int $userId, string $status = null): Collection
+    public function getReceivedSwapRequests(int $userId, ?string $status = null): Collection
     {
         $query = SwapRequest::where('target_id', $userId)
             ->with([
                 'requester:id,name,nim',
                 'target:id,name,nim',
                 'requesterAssignment.schedule',
-                'targetAssignment.schedule'
+                'targetAssignment.schedule',
             ]);
 
         if ($status) {
@@ -51,13 +51,13 @@ class SwapRepository
     /**
      * Get all swap requests (for admin)
      */
-    public function getAllSwapRequests(string $status = null): Collection
+    public function getAllSwapRequests(?string $status = null): Collection
     {
         $query = SwapRequest::with([
             'requester:id,name,nim',
             'target:id,name,nim',
             'requesterAssignment.schedule',
-            'targetAssignment.schedule'
+            'targetAssignment.schedule',
         ]);
 
         if ($status) {
@@ -93,7 +93,7 @@ class SwapRepository
                 'requester:id,name,nim',
                 'target:id,name,nim',
                 'requesterAssignment.schedule',
-                'targetAssignment.schedule'
+                'targetAssignment.schedule',
             ])
             ->first();
     }
@@ -138,7 +138,7 @@ class SwapRepository
                 'requester:id,name,nim',
                 'target:id,name,nim',
                 'requesterAssignment.schedule',
-                'targetAssignment.schedule'
+                'targetAssignment.schedule',
             ])
             ->orderBy('created_at', 'desc')
             ->get();
@@ -158,8 +158,8 @@ class SwapRepository
     public function getByDateRange(\Carbon\Carbon $startDate, \Carbon\Carbon $endDate): Collection
     {
         return SwapRequest::whereHas('requesterAssignment', function ($query) use ($startDate, $endDate) {
-                $query->whereBetween('date', [$startDate, $endDate]);
-            })
+            $query->whereBetween('date', [$startDate, $endDate]);
+        })
             ->orWhereHas('targetAssignment', function ($query) use ($startDate, $endDate) {
                 $query->whereBetween('date', [$startDate, $endDate]);
             })
@@ -167,7 +167,7 @@ class SwapRepository
                 'requester:id,name,nim',
                 'target:id,name,nim',
                 'requesterAssignment.schedule',
-                'targetAssignment.schedule'
+                'targetAssignment.schedule',
             ])
             ->orderBy('created_at', 'desc')
             ->get();

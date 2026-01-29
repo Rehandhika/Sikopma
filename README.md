@@ -139,57 +139,28 @@ SIKOPMA (Sistem Informasi Koperasi Mahasiswa) is a comprehensive web-based manag
 
 ## 🚀 Quick Start
 
-### Prerequisites
-
-- PHP 8.3 or higher
-- Composer
-- Node.js 18+ and npm
-- MySQL 8.0+
-- Git
-
-### Installation
-
 ```bash
-# Clone repository
+# 1. Clone & Install
 git clone https://github.com/[your-org]/sikopma.git
 cd sikopma
-
-# Install PHP dependencies
 composer install
-
-# Install JavaScript dependencies
 npm install
 
-# Copy environment file
+# 2. Setup
 cp .env.example .env
-
-# Generate application key
 php artisan key:generate
 
-# Configure database in .env
-# DB_DATABASE=sikopma
-# DB_USERNAME=your_username
-# DB_PASSWORD=your_password
-
-# Run migrations and seeders
+# 3. Database (edit .env first)
 php artisan migrate --seed
 
-# Build assets
+# 4. Build & Run
 npm run build
-
-# Start development server
 php artisan serve
-
-# In another terminal, start Vite
-npm run dev
 ```
 
-### Default Credentials
+**Login:** NIM `00000000` / Password `password`
 
-After seeding, you can login with:
-
-- **Super Admin**: NIM `00000000` / Password `password`
-- **Test User**: NIM `12345678` / Password `password123`
+**📘 Panduan Lengkap:** Lihat [PANDUAN.md](PANDUAN.md) untuk deploy & maintenance
 
 ---
 
@@ -234,35 +205,14 @@ $middleware->group('web', [
 
 ## 📚 Documentation
 
-### 🎯 Start Here
+### 🎯 Panduan Utama
 
-**[📘 Master Development Guide](MASTER_DEVELOPMENT_GUIDE.md)**  
-Complete reference for building SIKOPMA features with consistency and quality.
+**[📘 PANDUAN.md](PANDUAN.md)** - Panduan lengkap deploy & maintenance (BACA INI DULU!)
 
-### 🔐 Authentication & Security
-- **[AUTH_SYSTEM_GUIDE.md](AUTH_SYSTEM_GUIDE.md)** - Authentication system overview
-- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Debugging and common issues
-- **[CHANGELOG.md](CHANGELOG.md)** - Version history and changes
-
-### 🎨 UI/UX Documentation
-- **[UI_IMPROVEMENTS.md](UI_IMPROVEMENTS.md)** - UI/UX improvements and design system
-- **[FINAL_UI_UPDATE_SUMMARY.md](FINAL_UI_UPDATE_SUMMARY.md)** - Latest UI updates summary
-- **[Tailwind Optimization](.kiro/specs/tailwind-styling-optimization/)** - Complete Tailwind CSS v4 optimization documentation
-
-### Essential Guides
-
-| Document | Purpose | Read Time |
-|----------|---------|-----------|
-| **[🚀 Quick Start](docs/QUICK_START.md)** | Get building in 5 minutes | 10 min |
-| **[📋 Feature Backlog](FEATURE_BACKLOG.md)** | All features documented | Reference |
-| **[💻 Implementation Templates](docs/IMPLEMENTATION_TEMPLATES.md)** | Copy-paste ready code | Reference |
-| **[🔄 Development Workflow](docs/DEVELOPMENT_WORKFLOW.md)** | Step-by-step process | 20 min |
-| **[🧪 Testing Guide](docs/TESTING_GUIDE.md)** | Testing patterns | 15 min |
-| **[🛠️ Troubleshooting](docs/TROUBLESHOOTING.md)** | Common issues & solutions | As needed |
-
-### For AI Assistants
-
-Use the **Master Prompt** in [MASTER_DEVELOPMENT_GUIDE.md](MASTER_DEVELOPMENT_GUIDE.md) to ensure AI-generated code follows SIKOPMA standards.
+### Development Guides
+- **[MASTER_DEVELOPMENT_GUIDE.md](MASTER_DEVELOPMENT_GUIDE.md)** - Development reference
+- **[AUTH_SYSTEM_GUIDE.md](AUTH_SYSTEM_GUIDE.md)** - Authentication system
+- **[docs/](docs/)** - Detailed documentation
 
 ---
 
@@ -402,31 +352,13 @@ See [Testing Guide](docs/TESTING_GUIDE.md) for comprehensive patterns.
 
 ## 🚀 Deployment
 
-### Production Checklist
+**Untuk deployment production, lihat [PANDUAN.md](PANDUAN.md)**
 
-- [ ] Set `APP_ENV=production` in `.env`
-- [ ] Set `APP_DEBUG=false`
-- [ ] Configure proper database credentials
-- [ ] Run `composer install --no-dev --optimize-autoloader`
-- [ ] Run `npm run build`
-- [ ] Run `php artisan migrate --force`
-- [ ] Run `php artisan config:cache`
-- [ ] Run `php artisan route:cache`
-- [ ] Run `php artisan view:cache`
-- [ ] Set up proper file permissions
-- [ ] Configure queue workers (if using queues)
-- [ ] Set up SSL certificate
-- [ ] Configure backups
-
-### Server Requirements
-
-- PHP 8.3+
-- MySQL 8.0+
-- Nginx or Apache
-- Composer
-- Node.js (for builds)
-- Supervisor (for queue workers)
-- Redis (optional, for caching)
+Panduan mencakup:
+- Deploy manual (upload via FTP/SFTP)
+- Setup tanpa npm di server
+- Maintenance & troubleshooting
+- Command-command penting
 
 ---
 

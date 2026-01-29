@@ -10,15 +10,16 @@ use Tests\TestCase;
 class CacheManagerTest extends TestCase
 {
     protected CacheManager $cacheManager;
+
     protected StorageOrganizer $organizer;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
-        $this->organizer = new StorageOrganizer();
+
+        $this->organizer = new StorageOrganizer;
         $this->cacheManager = new CacheManager($this->organizer);
-        
+
         // Clear cache before each test
         Cache::flush();
     }
@@ -31,18 +32,19 @@ class CacheManagerTest extends TestCase
         $path = 'product/2026/01/abc-123.webp';
         $size = 'original';
         $expectedUrl = '/storage/product/2026/01/abc-123.webp';
-        
+
         $generatorCallCount = 0;
         $generator = function () use ($expectedUrl, &$generatorCallCount) {
             $generatorCallCount++;
+
             return $expectedUrl;
         };
-        
+
         // First call - should call generator
         $url1 = $this->cacheManager->getUrl($path, $size, $generator);
         $this->assertEquals($expectedUrl, $url1);
         $this->assertEquals(1, $generatorCallCount);
-        
+
         // Second call - should return cached value
         $url2 = $this->cacheManager->getUrl($path, $size, $generator);
         $this->assertEquals($expectedUrl, $url2);
@@ -57,15 +59,16 @@ class CacheManagerTest extends TestCase
         $path = 'product/2026/01/abc-123.webp';
         $size = 'thumbnail';
         $expectedUrl = '/storage/product/2026/01/thumbnail/abc-123.webp';
-        
+
         $generatorCalled = false;
         $generator = function () use ($expectedUrl, &$generatorCalled) {
             $generatorCalled = true;
+
             return $expectedUrl;
         };
-        
+
         $url = $this->cacheManager->getUrl($path, $size, $generator);
-        
+
         $this->assertTrue($generatorCalled);
         $this->assertEquals($expectedUrl, $url);
     }
@@ -77,9 +80,9 @@ class CacheManagerTest extends TestCase
     {
         $path = 'product/2026/01/abc-123.webp';
         $size = 'thumbnail';
-        
+
         $cacheKey = $this->cacheManager->getCacheKey($path, $size);
-        
+
         // Should match format: file_url_{type}_{size}_{hash}
         $this->assertMatchesRegularExpression(
             '/^file_url_product_thumbnail_[a-f0-9]{32}$/',
@@ -94,9 +97,9 @@ class CacheManagerTest extends TestCase
     {
         $path = 'invalid/path';
         $size = 'original';
-        
+
         $cacheKey = $this->cacheManager->getCacheKey($path, $size);
-        
+
         // Should use fallback format: file_url_unknown_{size}_{hash}
         $this->assertMatchesRegularExpression(
             '/^file_url_unknown_original_[a-f0-9]{32}$/',
@@ -112,16 +115,16 @@ class CacheManagerTest extends TestCase
         $path = 'product/2026/01/abc-123.webp';
         $size = 'original';
         $url = '/storage/product/2026/01/abc-123.webp';
-        
+
         // Cache the URL
-        $this->cacheManager->getUrl($path, $size, fn() => $url);
-        
+        $this->cacheManager->getUrl($path, $size, fn () => $url);
+
         // Verify it's cached
         $this->assertTrue($this->cacheManager->has($path, $size));
-        
+
         // Invalidate
         $this->cacheManager->invalidate($path);
-        
+
         // Verify it's removed
         $this->assertFalse($this->cacheManager->has($path, $size));
     }
@@ -133,13 +136,13 @@ class CacheManagerTest extends TestCase
     {
         $path = 'product/2026/01/abc-123.webp';
         $size = 'original';
-        
+
         // Initially not cached
         $this->assertFalse($this->cacheManager->has($path, $size));
-        
+
         // Cache it
-        $this->cacheManager->getUrl($path, $size, fn() => '/some/url');
-        
+        $this->cacheManager->getUrl($path, $size, fn () => '/some/url');
+
         // Now it should be cached
         $this->assertTrue($this->cacheManager->has($path, $size));
     }
@@ -150,21 +153,21 @@ class CacheManagerTest extends TestCase
     public function test_get_statistics_tracks_hits_and_misses(): void
     {
         $this->cacheManager->resetStatistics();
-        
+
         $path = 'product/2026/01/abc-123.webp';
         $size = 'original';
-        
+
         // First call - miss
-        $this->cacheManager->getUrl($path, $size, fn() => '/url');
-        
+        $this->cacheManager->getUrl($path, $size, fn () => '/url');
+
         // Second call - hit
-        $this->cacheManager->getUrl($path, $size, fn() => '/url');
-        
+        $this->cacheManager->getUrl($path, $size, fn () => '/url');
+
         // Third call - hit
-        $this->cacheManager->getUrl($path, $size, fn() => '/url');
-        
+        $this->cacheManager->getUrl($path, $size, fn () => '/url');
+
         $stats = $this->cacheManager->getStatistics();
-        
+
         $this->assertEquals(1, $stats['misses']);
         $this->assertEquals(2, $stats['hits']);
         $this->assertEquals(3, $stats['total']);
@@ -177,11 +180,11 @@ class CacheManagerTest extends TestCase
     public function test_different_sizes_have_different_cache_keys(): void
     {
         $path = 'product/2026/01/abc-123.webp';
-        
+
         $keyOriginal = $this->cacheManager->getCacheKey($path, 'original');
         $keyThumbnail = $this->cacheManager->getCacheKey($path, 'thumbnail');
         $keyMedium = $this->cacheManager->getCacheKey($path, 'medium');
-        
+
         $this->assertNotEquals($keyOriginal, $keyThumbnail);
         $this->assertNotEquals($keyOriginal, $keyMedium);
         $this->assertNotEquals($keyThumbnail, $keyMedium);
@@ -193,10 +196,10 @@ class CacheManagerTest extends TestCase
     public function test_different_paths_have_different_cache_keys(): void
     {
         $size = 'original';
-        
+
         $key1 = $this->cacheManager->getCacheKey('product/2026/01/abc-123.webp', $size);
         $key2 = $this->cacheManager->getCacheKey('product/2026/01/def-456.webp', $size);
-        
+
         $this->assertNotEquals($key1, $key2);
     }
 
@@ -206,10 +209,10 @@ class CacheManagerTest extends TestCase
     public function test_set_ttl_and_get_ttl_work_correctly(): void
     {
         $originalTtl = $this->cacheManager->getTtl();
-        
+
         $this->cacheManager->setTtl(7200);
         $this->assertEquals(7200, $this->cacheManager->getTtl());
-        
+
         // Reset to original
         $this->cacheManager->setTtl($originalTtl);
     }
@@ -220,17 +223,17 @@ class CacheManagerTest extends TestCase
     public function test_reset_statistics_clears_counters(): void
     {
         $path = 'product/2026/01/abc-123.webp';
-        
+
         // Generate some stats
-        $this->cacheManager->getUrl($path, 'original', fn() => '/url');
-        $this->cacheManager->getUrl($path, 'original', fn() => '/url');
-        
+        $this->cacheManager->getUrl($path, 'original', fn () => '/url');
+        $this->cacheManager->getUrl($path, 'original', fn () => '/url');
+
         $statsBefore = $this->cacheManager->getStatistics();
         $this->assertGreaterThan(0, $statsBefore['total']);
-        
+
         // Reset
         $this->cacheManager->resetStatistics();
-        
+
         $statsAfter = $this->cacheManager->getStatistics();
         $this->assertEquals(0, $statsAfter['hits']);
         $this->assertEquals(0, $statsAfter['misses']);
@@ -244,7 +247,7 @@ class CacheManagerTest extends TestCase
     {
         $productKey = $this->cacheManager->getCacheKey('product/2026/01/abc.webp', 'original');
         $bannerKey = $this->cacheManager->getCacheKey('banner/2026/01/abc.webp', 'original');
-        
+
         $this->assertStringContainsString('product', $productKey);
         $this->assertStringContainsString('banner', $bannerKey);
     }
@@ -256,7 +259,7 @@ class CacheManagerTest extends TestCase
     {
         // Should not throw exception
         $this->cacheManager->invalidate('invalid/path');
-        
+
         $this->assertTrue(true); // If we get here, no exception was thrown
     }
 
@@ -268,11 +271,11 @@ class CacheManagerTest extends TestCase
         $path = 'attendance/2026/01/15/abc-123.webp';
         $size = 'thumbnail';
         $expectedUrl = '/storage/attendance/2026/01/15/thumbnails/abc-123_80x80.webp';
-        
-        $url = $this->cacheManager->getUrl($path, $size, fn() => $expectedUrl);
-        
+
+        $url = $this->cacheManager->getUrl($path, $size, fn () => $expectedUrl);
+
         $this->assertEquals($expectedUrl, $url);
-        
+
         // Verify cache key format
         $cacheKey = $this->cacheManager->getCacheKey($path, $size);
         $this->assertStringContainsString('attendance', $cacheKey);

@@ -5,21 +5,21 @@ namespace App\Livewire\Schedule;
 use App\Models\Schedule;
 use App\Models\ScheduleAssignment;
 use App\Models\User;
-use App\Services\ScheduleEditService;
 use App\Services\ConflictDetectionService;
 use App\Services\ScheduleConfigurationService;
+use App\Services\ScheduleEditService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Livewire\Component;
 use Livewire\Attributes\On;
+use Livewire\Component;
 
 /**
  * EditSchedule Livewire Component
- * 
+ *
  * Main interface for editing published schedules with multi-user slot support.
  * Provides real-time conflict detection, change tracking, and undo functionality.
- * 
+ *
  * Features:
  * - Multi-user slot management (add, remove, update, clear)
  * - Real-time conflict detection and validation
@@ -27,8 +27,6 @@ use Livewire\Attributes\On;
  * - Audit trail recording
  * - User notifications
  * - Cache invalidation
- * 
- * @package App\Livewire\Schedule
  */
 class EditSchedule extends Component
 {
@@ -138,7 +136,9 @@ class EditSchedule extends Component
      * Services
      */
     protected ScheduleEditService $editService;
+
     protected ConflictDetectionService $conflictService;
+
     protected ScheduleConfigurationService $configService;
 
     /**
@@ -148,8 +148,7 @@ class EditSchedule extends Component
         ScheduleEditService $editService,
         ConflictDetectionService $conflictService,
         ScheduleConfigurationService $configService
-    ): void
-    {
+    ): void {
         $this->editService = $editService;
         $this->conflictService = $conflictService;
         $this->configService = $configService;
@@ -177,7 +176,7 @@ class EditSchedule extends Component
         // Load initial data - simplified for performance
         $this->loadAssignments();
 
-        Log::info("EditSchedule component mounted", [
+        Log::info('EditSchedule component mounted', [
             'schedule_id' => $schedule->id,
             'user' => auth()->user()->name,
             'max_users_per_slot' => $this->maxUsersPerSlot,
@@ -210,7 +209,7 @@ class EditSchedule extends Component
                 'schedule_assignments.user_id',
                 'schedule_assignments.date',
                 'schedule_assignments.session',
-                'users.name as user_name'
+                'users.name as user_name',
             ])
             ->orderBy('schedule_assignments.date')
             ->orderBy('schedule_assignments.session')
@@ -221,11 +220,11 @@ class EditSchedule extends Component
             $date = $assignment->date->format('Y-m-d');
             $session = $assignment->session;
 
-            if (!isset($this->assignments[$date])) {
+            if (! isset($this->assignments[$date])) {
                 $this->assignments[$date] = [];
             }
 
-            if (!isset($this->assignments[$date][$session])) {
+            if (! isset($this->assignments[$date][$session])) {
                 $this->assignments[$date][$session] = [];
             }
 
@@ -250,8 +249,8 @@ class EditSchedule extends Component
             ->orderBy('name');
 
         // Apply search filter if provided
-        if (!empty($this->searchTerm)) {
-            $query->where('name', 'like', '%' . $this->searchTerm . '%');
+        if (! empty($this->searchTerm)) {
+            $query->where('name', 'like', '%'.$this->searchTerm.'%');
         }
 
         // Limit results for performance
@@ -287,7 +286,7 @@ class EditSchedule extends Component
             $this->dispatch('notify', type: 'success', message: 'User ditambahkan.');
 
         } catch (\Exception $e) {
-            $this->dispatch('notify', type: 'error', message: 'Gagal: ' . $e->getMessage());
+            $this->dispatch('notify', type: 'error', message: 'Gagal: '.$e->getMessage());
         }
     }
 
@@ -312,7 +311,7 @@ class EditSchedule extends Component
             $this->dispatch('notify', type: 'success', message: 'User dihapus.');
 
         } catch (\Exception $e) {
-            $this->dispatch('notify', type: 'error', message: 'Gagal: ' . $e->getMessage());
+            $this->dispatch('notify', type: 'error', message: 'Gagal: '.$e->getMessage());
         }
     }
 
@@ -353,16 +352,16 @@ class EditSchedule extends Component
             // Show success message
             $this->dispatch('notify', type: 'success', message: 'User berhasil diperbarui.');
 
-            Log::info("User updated in slot via component", [
+            Log::info('User updated in slot via component', [
                 'schedule_id' => $this->schedule->id,
                 'assignment_id' => $assignmentId,
                 'new_user_id' => $newUserId,
             ]);
 
         } catch (\Exception $e) {
-            $this->dispatch('notify', type: 'error', message: 'Gagal memperbarui user: ' . $e->getMessage());
+            $this->dispatch('notify', type: 'error', message: 'Gagal memperbarui user: '.$e->getMessage());
 
-            Log::error("Failed to update user in slot", [
+            Log::error('Failed to update user in slot', [
                 'error' => $e->getMessage(),
                 'assignment_id' => $assignmentId,
                 'new_user_id' => $newUserId,
@@ -404,16 +403,16 @@ class EditSchedule extends Component
             // Show success message
             $this->dispatch('notify', type: 'success', message: 'Slot berhasil dikosongkan.');
 
-            Log::info("Slot cleared via component", [
+            Log::info('Slot cleared via component', [
                 'schedule_id' => $this->schedule->id,
                 'date' => $date,
                 'session' => $session,
             ]);
 
         } catch (\Exception $e) {
-            $this->dispatch('notify', type: 'error', message: 'Gagal mengosongkan slot: ' . $e->getMessage());
+            $this->dispatch('notify', type: 'error', message: 'Gagal mengosongkan slot: '.$e->getMessage());
 
-            Log::error("Failed to clear slot", [
+            Log::error('Failed to clear slot', [
                 'error' => $e->getMessage(),
                 'date' => $date,
                 'session' => $session,
@@ -450,9 +449,9 @@ class EditSchedule extends Component
             $this->refreshData();
 
             // Show success message
-            $this->dispatch('notify', type: 'success', message: count($userIds) . ' user berhasil ditambahkan ke slot.');
+            $this->dispatch('notify', type: 'success', message: count($userIds).' user berhasil ditambahkan ke slot.');
 
-            Log::info("Bulk users added to slot via component", [
+            Log::info('Bulk users added to slot via component', [
                 'schedule_id' => $this->schedule->id,
                 'date' => $date,
                 'session' => $session,
@@ -460,9 +459,9 @@ class EditSchedule extends Component
             ]);
 
         } catch (\Exception $e) {
-            $this->dispatch('notify', type: 'error', message: 'Gagal menambahkan users: ' . $e->getMessage());
+            $this->dispatch('notify', type: 'error', message: 'Gagal menambahkan users: '.$e->getMessage());
 
-            Log::error("Failed to bulk add users to slot", [
+            Log::error('Failed to bulk add users to slot', [
                 'error' => $e->getMessage(),
                 'date' => $date,
                 'session' => $session,
@@ -482,7 +481,7 @@ class EditSchedule extends Component
             'timestamp' => now()->toDateTimeString(),
         ];
 
-        Log::debug("Change tracked", [
+        Log::debug('Change tracked', [
             'action' => $action,
             'changes_count' => count($this->changes),
         ]);
@@ -593,7 +592,7 @@ class EditSchedule extends Component
 
     /**
      * Save all changes to database - Optimized
-     * 
+     *
      * Note: Changes are already persisted individually through the service methods.
      * This method primarily handles final validation and notifications.
      */
@@ -628,7 +627,7 @@ class EditSchedule extends Component
             // Show success message
             $this->dispatch('notify', type: 'success', message: 'Perubahan berhasil disimpan.');
 
-            Log::info("Schedule changes saved", [
+            Log::info('Schedule changes saved', [
                 'schedule_id' => $this->schedule->id,
                 'user' => auth()->user()->name,
             ]);
@@ -636,9 +635,9 @@ class EditSchedule extends Component
         } catch (\Exception $e) {
             DB::rollBack();
 
-            $this->dispatch('notify', type: 'error', message: 'Gagal menyimpan perubahan: ' . $e->getMessage());
+            $this->dispatch('notify', type: 'error', message: 'Gagal menyimpan perubahan: '.$e->getMessage());
 
-            Log::error("Failed to save schedule changes", [
+            Log::error('Failed to save schedule changes', [
                 'schedule_id' => $this->schedule->id,
                 'error' => $e->getMessage(),
             ]);
@@ -647,7 +646,7 @@ class EditSchedule extends Component
 
     /**
      * Discard all unsaved changes and revert to original state
-     * 
+     *
      * Note: Since changes are persisted immediately, this will reload from database.
      * For true undo functionality, we would need to implement a transaction-based approach.
      */
@@ -664,15 +663,15 @@ class EditSchedule extends Component
             // Show success message
             $this->dispatch('notify', type: 'info', message: 'Perubahan dibatalkan. Data dimuat ulang dari database.');
 
-            Log::info("Schedule changes discarded", [
+            Log::info('Schedule changes discarded', [
                 'schedule_id' => $this->schedule->id,
                 'user' => auth()->user()->name,
             ]);
 
         } catch (\Exception $e) {
-            $this->dispatch('notify', type: 'error', message: 'Gagal membatalkan perubahan: ' . $e->getMessage());
+            $this->dispatch('notify', type: 'error', message: 'Gagal membatalkan perubahan: '.$e->getMessage());
 
-            Log::error("Failed to discard schedule changes", [
+            Log::error('Failed to discard schedule changes', [
                 'schedule_id' => $this->schedule->id,
                 'error' => $e->getMessage(),
             ]);
@@ -681,7 +680,7 @@ class EditSchedule extends Component
 
     /**
      * Undo last change
-     * 
+     *
      * Note: This is a simplified undo that just removes the last tracked change.
      * For full undo functionality, we would need to implement reverse operations.
      */
@@ -689,6 +688,7 @@ class EditSchedule extends Component
     {
         if (empty($this->changes)) {
             $this->dispatch('notify', type: 'warning', message: 'Tidak ada perubahan yang dapat dibatalkan.');
+
             return;
         }
 
@@ -698,7 +698,7 @@ class EditSchedule extends Component
         // Show info message
         $this->dispatch('notify', type: 'info', message: 'Perubahan terakhir dihapus dari tracking. Reload data untuk melihat state terbaru.');
 
-        Log::info("Last change undone from tracking", [
+        Log::info('Last change undone from tracking', [
             'schedule_id' => $this->schedule->id,
             'action' => $lastChange['action'],
         ]);
@@ -741,6 +741,7 @@ class EditSchedule extends Component
     public function isSlotFull(string $date, int $session): bool
     {
         $count = count($this->assignments[$date][$session] ?? []);
+
         return $count >= $this->maxUsersPerSlot;
     }
 
@@ -848,12 +849,12 @@ class EditSchedule extends Component
         $conflicts = $this->getSlotConflicts($date, $session);
 
         // Check for critical conflicts
-        if (!empty($conflicts['critical'])) {
+        if (! empty($conflicts['critical'])) {
             return 'conflict'; // Red
         }
 
         // Check for warnings
-        if (!empty($conflicts['warning'])) {
+        if (! empty($conflicts['warning'])) {
             return 'warning'; // Yellow
         }
 
@@ -877,7 +878,7 @@ class EditSchedule extends Component
      */
     public function toggleConflicts(): void
     {
-        $this->showConflicts = !$this->showConflicts;
+        $this->showConflicts = ! $this->showConflicts;
     }
 
     /**
@@ -885,7 +886,7 @@ class EditSchedule extends Component
      */
     public function toggleStatistics(): void
     {
-        $this->showStatistics = !$this->showStatistics;
+        $this->showStatistics = ! $this->showStatistics;
     }
 
     /**
@@ -984,7 +985,7 @@ class EditSchedule extends Component
      */
     public function canSave(): bool
     {
-        return !$this->hasCriticalConflicts();
+        return ! $this->hasCriticalConflicts();
     }
 
     /**

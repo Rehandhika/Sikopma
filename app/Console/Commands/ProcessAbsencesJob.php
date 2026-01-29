@@ -2,13 +2,12 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use App\Models\ScheduleAssignment;
 use App\Models\Attendance;
-use App\Models\LeaveRequest;
-use App\Services\PenaltyService;
+use App\Models\ScheduleAssignment;
 use App\Services\AttendanceService;
+use App\Services\PenaltyService;
 use Carbon\Carbon;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -29,6 +28,7 @@ class ProcessAbsencesJob extends Command
     protected $description = 'Process absences for scheduled assignments without attendance and without approved leave';
 
     protected PenaltyService $penaltyService;
+
     protected AttendanceService $attendanceService;
 
     /**
@@ -76,6 +76,7 @@ class ProcessAbsencesJob extends Command
             if ($hasAttendance) {
                 $this->line("  Skipping assignment #{$assignment->id} - already has attendance");
                 $skippedCount++;
+
                 continue;
             }
 
@@ -85,6 +86,7 @@ class ProcessAbsencesJob extends Command
             if ($hasApprovedLeave) {
                 $this->line("  Skipping assignment #{$assignment->id} - user has approved leave");
                 $skippedCount++;
+
                 continue;
             }
 
@@ -100,13 +102,13 @@ class ProcessAbsencesJob extends Command
                     'user_id' => $assignment->user_id,
                     'date' => $date->toDateString(),
                     'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'trace' => $e->getTraceAsString(),
                 ]);
             }
         }
 
         $this->newLine();
-        $this->info("Absence processing completed:");
+        $this->info('Absence processing completed:');
         $this->info("  - Processed: {$processedCount}");
         $this->info("  - Skipped: {$skippedCount}");
         $this->info("  - Total checked: {$scheduledAssignments->count()}");
@@ -118,9 +120,6 @@ class ProcessAbsencesJob extends Command
      * Process absence for a single assignment
      * Creates attendance with status 'absent', creates ABSENT penalty, and updates assignment status to 'missed'
      *
-     * @param ScheduleAssignment $assignment
-     * @param Carbon $date
-     * @return void
      * @throws \Exception
      */
     protected function processAbsence(ScheduleAssignment $assignment, Carbon $date): void

@@ -9,7 +9,6 @@ use App\Models\StoreSetting;
 use App\Services\Storage\FileStorageServiceInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
 
 class PublicDataService
 {
@@ -23,7 +22,7 @@ class PublicDataService
             return StoreSetting::query()->first();
         });
 
-        if (!$storeSetting) {
+        if (! $storeSetting) {
             return [
                 'about_text' => null,
                 'contact_phone' => null,
@@ -60,7 +59,7 @@ class PublicDataService
 
             // Default fallback URL - use relative path for cross-device compatibility
             $defaultUrl = $imagePath
-                ? '/storage/' . ltrim($imagePath, '/')
+                ? '/storage/'.ltrim($imagePath, '/')
                 : null;
 
             $images = [
@@ -133,7 +132,7 @@ class PublicDataService
                 ->where('category', '!=', '')
                 ->distinct()
                 ->pluck('category')
-                ->filter(fn ($c) => !empty(trim($c)))
+                ->filter(fn ($c) => ! empty(trim($c)))
                 ->sort()
                 ->values();
         });
@@ -174,9 +173,9 @@ class PublicDataService
                 ->active()
                 ->when($search, function ($query) use ($search) {
                     $query->where(function ($q) use ($search) {
-                        $q->where('name', 'like', '%' . $search . '%')
-                            ->orWhere('description', 'like', '%' . $search . '%')
-                            ->orWhere('sku', 'like', '%' . $search . '%');
+                        $q->where('name', 'like', '%'.$search.'%')
+                            ->orWhere('description', 'like', '%'.$search.'%')
+                            ->orWhere('sku', 'like', '%'.$search.'%');
                     });
                 })
                 ->when($category, function ($query) use ($category) {
@@ -233,7 +232,7 @@ class PublicDataService
         $data['price_range'] = $product->price_range;
         $data['display_price'] = $product->display_price;
         $data['variant_count'] = $product->variant_count;
-        
+
         // Ensure active_variants key exists (Laravel may use camelCase)
         if (isset($data['activeVariants'])) {
             $data['active_variants'] = $data['activeVariants'];
@@ -262,7 +261,7 @@ class PublicDataService
 
             // Default fallback URL - use relative path for cross-device compatibility
             $defaultUrl = $imagePath
-                ? '/storage/' . ltrim($imagePath, '/')
+                ? '/storage/'.ltrim($imagePath, '/')
                 : null;
 
             $images = [
@@ -328,4 +327,3 @@ class PublicDataService
         return $images;
     }
 }
-

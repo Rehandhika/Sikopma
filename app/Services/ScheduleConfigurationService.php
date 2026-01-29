@@ -8,19 +8,17 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * ScheduleConfigurationService
- * 
+ *
  * Service for managing schedule system configuration values with caching support.
  * Provides methods to get, set, and manage configuration values with automatic
  * type casting and cache invalidation.
- * 
+ *
  * Features:
  * - Automatic caching with configurable TTL
  * - Type casting (integer, float, boolean, json, string)
  * - Cache invalidation on updates
  * - Bulk operations (getAll, getMany)
  * - Default configuration initialization
- * 
- * @package App\Services
  */
 class ScheduleConfigurationService
 {
@@ -36,9 +34,9 @@ class ScheduleConfigurationService
 
     /**
      * Get a configuration value with caching
-     * 
-     * @param string $key Configuration key
-     * @param mixed $default Default value if key not found
+     *
+     * @param  string  $key  Configuration key
+     * @param  mixed  $default  Default value if key not found
      * @return mixed
      */
     public function get(string $key, $default = null)
@@ -48,11 +46,12 @@ class ScheduleConfigurationService
         return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($key, $default) {
             $config = ScheduleConfiguration::where('key', $key)->first();
 
-            if (!$config) {
+            if (! $config) {
                 Log::debug("Configuration key not found: {$key}, using default", [
                     'key' => $key,
                     'default' => $default,
                 ]);
+
                 return $default;
             }
 
@@ -62,12 +61,11 @@ class ScheduleConfigurationService
 
     /**
      * Set a configuration value with cache invalidation
-     * 
-     * @param string $key Configuration key
-     * @param mixed $value Configuration value
-     * @param string $type Value type (integer, float, boolean, json, string)
-     * @param string|null $description Optional description
-     * @return ScheduleConfiguration
+     *
+     * @param  string  $key  Configuration key
+     * @param  mixed  $value  Configuration value
+     * @param  string  $type  Value type (integer, float, boolean, json, string)
+     * @param  string|null  $description  Optional description
      */
     public function set(string $key, $value, string $type = 'string', ?string $description = null): ScheduleConfiguration
     {
@@ -98,8 +96,6 @@ class ScheduleConfigurationService
 
     /**
      * Get all configuration values with caching
-     * 
-     * @return array
      */
     public function getAll(): array
     {
@@ -116,8 +112,6 @@ class ScheduleConfigurationService
 
     /**
      * Get all configurations grouped by type
-     * 
-     * @return array
      */
     public function getAllGrouped(): array
     {
@@ -132,7 +126,7 @@ class ScheduleConfigurationService
                             $config->key => [
                                 'value' => $this->castValue($config->value, $config->type),
                                 'description' => $config->description,
-                            ]
+                            ],
                         ];
                     });
                 })
@@ -142,10 +136,9 @@ class ScheduleConfigurationService
 
     /**
      * Get multiple configuration values at once
-     * 
-     * @param array $keys Array of configuration keys
-     * @param mixed $default Default value for missing keys
-     * @return array
+     *
+     * @param  array  $keys  Array of configuration keys
+     * @param  mixed  $default  Default value for missing keys
      */
     public function getMany(array $keys, $default = null): array
     {
@@ -160,9 +153,8 @@ class ScheduleConfigurationService
 
     /**
      * Check if a configuration key exists
-     * 
-     * @param string $key Configuration key
-     * @return bool
+     *
+     * @param  string  $key  Configuration key
      */
     public function has(string $key): bool
     {
@@ -175,9 +167,8 @@ class ScheduleConfigurationService
 
     /**
      * Delete a configuration key
-     * 
-     * @param string $key Configuration key
-     * @return bool
+     *
+     * @param  string  $key  Configuration key
      */
     public function delete(string $key): bool
     {
@@ -197,9 +188,8 @@ class ScheduleConfigurationService
 
     /**
      * Invalidate cache for a specific key
-     * 
-     * @param string $key Configuration key
-     * @return void
+     *
+     * @param  string  $key  Configuration key
      */
     public function invalidateCache(string $key): void
     {
@@ -216,8 +206,6 @@ class ScheduleConfigurationService
 
     /**
      * Clear all configuration caches
-     * 
-     * @return void
      */
     public function clearAllCache(): void
     {
@@ -233,16 +221,16 @@ class ScheduleConfigurationService
         Cache::forget($this->getCacheKey('all'));
         Cache::forget($this->getCacheKey('all_grouped'));
 
-        Log::info("All configuration caches cleared", [
+        Log::info('All configuration caches cleared', [
             'admin' => auth()->user()?->name ?? 'System',
         ]);
     }
 
     /**
      * Cast value from string to appropriate type
-     * 
-     * @param string $value Stored value
-     * @param string $type Target type
+     *
+     * @param  string  $value  Stored value
+     * @param  string  $type  Target type
      * @return mixed
      */
     protected function castValue($value, string $type)
@@ -263,10 +251,9 @@ class ScheduleConfigurationService
 
     /**
      * Convert value to string for storage
-     * 
-     * @param mixed $value Value to convert
-     * @param string $type Value type
-     * @return string
+     *
+     * @param  mixed  $value  Value to convert
+     * @param  string  $type  Value type
      */
     protected function convertToString($value, string $type): string
     {
@@ -279,9 +266,8 @@ class ScheduleConfigurationService
 
     /**
      * Cast string to boolean
-     * 
-     * @param mixed $value Value to cast
-     * @return bool
+     *
+     * @param  mixed  $value  Value to cast
      */
     protected function castToBoolean($value): bool
     {
@@ -290,14 +276,14 @@ class ScheduleConfigurationService
         }
 
         $value = strtolower((string) $value);
+
         return in_array($value, ['true', '1', 'yes', 'on'], true);
     }
 
     /**
      * Cast string to JSON array
-     * 
-     * @param mixed $value Value to cast
-     * @return array
+     *
+     * @param  mixed  $value  Value to cast
      */
     protected function castToJson($value): array
     {
@@ -306,24 +292,22 @@ class ScheduleConfigurationService
         }
 
         $decoded = json_decode($value, true);
+
         return is_array($decoded) ? $decoded : [];
     }
 
     /**
      * Get cache key with prefix
-     * 
-     * @param string $key Configuration key
-     * @return string
+     *
+     * @param  string  $key  Configuration key
      */
     protected function getCacheKey(string $key): string
     {
-        return self::CACHE_PREFIX . $key;
+        return self::CACHE_PREFIX.$key;
     }
 
     /**
      * Get default configuration values for schedule system
-     * 
-     * @return array
      */
     public function getDefaults(): array
     {
@@ -364,15 +348,13 @@ class ScheduleConfigurationService
 
     /**
      * Initialize default configurations if they don't exist
-     * 
-     * @return void
      */
     public function initializeDefaults(): void
     {
         $defaults = $this->getDefaults();
 
         foreach ($defaults as $key => $value) {
-            if (!$this->has($key)) {
+            if (! $this->has($key)) {
                 $type = $this->inferType($value);
                 $description = $this->getDefaultDescription($key);
 
@@ -380,7 +362,7 @@ class ScheduleConfigurationService
             }
         }
 
-        Log::info("Default configurations initialized", [
+        Log::info('Default configurations initialized', [
             'count' => count($defaults),
             'admin' => auth()->user()?->name ?? 'System',
         ]);
@@ -388,9 +370,8 @@ class ScheduleConfigurationService
 
     /**
      * Infer type from value
-     * 
-     * @param mixed $value
-     * @return string
+     *
+     * @param  mixed  $value
      */
     protected function inferType($value): string
     {
@@ -415,9 +396,6 @@ class ScheduleConfigurationService
 
     /**
      * Get default description for configuration key
-     * 
-     * @param string $key
-     * @return string
      */
     protected function getDefaultDescription(string $key): string
     {
@@ -447,4 +425,3 @@ class ScheduleConfigurationService
         return $descriptions[$key] ?? "Configuration for {$key}";
     }
 }
-

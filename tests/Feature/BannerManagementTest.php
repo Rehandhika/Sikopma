@@ -2,15 +2,14 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
 use App\Models\Banner;
-use App\Services\BannerService;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
+use Tests\TestCase;
 
 class BannerManagementTest extends TestCase
 {
@@ -19,10 +18,10 @@ class BannerManagementTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Create storage disk for testing
         Storage::fake('public');
-        
+
         // Create roles
         Role::create(['name' => 'Super Admin']);
         Role::create(['name' => 'Ketua']);
@@ -271,13 +270,13 @@ class BannerManagementTest extends TestCase
 
         // Should see first 10 banners
         $component->assertSee('Banner 1')
-                  ->assertSee('Banner 10')
-                  ->assertDontSee('Banner 11');
+            ->assertSee('Banner 10')
+            ->assertDontSee('Banner 11');
 
         // Navigate to page 2
         $component->set('page', 2)
-                  ->assertSee('Banner 11')
-                  ->assertSee('Banner 15')
-                  ->assertDontSee('Banner 1');
+            ->assertSee('Banner 11')
+            ->assertSee('Banner 15')
+            ->assertDontSee('Banner 1');
     }
 }

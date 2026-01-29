@@ -18,7 +18,7 @@ class BatchResult
     /**
      * Create from processing results.
      *
-     * @param array $results Array of ['path' => string, 'success' => bool, 'error' => ?string]
+     * @param  array  $results  Array of ['path' => string, 'success' => bool, 'error' => ?string]
      */
     public static function fromResults(array $results): self
     {
@@ -83,7 +83,7 @@ class BatchResult
     {
         return array_filter(
             array_column($this->results, 'path', 'success'),
-            fn($success) => $success === true,
+            fn ($success) => $success === true,
             ARRAY_FILTER_USE_KEY
         );
     }

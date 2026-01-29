@@ -19,7 +19,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->foreignId('created_by')->constrained('users');
             $table->timestamps();
-            
+
             // Composite index for performance on active banners ordered by priority
             $table->index(['is_active', 'priority']);
         });

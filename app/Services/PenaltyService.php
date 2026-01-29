@@ -21,7 +21,7 @@ class PenaltyService
         ?Carbon $date = null
     ): Penalty {
         $user = User::findOrFail($userId);
-        
+
         $penaltyType = PenaltyType::where('code', $penaltyTypeCode)
             ->where('is_active', true)
             ->firstOrFail();
@@ -201,7 +201,7 @@ class PenaltyService
                 $penalty->user,
                 'appeal_approved',
                 'Banding Disetujui',
-                "Banding penalti Anda telah disetujui. Penalti telah dibatalkan.",
+                'Banding penalti Anda telah disetujui. Penalti telah dibatalkan.',
                 ['penalty_id' => $penalty->id],
                 route('admin.penalties.my-penalties')
             );
@@ -219,7 +219,7 @@ class PenaltyService
                 $penalty->user,
                 'appeal_rejected',
                 'Banding Ditolak',
-                "Banding penalti Anda telah ditolak. Penalti tetap aktif.",
+                'Banding penalti Anda telah ditolak. Penalti tetap aktif.',
                 ['penalty_id' => $penalty->id],
                 route('admin.penalties.my-penalties')
             );

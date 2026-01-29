@@ -5,15 +5,14 @@ namespace App\Observers;
 use App\Models\User;
 use App\Services\MenuAccessService;
 use Illuminate\Support\Facades\Log;
-use Spatie\Permission\PermissionRegistrar;
 
 /**
  * Observer for User model to handle permission cache invalidation
  * when user roles are updated.
- * 
+ *
  * This observer listens to User model events and clears the permission
  * cache to ensure menu access states are updated immediately.
- * 
+ *
  * @see Requirements 2.3, 8.1, 8.2
  */
 class UserRoleObserver
@@ -24,7 +23,7 @@ class UserRoleObserver
 
     /**
      * Handle the User "updated" event.
-     * 
+     *
      * This is triggered when user attributes are updated.
      * We check if roles might have changed and invalidate cache.
      */
@@ -36,7 +35,7 @@ class UserRoleObserver
 
     /**
      * Handle the User "deleted" event.
-     * 
+     *
      * Clean up cache when user is deleted.
      */
     public function deleted(User $user): void
@@ -46,15 +45,13 @@ class UserRoleObserver
 
     /**
      * Invalidate permission cache for a specific user.
-     * 
-     * @param User $user
      */
     protected function invalidateUserPermissionCache(User $user): void
     {
         try {
             // Clear menu access cache for this user
             $this->menuAccessService->invalidateUserCache($user->id);
-            
+
             Log::info('User permission cache invalidated', [
                 'user_id' => $user->id,
                 'user_name' => $user->name,

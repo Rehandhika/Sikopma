@@ -2,10 +2,11 @@
 
 namespace App\Livewire\Leave;
 
+use App\Models\LeaveRequest;
+use Livewire\Attributes\On;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Livewire\Attributes\{Title, On};
-use App\Models\LeaveRequest;
 
 #[Title('Riwayat Cuti/Izin Saya')]
 class MyRequests extends Component
@@ -20,8 +21,9 @@ class MyRequests extends Component
             ->where('id', $id)
             ->firstOrFail();
 
-        if (!$request->canCancel()) {
+        if (! $request->canCancel()) {
             $this->dispatch('toast', message: 'Tidak dapat membatalkan permohonan ini', type: 'error');
+
             return;
         }
 
@@ -29,7 +31,7 @@ class MyRequests extends Component
         $this->dispatch('toast', message: 'Permohonan berhasil dibatalkan', type: 'success');
     }
 
-    #[On('leave-request-created')] 
+    #[On('leave-request-created')]
     public function refreshList()
     {
         $this->resetPage();
@@ -39,7 +41,7 @@ class MyRequests extends Component
     {
         $requests = LeaveRequest::where('user_id', auth()->id())
             ->with('reviewer')
-            ->when($this->statusFilter !== 'all', fn($q) => $q->where('status', $this->statusFilter))
+            ->when($this->statusFilter !== 'all', fn ($q) => $q->where('status', $this->statusFilter))
             ->latest()
             ->paginate(10);
 

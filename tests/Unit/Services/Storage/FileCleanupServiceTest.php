@@ -2,7 +2,6 @@
 
 namespace Tests\Unit\Services\Storage;
 
-use App\Models\Product;
 use App\Services\Storage\FileCleanupService;
 use App\Services\Storage\StorageOrganizer;
 use Carbon\Carbon;
@@ -13,15 +12,16 @@ use Tests\TestCase;
 class FileCleanupServiceTest extends TestCase
 {
     protected FileCleanupService $cleanupService;
+
     protected StorageOrganizer $organizer;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
-        $this->organizer = new StorageOrganizer();
+
+        $this->organizer = new StorageOrganizer;
         $this->cleanupService = new FileCleanupService($this->organizer);
-        
+
         // Use fake storage for tests
         Storage::fake('public');
         Storage::fake('local');
@@ -41,9 +41,9 @@ class FileCleanupServiceTest extends TestCase
         // Create test files
         Storage::disk('public')->put('product/2026/01/abc-123.webp', 'test content');
         Storage::disk('public')->put('product/2026/01/def-456.webp', 'test content 2');
-        
+
         $files = $this->cleanupService->getStorageFiles('product');
-        
+
         $this->assertCount(2, $files);
     }
 
@@ -56,9 +56,9 @@ class FileCleanupServiceTest extends TestCase
         Storage::disk('public')->put('product/2026/01/abc-123.webp', 'original');
         Storage::disk('public')->put('product/2026/01/thumbnail/abc-123.webp', 'thumbnail');
         Storage::disk('public')->put('product/2026/01/medium/abc-123.webp', 'medium');
-        
+
         $files = $this->cleanupService->getStorageFiles('product');
-        
+
         // Should only return original, not variants
         $this->assertCount(1, $files);
         $this->assertEquals('product/2026/01/abc-123.webp', $files->first()['path']);
@@ -70,7 +70,7 @@ class FileCleanupServiceTest extends TestCase
     public function test_get_storage_files_returns_empty_for_nonexistent_directory(): void
     {
         $files = $this->cleanupService->getStorageFiles('product');
-        
+
         $this->assertCount(0, $files);
     }
 
@@ -82,12 +82,12 @@ class FileCleanupServiceTest extends TestCase
         // Create temp files
         Storage::disk('public')->put('livewire-tmp/old-file.tmp', 'old content');
         Storage::disk('public')->put('livewire-tmp/new-file.tmp', 'new content');
-        
+
         // Set old file to be older than threshold
         $this->setFileModificationTime('public', 'livewire-tmp/old-file.tmp', Carbon::now()->subHours(48));
-        
+
         $result = $this->cleanupService->cleanTempFiles(hoursOld: 24, dryRun: false);
-        
+
         // Old file should be deleted, new file should remain
         $this->assertFalse(Storage::disk('public')->exists('livewire-tmp/old-file.tmp'));
         $this->assertTrue(Storage::disk('public')->exists('livewire-tmp/new-file.tmp'));
@@ -102,9 +102,9 @@ class FileCleanupServiceTest extends TestCase
         // Create temp file
         Storage::disk('public')->put('livewire-tmp/old-file.tmp', 'old content');
         $this->setFileModificationTime('public', 'livewire-tmp/old-file.tmp', Carbon::now()->subHours(48));
-        
+
         $result = $this->cleanupService->cleanTempFiles(hoursOld: 24, dryRun: true);
-        
+
         // File should still exist
         $this->assertTrue(Storage::disk('public')->exists('livewire-tmp/old-file.tmp'));
         $this->assertTrue($result->dryRun);
@@ -118,9 +118,9 @@ class FileCleanupServiceTest extends TestCase
     {
         Storage::disk('public')->put('livewire-tmp/old.tmp', str_repeat('x', 1024 * 100)); // 100KB
         $this->setFileModificationTime('public', 'livewire-tmp/old.tmp', Carbon::now()->subHours(48));
-        
+
         $result = $this->cleanupService->cleanTempFiles(hoursOld: 24, dryRun: true);
-        
+
         $this->assertGreaterThan(0, $result->bytesFreed);
         $this->assertStringContainsString('would be deleted', $result->getSummary());
     }
@@ -131,7 +131,7 @@ class FileCleanupServiceTest extends TestCase
     public function test_cleanup_result_empty_factory(): void
     {
         $result = \App\Services\Storage\DTOs\CleanupResult::empty(true);
-        
+
         $this->assertEquals(0, $result->filesScanned);
         $this->assertEquals(0, $result->filesDeleted);
         $this->assertEquals(0, $result->bytesFreed);
@@ -152,9 +152,9 @@ class FileCleanupServiceTest extends TestCase
             errors: [],
             dryRun: false
         );
-        
+
         $array = $result->toArray();
-        
+
         $this->assertEquals(10, $array['files_scanned']);
         $this->assertEquals(5, $array['files_deleted']);
         $this->assertEquals(1024 * 1024, $array['bytes_freed']);
@@ -169,7 +169,7 @@ class FileCleanupServiceTest extends TestCase
     public function test_get_database_references_returns_empty_for_unknown_type(): void
     {
         $references = $this->cleanupService->getDatabaseReferences('unknown_type');
-        
+
         $this->assertCount(0, $references);
     }
 

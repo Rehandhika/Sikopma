@@ -2,22 +2,28 @@
 
 namespace App\Livewire\Swap;
 
+use App\Models\SwapRequest;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\{SwapRequest, ScheduleAssignment, User};
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class PendingApprovals extends Component
 {
     use WithPagination;
 
     public $filter = 'all'; // all, pending, approved, rejected
+
     public $search = '';
+
     public $selectedRequest = null;
+
     public $showDetailModal = false;
+
     public $responseMessage = '';
+
     public $showResponseModal = false;
+
     public $responseType = 'approve'; // approve, reject
 
     protected $queryString = ['filter', 'search'];
@@ -39,8 +45,9 @@ class PendingApprovals extends Component
             ->where('status', 'pending')
             ->first();
 
-        if (!$request) {
+        if (! $request) {
             $this->dispatch('toast', message: 'Permintaan tidak ditemukan atau sudah diproses.', type: 'error');
+
             return;
         }
 
@@ -48,9 +55,10 @@ class PendingApprovals extends Component
         $deadline = $request->targetAssignment->date->copy()
             ->setTimeFromTimeString($request->targetAssignment->time_start)
             ->subHours(24);
-        
+
         if (now()->greaterThan($deadline)) {
             $this->dispatch('toast', message: 'Tidak dapat menyetujui permintaan dalam 24 jam sebelum shift.', type: 'error');
+
             return;
         }
 
@@ -66,8 +74,9 @@ class PendingApprovals extends Component
             ->where('status', 'pending')
             ->first();
 
-        if (!$request) {
+        if (! $request) {
             $this->dispatch('toast', message: 'Permintaan tidak ditemukan atau sudah diproses.', type: 'error');
+
             return;
         }
 
@@ -78,7 +87,7 @@ class PendingApprovals extends Component
 
     public function confirmResponse()
     {
-        if (!$this->selectedRequest) {
+        if (! $this->selectedRequest) {
             return;
         }
 
@@ -86,7 +95,7 @@ class PendingApprovals extends Component
             DB::beginTransaction();
 
             $status = $this->responseType === 'approve' ? 'target_approved' : 'target_rejected';
-            
+
             $this->selectedRequest->update([
                 'status' => $status,
                 'target_response' => $this->responseMessage,
@@ -96,7 +105,7 @@ class PendingApprovals extends Component
             // Create notification for requester
             $this->createNotification($this->selectedRequest->requester_id, 'swap_response', [
                 'title' => $this->responseType === 'approve' ? 'Permintaan Tukar Shift Disetujui' : 'Permintaan Tukar Shift Ditolak',
-                'message' => auth()->user()->name . ' telah ' . ($this->responseType === 'approve' ? 'menyetujui' : 'menolak') . ' permintaan tukar shift Anda.',
+                'message' => auth()->user()->name.' telah '.($this->responseType === 'approve' ? 'menyetujui' : 'menolak').' permintaan tukar shift Anda.',
                 'swap_request_id' => $this->selectedRequest->id,
             ]);
 
@@ -107,12 +116,12 @@ class PendingApprovals extends Component
 
             DB::commit();
 
-            $this->dispatch('toast', message: 'Permintaan tukar shift berhasil ' . ($this->responseType === 'approve' ? 'disetujui' : 'ditolak') . '.', type: 'success');
+            $this->dispatch('toast', message: 'Permintaan tukar shift berhasil '.($this->responseType === 'approve' ? 'disetujui' : 'ditolak').'.', type: 'success');
             $this->reset(['showResponseModal', 'responseMessage', 'selectedRequest', 'responseType']);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->dispatch('toast', message: 'Gagal memproses permintaan: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal memproses permintaan: '.$e->getMessage(), type: 'error');
         }
     }
 
@@ -122,7 +131,7 @@ class PendingApprovals extends Component
             'requester:id,name,nim',
             'target:id,name,nim',
             'requesterAssignment.schedule',
-            'targetAssignment.schedule'
+            'targetAssignment.schedule',
         ])->find($id);
 
         if ($this->selectedRequest && $this->selectedRequest->target_id === auth()->id()) {
@@ -147,7 +156,7 @@ class PendingApprovals extends Component
         foreach ($adminUsers as $admin) {
             $this->createNotification($admin->id, 'swap_admin_approval', [
                 'title' => 'Persetajuan Tukar Shift Diperlukan',
-                'message' => 'Permintaan tukar shift antara ' . $swapRequest->requester->name . ' dan ' . $swapRequest->target->name . ' menunggu persetujuan admin.',
+                'message' => 'Permintaan tukar shift antara '.$swapRequest->requester->name.' dan '.$swapRequest->target->name.' menunggu persetujuan admin.',
                 'swap_request_id' => $swapRequest->id,
             ]);
         }
@@ -155,7 +164,7 @@ class PendingApprovals extends Component
 
     public function getStatusColor($status)
     {
-        return match($status) {
+        return match ($status) {
             'pending' => 'yellow',
             'target_approved' => 'blue',
             'target_rejected' => 'red',
@@ -165,7 +174,7 @@ class PendingApprovals extends Component
 
     public function getStatusText($status)
     {
-        return match($status) {
+        return match ($status) {
             'pending' => 'Menunggu Respons',
             'target_approved' => 'Saya Setujui',
             'target_rejected' => 'Saya Tolak',
@@ -183,8 +192,8 @@ class PendingApprovals extends Component
         $deadline = $request->targetAssignment->date->copy()
             ->setTimeFromTimeString($request->targetAssignment->time_start)
             ->subHours(24);
-        
-        return !now()->greaterThan($deadline);
+
+        return ! now()->greaterThan($deadline);
     }
 
     public function render()
@@ -193,7 +202,7 @@ class PendingApprovals extends Component
             ->with([
                 'requester:id,name,nim',
                 'requesterAssignment.schedule',
-                'targetAssignment.schedule'
+                'targetAssignment.schedule',
             ]);
 
         // Apply filter
@@ -214,8 +223,8 @@ class PendingApprovals extends Component
         // Apply search
         if ($this->search) {
             $query->whereHas('requester', function ($q) {
-                $q->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('nim', 'like', '%' . $this->search . '%');
+                $q->where('name', 'like', '%'.$this->search.'%')
+                    ->orWhere('nim', 'like', '%'.$this->search.'%');
             });
         }
 

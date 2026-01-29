@@ -2,22 +2,29 @@
 
 namespace App\Livewire\Schedule;
 
-use Livewire\Component;
-use Livewire\WithPagination;
 use App\Models\ScheduleAssignment;
 use App\Services\ActivityLogService;
 use Carbon\Carbon;
+use Livewire\Component;
 
 class ScheduleCalendar extends Component
 {
     public $currentMonth;
+
     public $currentYear;
+
     public $selectedDate;
+
     public $viewMode = 'month'; // month, week, day
+
     public $showDetails = false;
+
     public $selectedAssignment = null;
+
     public $filterUser = '';
+
     public $filterSession = '';
+
     public $search = '';
 
     protected $queryString = [
@@ -122,8 +129,8 @@ class ScheduleCalendar extends Component
 
         if ($this->search) {
             $query->whereHas('user', function ($q) {
-                $q->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('nim', 'like', '%' . $this->search . '%');
+                $q->where('name', 'like', '%'.$this->search.'%')
+                    ->orWhere('nim', 'like', '%'.$this->search.'%');
             });
         }
 
@@ -175,8 +182,8 @@ class ScheduleCalendar extends Component
 
         if ($this->search) {
             $query->whereHas('user', function ($q) {
-                $q->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('nim', 'like', '%' . $this->search . '%');
+                $q->where('name', 'like', '%'.$this->search.'%')
+                    ->orWhere('nim', 'like', '%'.$this->search.'%');
             });
         }
 
@@ -186,6 +193,7 @@ class ScheduleCalendar extends Component
             'total_hours' => $query->get()->sum(function ($assignment) {
                 $start = Carbon::parse($assignment->time_start);
                 $end = Carbon::parse($assignment->time_end);
+
                 return $start->diffInHours($end);
             }),
             'coverage_days' => $query->distinct('date')->count('date'),
@@ -197,7 +205,7 @@ class ScheduleCalendar extends Component
         // Log activity
         $monthName = Carbon::create($this->currentYear, $this->currentMonth, 1)->locale('id')->format('F Y');
         ActivityLogService::logReportExported('Kalender Jadwal', $monthName);
-        
+
         // Implementation for calendar export
         $this->dispatch('export-calendar', [
             'month' => $this->currentMonth,
@@ -206,11 +214,9 @@ class ScheduleCalendar extends Component
                 'user' => $this->filterUser,
                 'session' => $this->filterSession,
                 'search' => $this->search,
-            ]
+            ],
         ]);
     }
-
-
 
     public function render()
     {

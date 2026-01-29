@@ -2,12 +2,12 @@
 
 namespace App\Livewire\Report;
 
-use Livewire\Component;
-use Livewire\WithPagination;
-use Livewire\Attributes\Title;
-use Livewire\Attributes\Computed;
 use App\Models\Penalty;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Title;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 #[Title('Laporan Penalti')]
 class PenaltyReport extends Component
@@ -15,9 +15,13 @@ class PenaltyReport extends Component
     use WithPagination;
 
     public string $dateFrom = '';
+
     public string $dateTo = '';
+
     public string $userFilter = 'all';
+
     public string $statusFilter = 'all';
+
     public string $period = 'month';
 
     public function mount()
@@ -57,6 +61,7 @@ class PenaltyReport extends Component
     {
         if (empty($this->dateFrom) || empty($this->dateTo)) {
             $this->period = 'custom';
+
             return;
         }
 
@@ -65,16 +70,16 @@ class PenaltyReport extends Component
         $dateTo = \Carbon\Carbon::parse($this->dateTo);
 
         // Check if dates match predefined periods
-        if ($dateFrom->format('Y-m-d') === $now->format('Y-m-d') && 
+        if ($dateFrom->format('Y-m-d') === $now->format('Y-m-d') &&
             $dateTo->format('Y-m-d') === $now->format('Y-m-d')) {
             $this->period = 'today';
-        } elseif ($dateFrom->format('Y-m-d') === $now->copy()->startOfWeek()->format('Y-m-d') && 
+        } elseif ($dateFrom->format('Y-m-d') === $now->copy()->startOfWeek()->format('Y-m-d') &&
                   $dateTo->format('Y-m-d') === $now->copy()->endOfWeek()->format('Y-m-d')) {
             $this->period = 'week';
-        } elseif ($dateFrom->format('Y-m-d') === $now->copy()->startOfMonth()->format('Y-m-d') && 
+        } elseif ($dateFrom->format('Y-m-d') === $now->copy()->startOfMonth()->format('Y-m-d') &&
                   $dateTo->format('Y-m-d') === $now->copy()->endOfMonth()->format('Y-m-d')) {
             $this->period = 'month';
-        } elseif ($dateFrom->format('Y-m-d') === $now->copy()->startOfYear()->format('Y-m-d') && 
+        } elseif ($dateFrom->format('Y-m-d') === $now->copy()->startOfYear()->format('Y-m-d') &&
                   $dateTo->format('Y-m-d') === $now->copy()->endOfYear()->format('Y-m-d')) {
             $this->period = 'year';
         } else {
@@ -98,9 +103,9 @@ class PenaltyReport extends Component
     #[Computed]
     public function stats()
     {
-        $userCondition = $this->userFilter !== 'all' ? "AND user_id = ?" : "";
+        $userCondition = $this->userFilter !== 'all' ? 'AND user_id = ?' : '';
         $params = [$this->dateFrom, $this->dateTo];
-        
+
         if ($this->userFilter !== 'all') {
             $params[] = $this->userFilter;
         }
@@ -117,9 +122,9 @@ class PenaltyReport extends Component
             WHERE date BETWEEN ? AND ? {$userCondition}
         ", $params);
 
-        return $result[0] ?? (object)[
-            'total' => 0, 'active' => 0, 'appealed' => 0, 
-            'dismissed' => 0, 'expired' => 0, 'total_points' => 0
+        return $result[0] ?? (object) [
+            'total' => 0, 'active' => 0, 'appealed' => 0,
+            'dismissed' => 0, 'expired' => 0, 'total_points' => 0,
         ];
     }
 
@@ -129,15 +134,15 @@ class PenaltyReport extends Component
     #[Computed]
     public function users()
     {
-        return DB::select("SELECT id, name FROM users WHERE deleted_at IS NULL ORDER BY name");
+        return DB::select('SELECT id, name FROM users WHERE deleted_at IS NULL ORDER BY name');
     }
 
     public function render()
     {
         $penalties = Penalty::query()
             ->whereBetween('date', [$this->dateFrom, $this->dateTo])
-            ->when($this->userFilter !== 'all', fn($q) => $q->where('user_id', $this->userFilter))
-            ->when($this->statusFilter !== 'all', fn($q) => $q->where('status', $this->statusFilter))
+            ->when($this->userFilter !== 'all', fn ($q) => $q->where('user_id', $this->userFilter))
+            ->when($this->statusFilter !== 'all', fn ($q) => $q->where('status', $this->statusFilter))
             ->with(['user:id,name,nim', 'penaltyType:id,name,code'])
             ->select('id', 'user_id', 'penalty_type_id', 'date', 'points', 'description', 'status')
             ->latest('date')

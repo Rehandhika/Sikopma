@@ -4,18 +4,14 @@ namespace App\Repositories;
 
 use App\Models\Sale;
 use App\Models\SaleItem;
-use Illuminate\Support\Collection;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class SalesRepository
 {
     /**
      * Get sales statistics for a date range
-     *
-     * @param Carbon $startDate
-     * @param Carbon $endDate
-     * @return array
      */
     public function getStats(Carbon $startDate, Carbon $endDate): array
     {
@@ -31,11 +27,6 @@ class SalesRepository
 
     /**
      * Get top selling products
-     *
-     * @param Carbon $startDate
-     * @param Carbon $endDate
-     * @param int $limit
-     * @return Collection
      */
     public function getTopProducts(Carbon $startDate, Carbon $endDate, int $limit = 10): Collection
     {
@@ -52,10 +43,6 @@ class SalesRepository
 
     /**
      * Get sales by cashier
-     *
-     * @param Carbon $startDate
-     * @param Carbon $endDate
-     * @return Collection
      */
     public function getByCashier(Carbon $startDate, Carbon $endDate): Collection
     {
@@ -69,10 +56,6 @@ class SalesRepository
 
     /**
      * Get daily sales trend
-     *
-     * @param Carbon $startDate
-     * @param Carbon $endDate
-     * @return Collection
      */
     public function getDailyTrend(Carbon $startDate, Carbon $endDate): Collection
     {
@@ -85,10 +68,6 @@ class SalesRepository
 
     /**
      * Get sales by payment method
-     *
-     * @param Carbon $startDate
-     * @param Carbon $endDate
-     * @return Collection
      */
     public function getByPaymentMethod(Carbon $startDate, Carbon $endDate): Collection
     {
@@ -100,8 +79,6 @@ class SalesRepository
 
     /**
      * Get today's sales
-     *
-     * @return array
      */
     public function getTodaySales(): array
     {
@@ -117,11 +94,6 @@ class SalesRepository
 
     /**
      * Get sales with items for a date range
-     *
-     * @param Carbon $startDate
-     * @param Carbon $endDate
-     * @param int|null $cashierId
-     * @return Collection
      */
     public function getWithItems(Carbon $startDate, Carbon $endDate, ?int $cashierId = null): Collection
     {
@@ -137,10 +109,6 @@ class SalesRepository
 
     /**
      * Create sale with items
-     *
-     * @param array $saleData
-     * @param array $items
-     * @return Sale
      */
     public function createWithItems(array $saleData, array $items): Sale
     {
@@ -163,17 +131,14 @@ class SalesRepository
 
     /**
      * Get monthly comparison
-     *
-     * @param int $year
-     * @return Collection
      */
     public function getMonthlyComparison(int $year): Collection
     {
         return Sale::select(
-                DB::raw('MONTH(date) as month'),
-                DB::raw('COUNT(*) as transaction_count'),
-                DB::raw('SUM(total_amount) as total_sales')
-            )
+            DB::raw('MONTH(date) as month'),
+            DB::raw('COUNT(*) as transaction_count'),
+            DB::raw('SUM(total_amount) as total_sales')
+        )
             ->whereYear('date', $year)
             ->groupBy('month')
             ->orderBy('month')

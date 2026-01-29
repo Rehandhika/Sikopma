@@ -2,39 +2,51 @@
 
 namespace App\Livewire\Leave;
 
-use Livewire\Component;
-use Livewire\WithPagination;
-use Livewire\WithFileUploads;
-use Livewire\Attributes\{Title, Layout, Url, Lazy};
 use App\Models\LeaveRequest;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\{DB, Auth, Cache};
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Lazy;
+use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
+use Livewire\Component;
+use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 
 #[Title('Izin & Cuti')]
 #[Layout('layouts.app')]
 #[Lazy]
 class LeaveManager extends Component
 {
-    use WithPagination, WithFileUploads;
+    use WithFileUploads, WithPagination;
 
     #[Url(as: 'tab')]
     public string $activeTab = 'my-requests';
-    
+
     #[Url(as: 'status')]
     public string $statusFilter = 'all';
 
     // Form state - simple properties
     public bool $showForm = false;
+
     public string $leave_type = 'permission';
+
     public string $start_date = '';
+
     public string $end_date = '';
+
     public string $reason = '';
+
     public $attachment;
 
     // Modal state
     public ?int $viewingId = null;
+
     public ?int $reviewingId = null;
+
     public string $reviewAction = '';
+
     public string $reviewNotes = '';
 
     public function mount(): void
@@ -121,7 +133,7 @@ class LeaveManager extends Component
             ->where('user_id', Auth::id())
             ->where('status', 'pending')
             ->update(['status' => 'cancelled']);
-        
+
         $this->viewingId = null;
         $this->dispatch('toast', message: 'Pengajuan dibatalkan', type: 'success');
     }
@@ -162,7 +174,7 @@ class LeaveManager extends Component
         $isAdmin = Auth::user()->hasAnyRole(['Super Admin', 'Ketua', 'Wakil Ketua', 'BPH']);
 
         // Simple stats - cached
-        $stats = Cache::remember("leave_stats_{$userId}_{$this->activeTab}", 60, function () use ($userId, $isAdmin) {
+        $stats = Cache::remember("leave_stats_{$userId}_{$this->activeTab}", 60, function () use ($userId) {
             if ($this->activeTab === 'my-requests') {
                 return [
                     'pending' => LeaveRequest::where('user_id', $userId)->where('status', 'pending')->count(),
@@ -170,6 +182,7 @@ class LeaveManager extends Component
                     'rejected' => LeaveRequest::where('user_id', $userId)->where('status', 'rejected')->count(),
                 ];
             }
+
             return [
                 'pending' => LeaveRequest::where('status', 'pending')->count(),
                 'approved' => LeaveRequest::where('status', 'approved')->count(),
@@ -189,7 +202,7 @@ class LeaveManager extends Component
         $requests = $query->latest()->paginate(10);
 
         // Get viewing request if needed
-        $viewingRequest = $this->viewingId 
+        $viewingRequest = $this->viewingId
             ? LeaveRequest::with(['user:id,name,nim', 'reviewer:id,name'])->find($this->viewingId)
             : null;
 

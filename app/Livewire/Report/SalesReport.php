@@ -2,17 +2,17 @@
 
 namespace App\Livewire\Report;
 
-use Livewire\Component;
-use Livewire\WithPagination;
-use Livewire\Attributes\Title;
+use App\Models\Product;
+use App\Models\Sale;
+use App\Services\ActivityLogService;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
-use App\Models\Sale;
-use App\Models\Product;
-use App\Services\ActivityLogService;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\Title;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 #[Title('Laporan Penjualan')]
 class SalesReport extends Component
@@ -20,10 +20,15 @@ class SalesReport extends Component
     use WithPagination;
 
     public string $dateFrom = '';
+
     public string $dateTo = '';
+
     public string $period = 'month';
+
     public ?int $selectedSaleId = null;
+
     public ?int $saleToDelete = null;
+
     public bool $showDeleteModal = false;
 
     // Cache key untuk invalidasi
@@ -70,6 +75,7 @@ class SalesReport extends Component
     {
         if (empty($this->dateFrom) || empty($this->dateTo)) {
             $this->period = 'custom';
+
             return;
         }
 
@@ -78,16 +84,16 @@ class SalesReport extends Component
         $dateTo = \Carbon\Carbon::parse($this->dateTo);
 
         // Check if dates match predefined periods
-        if ($dateFrom->format('Y-m-d') === $now->format('Y-m-d') && 
+        if ($dateFrom->format('Y-m-d') === $now->format('Y-m-d') &&
             $dateTo->format('Y-m-d') === $now->format('Y-m-d')) {
             $this->period = 'today';
-        } elseif ($dateFrom->format('Y-m-d') === $now->copy()->startOfWeek()->format('Y-m-d') && 
+        } elseif ($dateFrom->format('Y-m-d') === $now->copy()->startOfWeek()->format('Y-m-d') &&
                   $dateTo->format('Y-m-d') === $now->copy()->endOfWeek()->format('Y-m-d')) {
             $this->period = 'week';
-        } elseif ($dateFrom->format('Y-m-d') === $now->copy()->startOfMonth()->format('Y-m-d') && 
+        } elseif ($dateFrom->format('Y-m-d') === $now->copy()->startOfMonth()->format('Y-m-d') &&
                   $dateTo->format('Y-m-d') === $now->copy()->endOfMonth()->format('Y-m-d')) {
             $this->period = 'month';
-        } elseif ($dateFrom->format('Y-m-d') === $now->copy()->startOfYear()->format('Y-m-d') && 
+        } elseif ($dateFrom->format('Y-m-d') === $now->copy()->startOfYear()->format('Y-m-d') &&
                   $dateTo->format('Y-m-d') === $now->copy()->endOfYear()->format('Y-m-d')) {
             $this->period = 'year';
         } else {
@@ -133,7 +139,7 @@ class SalesReport extends Component
      */
     public function deleteSale(): void
     {
-        if (!$this->saleToDelete) {
+        if (! $this->saleToDelete) {
             return;
         }
 
@@ -141,37 +147,37 @@ class SalesReport extends Component
             DB::transaction(function () {
                 $sale = Sale::with('items:id,sale_id,product_id,quantity')->findOrFail($this->saleToDelete);
                 $invoiceNumber = $sale->invoice_number;
-                
+
                 // Kembalikan stok produk
                 foreach ($sale->items as $item) {
                     Product::where('id', $item->product_id)->increment('stock', $item->quantity);
                 }
-                
+
                 // Hapus items dan sale (soft delete)
                 $sale->items()->delete();
                 $sale->delete();
-                
+
                 // Log activity
                 ActivityLogService::logSaleDeleted($invoiceNumber);
             });
-            
+
             // Clear cache
             Cache::forget('pos_products_active');
-            
+
             // Reset state
             $this->saleToDelete = null;
             $this->showDeleteModal = false;
             $this->selectedSaleId = null;
-            
+
             // Update cache key untuk refresh computed properties
             $this->updateCacheKey();
-            
+
             $this->dispatch('toast', message: 'Transaksi berhasil dihapus', type: 'success');
-            
+
         } catch (\Exception $e) {
-            Log::error('Delete Sale Error: ' . $e->getMessage(), ['sale_id' => $this->saleToDelete]);
-            $this->dispatch('toast', message: 'Gagal menghapus transaksi: ' . $e->getMessage(), type: 'error');
-            
+            Log::error('Delete Sale Error: '.$e->getMessage(), ['sale_id' => $this->saleToDelete]);
+            $this->dispatch('toast', message: 'Gagal menghapus transaksi: '.$e->getMessage(), type: 'error');
+
             $this->saleToDelete = null;
             $this->showDeleteModal = false;
         }
@@ -180,8 +186,10 @@ class SalesReport extends Component
     #[Computed]
     public function selectedSale()
     {
-        if (!$this->selectedSaleId) return null;
-        
+        if (! $this->selectedSaleId) {
+            return null;
+        }
+
         return Sale::with(['items:id,sale_id,product_id,product_name,quantity,price,subtotal', 'items.product:id,name', 'cashier:id,name'])
             ->select('id', 'invoice_number', 'cashier_id', 'payment_method', 'total_amount', 'payment_amount', 'change_amount', 'notes', 'created_at')
             ->find($this->selectedSaleId);
@@ -211,17 +219,17 @@ class SalesReport extends Component
             WHERE date BETWEEN ? AND ? AND deleted_at IS NULL
         ", [$this->dateFrom, $this->dateTo]);
 
-        return $result[0] ?? (object)[
+        return $result[0] ?? (object) [
             'total' => 0, 'revenue' => 0, 'avg_amount' => 0, 'max_amount' => 0,
             'cash_count' => 0, 'transfer_count' => 0, 'qris_count' => 0,
-            'cash_amount' => 0, 'transfer_amount' => 0, 'qris_amount' => 0
+            'cash_amount' => 0, 'transfer_amount' => 0, 'qris_amount' => 0,
         ];
     }
 
     #[Computed]
     public function topProducts()
     {
-        return DB::select("
+        return DB::select('
             SELECT p.name, SUM(si.quantity) as total_qty, SUM(si.subtotal) as total_revenue
             FROM sale_items si
             INNER JOIN sales s ON si.sale_id = s.id
@@ -230,31 +238,31 @@ class SalesReport extends Component
             GROUP BY p.id, p.name
             ORDER BY total_revenue DESC
             LIMIT 5
-        ", [$this->dateFrom, $this->dateTo]);
+        ', [$this->dateFrom, $this->dateTo]);
     }
 
     #[Computed]
     public function chartData()
     {
         // Query daily revenue dalam satu query
-        $dailyData = collect(DB::select("
+        $dailyData = collect(DB::select('
             SELECT DATE(date) as day, SUM(total_amount) as revenue
             FROM sales 
             WHERE date BETWEEN ? AND ? AND deleted_at IS NULL
             GROUP BY DATE(date)
-        ", [$this->dateFrom, $this->dateTo]))->pluck('revenue', 'day')->toArray();
+        ', [$this->dateFrom, $this->dateTo]))->pluck('revenue', 'day')->toArray();
 
         $labels = [];
         $revenue = [];
-        
+
         // Generate labels untuk semua tanggal dalam range
         $start = \Carbon\Carbon::parse($this->dateFrom);
         $end = \Carbon\Carbon::parse($this->dateTo);
-        
+
         while ($start <= $end) {
             $key = $start->format('Y-m-d');
             $labels[] = $start->format('d/m');
-            $revenue[] = (float)($dailyData[$key] ?? 0);
+            $revenue[] = (float) ($dailyData[$key] ?? 0);
             $start->addDay();
         }
 
@@ -264,18 +272,19 @@ class SalesReport extends Component
     #[Computed]
     public function hourlySales()
     {
-        $data = collect(DB::select("
+        $data = collect(DB::select('
             SELECT HOUR(created_at) as hour, COUNT(*) as count
             FROM sales 
             WHERE date BETWEEN ? AND ? AND deleted_at IS NULL
             GROUP BY HOUR(created_at)
-        ", [$this->dateFrom, $this->dateTo]))->pluck('count', 'hour')->toArray();
+        ', [$this->dateFrom, $this->dateTo]))->pluck('count', 'hour')->toArray();
 
         // Fill semua 24 jam
         $hourly = array_fill(0, 24, 0);
         foreach ($data as $hour => $count) {
-            $hourly[(int)$hour] = (int)$count;
+            $hourly[(int) $hour] = (int) $count;
         }
+
         return $hourly;
     }
 
@@ -284,11 +293,13 @@ class SalesReport extends Component
     {
         $hourly = $this->hourlySales;
         $maxCount = max($hourly);
-        if ($maxCount === 0) return null;
-        
+        if ($maxCount === 0) {
+            return null;
+        }
+
         return [
             'hour' => array_search($maxCount, $hourly),
-            'count' => $maxCount
+            'count' => $maxCount,
         ];
     }
 
@@ -296,18 +307,20 @@ class SalesReport extends Component
     public function paymentSummary()
     {
         $stats = $this->reportData;
-        if ($stats->total == 0) return [];
+        if ($stats->total == 0) {
+            return [];
+        }
 
         $methods = [
-            ['name' => 'Cash', 'count' => (int)$stats->cash_count, 'amount' => (float)$stats->cash_amount, 'color' => 'emerald'],
-            ['name' => 'Transfer', 'count' => (int)$stats->transfer_count, 'amount' => (float)$stats->transfer_amount, 'color' => 'blue'],
-            ['name' => 'QRIS', 'count' => (int)$stats->qris_count, 'amount' => (float)$stats->qris_amount, 'color' => 'violet']
+            ['name' => 'Cash', 'count' => (int) $stats->cash_count, 'amount' => (float) $stats->cash_amount, 'color' => 'emerald'],
+            ['name' => 'Transfer', 'count' => (int) $stats->transfer_count, 'amount' => (float) $stats->transfer_amount, 'color' => 'blue'],
+            ['name' => 'QRIS', 'count' => (int) $stats->qris_count, 'amount' => (float) $stats->qris_amount, 'color' => 'violet'],
         ];
 
         return collect($methods)
-            ->filter(fn($m) => $m['count'] > 0)
-            ->map(fn($m) => array_merge($m, [
-                'percentage' => round(($m['count'] / $stats->total) * 100, 1)
+            ->filter(fn ($m) => $m['count'] > 0)
+            ->map(fn ($m) => array_merge($m, [
+                'percentage' => round(($m['count'] / $stats->total) * 100, 1),
             ]))
             ->values()
             ->toArray();

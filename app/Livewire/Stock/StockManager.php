@@ -2,12 +2,17 @@
 
 namespace App\Livewire\Stock;
 
+use App\Models\Product;
+use App\Models\ProductVariant;
+use App\Models\StockAdjustment;
+use App\Services\ProductService;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Livewire\Attributes\{Title, Computed, Url};
-use App\Models\{Product, ProductVariant, StockAdjustment};
-use App\Services\ProductService;
-use Illuminate\Support\Facades\{DB, Cache};
 
 #[Title('Manajemen Stok')]
 class StockManager extends Component
@@ -16,32 +21,42 @@ class StockManager extends Component
 
     #[Url]
     public string $activeTab = 'products';
-    
+
     #[Url(except: '')]
     public string $search = '';
-    
+
     #[Url(except: 'all')]
     public string $stockFilter = 'all';
-    
+
     public string $categoryFilter = '';
+
     public string $historySearch = '';
+
     public string $historyType = 'all';
-    
+
     // Modal state
     public bool $showAdjustModal = false;
+
     public ?int $selectedProductId = null;
+
     public ?int $selectedVariantId = null;
+
     public string $adjustType = 'in';
+
     public int $adjustQuantity = 1;
+
     public string $adjustReason = '';
-    
+
     // Expanded variants
     public array $expandedProducts = [];
-    
+
     // Bulk
     public array $selectedProducts = [];
+
     public bool $showBulkModal = false;
+
     public string $bulkType = 'in';
+
     public string $bulkReason = '';
 
     protected function rules(): array
@@ -52,9 +67,20 @@ class StockManager extends Component
         ];
     }
 
-    public function updatingSearch(): void { $this->resetPage(); }
-    public function updatingStockFilter(): void { $this->resetPage(); }
-    public function updatingHistorySearch(): void { $this->resetPage('historyPage'); }
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStockFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingHistorySearch(): void
+    {
+        $this->resetPage('historyPage');
+    }
 
     public function setTab(string $tab): void
     {
@@ -108,16 +134,16 @@ class StockManager extends Component
     public function saveAdjustment(): void
     {
         $this->validate();
-        
+
         try {
             $product = Product::find($this->selectedProductId);
-            
-            if (!$product) {
+
+            if (! $product) {
                 throw new \Exception('Produk tidak ditemukan.');
             }
 
             // If product has variants, variant must be selected
-            if ($product->has_variants && !$this->selectedVariantId) {
+            if ($product->has_variants && ! $this->selectedVariantId) {
                 throw new \Exception('Pilih varian terlebih dahulu.');
             }
 
@@ -128,7 +154,7 @@ class StockManager extends Component
                 $this->adjustReason,
                 $this->selectedVariantId
             );
-            
+
             $this->closeAdjustModal();
             Cache::forget('stock:stats');
             $this->dispatch('notify', type: 'success', message: 'Stok berhasil diperbarui');
@@ -143,17 +169,20 @@ class StockManager extends Component
     public function quickIncrement(int $productId): void
     {
         $product = Product::find($productId);
-        if (!$product) return;
-        
+        if (! $product) {
+            return;
+        }
+
         if ($product->has_variants) {
             // Expand to show variants instead
-            if (!in_array($productId, $this->expandedProducts)) {
+            if (! in_array($productId, $this->expandedProducts)) {
                 $this->expandedProducts[] = $productId;
             }
             $this->dispatch('notify', type: 'info', message: 'Pilih varian untuk adjust stok');
+
             return;
         }
-        
+
         $this->doQuickAdjust($productId, 'in', 1, 'Quick +1');
     }
 
@@ -163,21 +192,25 @@ class StockManager extends Component
     public function quickDecrement(int $productId): void
     {
         $product = Product::find($productId);
-        if (!$product) return;
-        
+        if (! $product) {
+            return;
+        }
+
         if ($product->has_variants) {
-            if (!in_array($productId, $this->expandedProducts)) {
+            if (! in_array($productId, $this->expandedProducts)) {
                 $this->expandedProducts[] = $productId;
             }
             $this->dispatch('notify', type: 'info', message: 'Pilih varian untuk adjust stok');
+
             return;
         }
-        
+
         if ($product->stock <= 0) {
             $this->dispatch('notify', type: 'error', message: 'Stok sudah habis');
+
             return;
         }
-        
+
         $this->doQuickAdjust($productId, 'out', 1, 'Quick -1');
     }
 
@@ -187,8 +220,10 @@ class StockManager extends Component
     public function quickIncrementVariant(int $variantId): void
     {
         $variant = ProductVariant::find($variantId);
-        if (!$variant) return;
-        
+        if (! $variant) {
+            return;
+        }
+
         $this->doQuickAdjust($variant->product_id, 'in', 1, 'Quick +1', $variantId);
     }
 
@@ -198,13 +233,16 @@ class StockManager extends Component
     public function quickDecrementVariant(int $variantId): void
     {
         $variant = ProductVariant::find($variantId);
-        if (!$variant) return;
-        
-        if ($variant->stock <= 0) {
-            $this->dispatch('notify', type: 'error', message: 'Stok varian sudah habis');
+        if (! $variant) {
             return;
         }
-        
+
+        if ($variant->stock <= 0) {
+            $this->dispatch('notify', type: 'error', message: 'Stok varian sudah habis');
+
+            return;
+        }
+
         $this->doQuickAdjust($variant->product_id, 'out', 1, 'Quick -1', $variantId);
     }
 
@@ -226,9 +264,10 @@ class StockManager extends Component
         // Skip variant products for bulk selection
         if ($product && $product->has_variants) {
             $this->dispatch('notify', type: 'info', message: 'Produk varian tidak dapat dipilih untuk bulk adjust');
+
             return;
         }
-        
+
         if (in_array($productId, $this->selectedProducts)) {
             $this->selectedProducts = array_values(array_diff($this->selectedProducts, [$productId]));
         } else {
@@ -239,15 +278,20 @@ class StockManager extends Component
     public function selectAllVisible(): void
     {
         // Only select non-variant products
-        $ids = $this->products->filter(fn($p) => !$p->has_variants)->pluck('id')->toArray();
+        $ids = $this->products->filter(fn ($p) => ! $p->has_variants)->pluck('id')->toArray();
         $this->selectedProducts = count($this->selectedProducts) === count($ids) ? [] : $ids;
     }
 
-    public function clearSelection(): void { $this->selectedProducts = []; }
+    public function clearSelection(): void
+    {
+        $this->selectedProducts = [];
+    }
 
     public function openBulkModal(): void
     {
-        if (empty($this->selectedProducts)) return;
+        if (empty($this->selectedProducts)) {
+            return;
+        }
         $this->showBulkModal = true;
     }
 
@@ -272,7 +316,8 @@ class StockManager extends Component
                 try {
                     $service->adjustStock($id, $this->bulkType, $this->adjustQuantity, $this->bulkReason);
                     $success++;
-                } catch (\Exception $e) {}
+                } catch (\Exception $e) {
+                }
             }
         });
 
@@ -295,7 +340,7 @@ class StockManager extends Component
                 COALESCE(SUM(stock * cost_price), 0) as stock_cost,
                 COALESCE(SUM(stock * (price - cost_price)), 0) as stock_profit
             ')->first();
-            
+
             return [
                 'total' => (int) $r->total,
                 'low' => (int) $r->low_stock,
@@ -311,8 +356,7 @@ class StockManager extends Component
     #[Computed]
     public function categories(): array
     {
-        return Cache::remember('product:categories', 300, fn() => 
-            Product::whereNotNull('category')->distinct()->orderBy('category')->pluck('category')->toArray()
+        return Cache::remember('product:categories', 300, fn () => Product::whereNotNull('category')->distinct()->orderBy('category')->pluck('category')->toArray()
         );
     }
 
@@ -321,14 +365,13 @@ class StockManager extends Component
     {
         return Product::query()
             ->select(['id', 'name', 'sku', 'category', 'stock', 'min_stock', 'price', 'cost_price', 'image', 'has_variants'])
-            ->with(['variants' => fn($q) => $q->where('is_active', true)->orderBy('variant_name')])
-            ->when($this->search, fn($q) => $q->where(fn($sub) => 
-                $sub->where('name', 'like', "%{$this->search}%")->orWhere('sku', 'like', "%{$this->search}%")
+            ->with(['variants' => fn ($q) => $q->where('is_active', true)->orderBy('variant_name')])
+            ->when($this->search, fn ($q) => $q->where(fn ($sub) => $sub->where('name', 'like', "%{$this->search}%")->orWhere('sku', 'like', "%{$this->search}%")
             ))
-            ->when($this->categoryFilter, fn($q) => $q->where('category', $this->categoryFilter))
-            ->when($this->stockFilter === 'low', fn($q) => $q->whereColumn('stock', '<=', 'min_stock')->where('stock', '>', 0))
-            ->when($this->stockFilter === 'out', fn($q) => $q->where('stock', '<=', 0))
-            ->when($this->stockFilter === 'normal', fn($q) => $q->whereColumn('stock', '>', 'min_stock'))
+            ->when($this->categoryFilter, fn ($q) => $q->where('category', $this->categoryFilter))
+            ->when($this->stockFilter === 'low', fn ($q) => $q->whereColumn('stock', '<=', 'min_stock')->where('stock', '>', 0))
+            ->when($this->stockFilter === 'out', fn ($q) => $q->where('stock', '<=', 0))
+            ->when($this->stockFilter === 'normal', fn ($q) => $q->whereColumn('stock', '>', 'min_stock'))
             ->orderByRaw('CASE WHEN stock <= 0 THEN 0 WHEN stock <= min_stock THEN 1 ELSE 2 END')
             ->orderBy('name')
             ->paginate(20);
@@ -337,7 +380,7 @@ class StockManager extends Component
     #[Computed]
     public function selectedProduct(): ?Product
     {
-        return $this->selectedProductId ? Product::with(['variants' => fn($q) => $q->where('is_active', true)])->find($this->selectedProductId) : null;
+        return $this->selectedProductId ? Product::with(['variants' => fn ($q) => $q->where('is_active', true)])->find($this->selectedProductId) : null;
     }
 
     #[Computed]
@@ -352,6 +395,7 @@ class StockManager extends Component
         if ($this->selectedVariantId) {
             return $this->selectedVariant;
         }
+
         return $this->selectedProduct;
     }
 
@@ -360,10 +404,9 @@ class StockManager extends Component
     {
         return StockAdjustment::query()
             ->with(['product:id,name,sku', 'user:id,name', 'variant:id,variant_name'])
-            ->when($this->historySearch, fn($q) => $q->whereHas('product', fn($sub) => 
-                $sub->where('name', 'like', "%{$this->historySearch}%")
+            ->when($this->historySearch, fn ($q) => $q->whereHas('product', fn ($sub) => $sub->where('name', 'like', "%{$this->historySearch}%")
             ))
-            ->when($this->historyType !== 'all', fn($q) => $q->where('type', $this->historyType))
+            ->when($this->historyType !== 'all', fn ($q) => $q->where('type', $this->historyType))
             ->recent()
             ->paginate(15, pageName: 'historyPage');
     }

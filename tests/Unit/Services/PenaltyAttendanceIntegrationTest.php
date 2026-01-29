@@ -2,23 +2,23 @@
 
 namespace Tests\Unit\Services;
 
-use Tests\TestCase;
-use App\Services\PenaltyService;
-use App\Services\AttendanceService;
-use App\Models\User;
-use App\Models\PenaltyType;
+use App\Models\LeaveRequest;
 use App\Models\Penalty;
+use App\Models\PenaltyType;
 use App\Models\Schedule;
 use App\Models\ScheduleAssignment;
-use App\Models\LeaveRequest;
-use Carbon\Carbon;
+use App\Models\User;
+use App\Services\AttendanceService;
+use App\Services\PenaltyService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class PenaltyAttendanceIntegrationTest extends TestCase
 {
     use RefreshDatabase;
 
     protected PenaltyService $penaltyService;
+
     protected AttendanceService $attendanceService;
 
     protected function setUp(): void
@@ -26,7 +26,7 @@ class PenaltyAttendanceIntegrationTest extends TestCase
         parent::setUp();
         $this->penaltyService = app(PenaltyService::class);
         $this->attendanceService = app(AttendanceService::class);
-        
+
         // Seed penalty types
         $this->seedPenaltyTypes();
     }
@@ -195,7 +195,7 @@ class PenaltyAttendanceIntegrationTest extends TestCase
     public function attendance_service_checks_approved_leave_correctly()
     {
         $user = User::factory()->create();
-        
+
         LeaveRequest::factory()->create([
             'user_id' => $user->id,
             'start_date' => today(),

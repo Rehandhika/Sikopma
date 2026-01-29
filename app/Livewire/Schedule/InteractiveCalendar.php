@@ -2,35 +2,47 @@
 
 namespace App\Livewire\Schedule;
 
-use Livewire\Component;
-use Livewire\WithPagination;
+use App\Exceptions\ScheduleConflictException;
 use App\Models\ScheduleAssignment;
 use App\Models\User;
 use App\Repositories\ScheduleRepository;
-use App\Services\ScheduleService;
 use App\Services\ActivityLogService;
-use App\Exceptions\ScheduleConflictException;
+use App\Services\ScheduleService;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class InteractiveCalendar extends Component
 {
     use WithPagination;
 
     public $currentDate;
+
     public $viewMode = 'month'; // month, week, day
+
     public $selectedUsers = [];
+
     public $draggedSchedule = null;
+
     public $dropTarget = null;
+
     public $showConflictModal = false;
+
     public $conflictDetails = [];
+
     public $searchUser = '';
+
     public $availableUsers = [];
+
     public $selectedDate = null;
+
     public $selectedSession = null;
+
     public $showAssignModal = false;
 
     protected $scheduleRepository;
+
     protected $scheduleService;
 
     protected $listeners = [
@@ -68,13 +80,13 @@ class InteractiveCalendar extends Component
     private function getSchedules(): Collection
     {
         $dateRange = $this->getDateRange();
-        
+
         $query = ScheduleAssignment::whereBetween('date', [$dateRange['start'], $dateRange['end']])
             ->with(['user', 'schedule'])
             ->orderBy('date')
             ->orderBy('session');
 
-        if (!empty($this->selectedUsers)) {
+        if (! empty($this->selectedUsers)) {
             $query->whereIn('user_id', $this->selectedUsers);
         }
 
@@ -116,7 +128,7 @@ class InteractiveCalendar extends Component
         foreach ($period as $date) {
             $dateStr = $date->format('Y-m-d');
             $daySchedules = $schedules->where('date', $dateStr);
-            
+
             $data[$dateStr] = [
                 'date' => $date,
                 'schedules' => $daySchedules->groupBy('session'),
@@ -180,13 +192,13 @@ class InteractiveCalendar extends Component
 
     public function handleDrop($date, $session)
     {
-        if (!$this->draggedSchedule) {
+        if (! $this->draggedSchedule) {
             return;
         }
 
         try {
             $targetDate = Carbon::parse($date);
-            
+
             // Check for conflicts
             $hasConflict = $this->scheduleRepository->hasConflict(
                 $this->draggedSchedule->user_id,
@@ -201,6 +213,7 @@ class InteractiveCalendar extends Component
                     'session' => $session,
                 ];
                 $this->showConflictModal = true;
+
                 return;
             }
 
@@ -214,7 +227,7 @@ class InteractiveCalendar extends Component
             $this->draggedSchedule = null;
 
         } catch (\Exception $e) {
-            $this->dispatch('error', 'Gagal memindahkan jadwal: ' . $e->getMessage());
+            $this->dispatch('error', 'Gagal memindahkan jadwal: '.$e->getMessage());
         }
     }
 
@@ -240,11 +253,11 @@ class InteractiveCalendar extends Component
 
         try {
             $date = Carbon::parse($this->selectedDate);
-            
+
             foreach ($this->selectedUsers as $userId) {
                 // Check for conflicts
                 if ($this->scheduleRepository->hasConflict($userId, $date, $this->selectedSession)) {
-                    throw new ScheduleConflictException('Konflik jadwal terdeteksi untuk user ' . $userId);
+                    throw new ScheduleConflictException('Konflik jadwal terdeteksi untuk user '.$userId);
                 }
 
                 // Create schedule assignment
@@ -269,14 +282,14 @@ class InteractiveCalendar extends Component
 
     public function confirmMoveWithConflict()
     {
-        if (!$this->draggedSchedule) {
+        if (! $this->draggedSchedule) {
             return;
         }
 
         try {
             // Force move despite conflict (replace existing)
             $targetDate = Carbon::parse($this->dropTarget['date']);
-            
+
             // Remove existing schedule for that slot
             ScheduleAssignment::where('user_id', $this->draggedSchedule->user_id)
                 ->where('date', $targetDate)
@@ -295,7 +308,7 @@ class InteractiveCalendar extends Component
             $this->dropTarget = null;
 
         } catch (\Exception $e) {
-            $this->dispatch('error', 'Gagal memindahkan jadwal: ' . $e->getMessage());
+            $this->dispatch('error', 'Gagal memindahkan jadwal: '.$e->getMessage());
         }
     }
 
@@ -315,8 +328,8 @@ class InteractiveCalendar extends Component
 
         if ($this->searchUser) {
             $query->where(function ($q) {
-                $q->where('name', 'like', '%' . $this->searchUser . '%')
-                  ->orWhere('nim', 'like', '%' . $this->searchUser . '%');
+                $q->where('name', 'like', '%'.$this->searchUser.'%')
+                    ->orWhere('nim', 'like', '%'.$this->searchUser.'%');
             });
         }
 
@@ -331,7 +344,7 @@ class InteractiveCalendar extends Component
     public function getScheduleStats()
     {
         $dateRange = $this->getDateRange();
-        
+
         return $this->scheduleRepository->getScheduleStats(
             $dateRange['start'],
             $dateRange['end']
@@ -348,14 +361,14 @@ class InteractiveCalendar extends Component
             );
 
             // Log activity
-            $period = $dateRange['start']->format('d/m/Y') . ' - ' . $dateRange['end']->format('d/m/Y');
+            $period = $dateRange['start']->format('d/m/Y').' - '.$dateRange['end']->format('d/m/Y');
             ActivityLogService::logReportExported('Jadwal Interaktif', $period);
 
             // Generate CSV or PDF export
             $this->dispatch('scheduleExported', 'Jadwal berhasil diekspor');
-            
+
         } catch (\Exception $e) {
-            $this->dispatch('error', 'Gagal mengekspor jadwal: ' . $e->getMessage());
+            $this->dispatch('error', 'Gagal mengekspor jadwal: '.$e->getMessage());
         }
     }
 }

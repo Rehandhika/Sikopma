@@ -7,6 +7,7 @@ use Exception;
 class BusinessException extends Exception
 {
     protected $errorCode;
+
     protected $statusCode;
 
     public function __construct(string $message, string $errorCode = 'BUSINESS_ERROR', int $statusCode = 400)

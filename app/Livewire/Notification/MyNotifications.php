@@ -2,15 +2,16 @@
 
 namespace App\Livewire\Notification;
 
+use App\Models\Notification;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\Notification;
 
 class MyNotifications extends Component
 {
     use WithPagination;
 
     public $filter = 'all';
+
     public $search = '';
 
     protected $queryString = ['filter', 'search'];
@@ -27,7 +28,7 @@ class MyNotifications extends Component
             ->where('id', $id)
             ->first();
 
-        if ($notification && !$notification->read_at) {
+        if ($notification && ! $notification->read_at) {
             $notification->update(['read_at' => now()]);
             $this->dispatch('notification-read', id: $id);
         }
@@ -79,8 +80,8 @@ class MyNotifications extends Component
         // Apply search
         if ($this->search) {
             $query->where(function ($q) {
-                $q->where('title', 'like', '%' . $this->search . '%')
-                  ->orWhere('message', 'like', '%' . $this->search . '%');
+                $q->where('title', 'like', '%'.$this->search.'%')
+                    ->orWhere('message', 'like', '%'.$this->search.'%');
             });
         }
 

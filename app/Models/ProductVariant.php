@@ -3,11 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
-use App\Models\StockAdjustment;
 
 class ProductVariant extends Model
 {
@@ -47,7 +46,7 @@ class ProductVariant extends Model
         static::saved(function ($variant) {
             if ($variant->product) {
                 $variant->product->invalidateVariantCache();
-                
+
                 // Auto-sync product total stock when variant stock changes
                 if ($variant->isDirty('stock') || $variant->wasRecentlyCreated) {
                     static::syncProductStock($variant->product);
@@ -70,7 +69,7 @@ class ProductVariant extends Model
      */
     protected static function syncProductStock(Product $product): void
     {
-        if (!$product->has_variants) {
+        if (! $product->has_variants) {
             return;
         }
 
@@ -157,6 +156,7 @@ class ProductVariant extends Model
         if ($this->price <= 0) {
             return 0;
         }
+
         return round((($this->price - $this->cost_price) / $this->price) * 100, 2);
     }
 

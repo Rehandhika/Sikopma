@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PenaltyHistory extends Model
@@ -57,7 +57,7 @@ class PenaltyHistory extends Model
     public function scopeForPeriod($query, $start, $end)
     {
         return $query->where('period_start', '>=', $start)
-                     ->where('period_end', '<=', $end);
+            ->where('period_end', '<=', $end);
     }
 
     /**

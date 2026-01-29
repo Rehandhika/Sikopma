@@ -21,7 +21,7 @@ return new class extends Migration
             $table->index('user_id');
             $table->index('created_at');
         });
-        
+
         // Add fulltext index only for MySQL (SQLite doesn't support it)
         $driver = Schema::getConnection()->getDriverName();
         if ($driver !== 'sqlite') {

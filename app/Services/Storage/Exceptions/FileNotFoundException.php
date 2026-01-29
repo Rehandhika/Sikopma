@@ -16,11 +16,11 @@ class FileNotFoundException extends FileStorageException
         ?\Exception $previous = null
     ) {
         $this->path = $path;
-        
+
         if (empty($message)) {
             $message = __('filestorage.storage.file_not_found', ['path' => $path]);
         }
-        
+
         parent::__construct($message, $code, $previous, ['path' => $path]);
     }
 

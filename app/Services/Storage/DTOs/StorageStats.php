@@ -48,7 +48,6 @@ class StorageStats
         return round($this->availableBytes / (1024 * 1024 * 1024), 2);
     }
 
-
     /**
      * Check if usage is above warning threshold.
      */

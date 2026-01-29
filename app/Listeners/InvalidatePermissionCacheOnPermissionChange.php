@@ -11,11 +11,11 @@ use Spatie\Permission\PermissionRegistrar;
 
 /**
  * Listener to invalidate permission cache when permissions are changed.
- * 
+ *
  * This listener handles Spatie Permission events for permission attachment
  * and detachment, ensuring that menu access states are updated
  * immediately when permissions change.
- * 
+ *
  * @see Requirements 2.3, 8.1, 8.2
  */
 class InvalidatePermissionCacheOnPermissionChange
@@ -26,8 +26,8 @@ class InvalidatePermissionCacheOnPermissionChange
 
     /**
      * Handle the event.
-     * 
-     * @param PermissionAttached|PermissionDetached $event
+     *
+     * @param  PermissionAttached|PermissionDetached  $event
      */
     public function handle($event): void
     {
@@ -36,21 +36,21 @@ class InvalidatePermissionCacheOnPermissionChange
 
     /**
      * Invalidate permission cache for the affected model.
-     * 
-     * @param PermissionAttached|PermissionDetached $event
+     *
+     * @param  PermissionAttached|PermissionDetached  $event
      */
     protected function invalidateCache($event): void
     {
         try {
             $model = $event->model;
-            
+
             // Always clear Spatie Permission's global cache
             app(PermissionRegistrar::class)->forgetCachedPermissions();
-            
+
             // If the model is a User, clear their specific menu cache
             if ($model instanceof User) {
                 $this->menuAccessService->invalidateUserCache($model->id);
-                
+
                 Log::info('Permission cache invalidated for user on permission change', [
                     'user_id' => $model->id,
                     'user_name' => $model->name ?? 'Unknown',
@@ -61,7 +61,7 @@ class InvalidatePermissionCacheOnPermissionChange
                 // If permission is attached to a Role, we need to invalidate
                 // cache for all users with that role
                 $this->invalidateCacheForUsersWithRole($model);
-                
+
                 Log::info('Permission cache invalidated for role on permission change', [
                     'role' => $model->name ?? 'Unknown',
                     'permission' => $event->permission->name ?? 'Unknown',
@@ -78,23 +78,23 @@ class InvalidatePermissionCacheOnPermissionChange
 
     /**
      * Invalidate cache for all users with a specific role.
-     * 
-     * @param mixed $role
+     *
+     * @param  mixed  $role
      */
     protected function invalidateCacheForUsersWithRole($role): void
     {
-        if (!method_exists($role, 'users')) {
+        if (! method_exists($role, 'users')) {
             return;
         }
 
         try {
             // Get all users with this role and invalidate their cache
             $users = $role->users()->get();
-            
+
             foreach ($users as $user) {
                 $this->menuAccessService->invalidateUserCache($user->id);
             }
-            
+
             Log::info('Permission cache invalidated for users with role', [
                 'role' => $role->name ?? 'Unknown',
                 'affected_users_count' => $users->count(),

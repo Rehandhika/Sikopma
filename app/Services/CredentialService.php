@@ -6,11 +6,10 @@ use App\Jobs\SendInitialCredentialsJob;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 /**
  * Service untuk mengelola kredensial user
- * 
+ *
  * Menyediakan method untuk:
  * - Generate password random
  * - Kirim email kredensial awal
@@ -26,28 +25,28 @@ class CredentialService
     /**
      * Generate random password yang aman
      */
-    public function generatePassword(int $length = null): string
+    public function generatePassword(?int $length = null): string
     {
         $length = $length ?? $this->passwordLength;
-        
+
         // Generate password dengan kombinasi karakter
         $uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // Tanpa I, O (mirip 1, 0)
         $lowercase = 'abcdefghjkmnpqrstuvwxyz'; // Tanpa i, l, o
         $numbers = '23456789'; // Tanpa 0, 1 (mirip O, l)
         $special = '!@#$%&*';
-        
+
         // Pastikan minimal ada 1 dari setiap jenis
         $password = $uppercase[random_int(0, strlen($uppercase) - 1)];
         $password .= $lowercase[random_int(0, strlen($lowercase) - 1)];
         $password .= $numbers[random_int(0, strlen($numbers) - 1)];
         $password .= $special[random_int(0, strlen($special) - 1)];
-        
+
         // Isi sisa dengan random dari semua karakter
-        $allChars = $uppercase . $lowercase . $numbers . $special;
+        $allChars = $uppercase.$lowercase.$numbers.$special;
         for ($i = 4; $i < $length; $i++) {
             $password .= $allChars[random_int(0, strlen($allChars) - 1)];
         }
-        
+
         // Shuffle password agar tidak predictable
         return str_shuffle($password);
     }
@@ -61,29 +60,29 @@ class CredentialService
         $uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
         $lowercase = 'abcdefghjkmnpqrstuvwxyz';
         $numbers = '23456789';
-        
+
         $password = $uppercase[random_int(0, strlen($uppercase) - 1)];
         $password .= $lowercase[random_int(0, strlen($lowercase) - 1)];
         $password .= $numbers[random_int(0, strlen($numbers) - 1)];
-        
-        $allChars = $uppercase . $lowercase . $numbers;
+
+        $allChars = $uppercase.$lowercase.$numbers;
         for ($i = 3; $i < $length; $i++) {
             $password .= $allChars[random_int(0, strlen($allChars) - 1)];
         }
-        
+
         return str_shuffle($password);
     }
 
     /**
      * Kirim email kredensial awal ke user
-     * 
-     * @param User $user User yang akan dikirim email
-     * @param string|null $plainPassword Password plain text (jika null, akan di-generate)
-     * @param bool $updatePassword Apakah update password user di database
+     *
+     * @param  User  $user  User yang akan dikirim email
+     * @param  string|null  $plainPassword  Password plain text (jika null, akan di-generate)
+     * @param  bool  $updatePassword  Apakah update password user di database
      * @return array ['success' => bool, 'password' => string, 'message' => string]
      */
     public function sendInitialCredentials(
-        User $user, 
+        User $user,
         ?string $plainPassword = null,
         bool $updatePassword = true
     ): array {
@@ -130,16 +129,16 @@ class CredentialService
             return [
                 'success' => false,
                 'password' => null,
-                'message' => 'Gagal mengirim email: ' . $e->getMessage(),
+                'message' => 'Gagal mengirim email: '.$e->getMessage(),
             ];
         }
     }
 
     /**
      * Bulk send kredensial ke multiple users
-     * 
-     * @param array $userIds Array of user IDs
-     * @param int $delayBetween Delay antar email dalam detik (untuk rate limiting)
+     *
+     * @param  array  $userIds  Array of user IDs
+     * @param  int  $delayBetween  Delay antar email dalam detik (untuk rate limiting)
      * @return array ['total' => int, 'success' => int, 'failed' => int, 'results' => array]
      */
     public function bulkSendCredentials(array $userIds, int $delayBetween = 5): array
@@ -155,14 +154,15 @@ class CredentialService
 
         foreach ($userIds as $userId) {
             $user = User::find($userId);
-            
-            if (!$user) {
+
+            if (! $user) {
                 $results['failed']++;
                 $results['results'][] = [
                     'user_id' => $userId,
                     'success' => false,
                     'message' => 'User tidak ditemukan',
                 ];
+
                 continue;
             }
 

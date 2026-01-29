@@ -20,11 +20,11 @@ class SecurityHeaders
         // Disable XSS protection as it can cause issues with modern browsers
         // $response->headers->set('X-XSS-Protection', '1; mode=block');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
-        
+
         // Content Security Policy - temporarily disabled for debugging
         if (app()->environment('local', 'testing')) {
             // CSP disabled for development debugging
-            // $response->headers->set('Content-Security-Policy', 
+            // $response->headers->set('Content-Security-Policy',
             //     "default-src 'self'; " .
             //     "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:5173 http://localhost:5174 ws://localhost:5173 ws://localhost:5174; " .
             //     "style-src 'self' 'unsafe-inline' http://localhost:5173 http://localhost:5174; " .
@@ -34,16 +34,16 @@ class SecurityHeaders
             // );
         } else {
             // Production CSP - stricter
-            $response->headers->set('Content-Security-Policy', 
-                "default-src 'self'; " .
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " .
-                "style-src 'self' 'unsafe-inline'; " .
-                "img-src 'self' data: https:; " .
-                "font-src 'self' data:; " .
+            $response->headers->set('Content-Security-Policy',
+                "default-src 'self'; ".
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval'; ".
+                "style-src 'self' 'unsafe-inline'; ".
+                "img-src 'self' data: https:; ".
+                "font-src 'self' data:; ".
                 "connect-src 'self'"
             );
         }
-        
+
         // Remove server information
         $response->headers->remove('Server');
         $response->headers->remove('X-Powered-By');

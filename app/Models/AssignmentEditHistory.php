@@ -64,7 +64,7 @@ class AssignmentEditHistory extends Model
     // Helper Methods
     public function getChangeSummary(): string
     {
-        $action = match($this->action) {
+        $action = match ($this->action) {
             'created' => 'menambahkan assignment',
             'updated' => 'mengubah assignment',
             'deleted' => 'menghapus assignment',
@@ -80,7 +80,7 @@ class AssignmentEditHistory extends Model
 
     public function getAffectedFields(): array
     {
-        if (!$this->old_values || !$this->new_values) {
+        if (! $this->old_values || ! $this->new_values) {
             return [];
         }
 
@@ -90,7 +90,7 @@ class AssignmentEditHistory extends Model
 
         foreach ($newValues as $field => $newValue) {
             $oldValue = $oldValues[$field] ?? null;
-            
+
             if ($oldValue !== $newValue) {
                 $affected[] = [
                     'field' => $field,
@@ -106,7 +106,7 @@ class AssignmentEditHistory extends Model
 
     private function getFieldLabel(string $field): string
     {
-        return match($field) {
+        return match ($field) {
             'user_id' => 'Anggota',
             'date' => 'Tanggal',
             'session' => 'Sesi',

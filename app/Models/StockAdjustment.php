@@ -2,9 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Model;
 
 class StockAdjustment extends Model
 {
@@ -31,13 +30,8 @@ class StockAdjustment extends Model
 
     /**
      * Create a stock adjustment for a product (non-variant)
-     * 
-     * @param int $productId
-     * @param string $type 'in' or 'out'
-     * @param int $quantity
-     * @param string $reason
-     * @param int|null $userId
-     * @return static
+     *
+     * @param  string  $type  'in' or 'out'
      */
     public static function createForProduct(
         int $productId,
@@ -48,7 +42,7 @@ class StockAdjustment extends Model
     ): static {
         $product = Product::findOrFail($productId);
         $previousStock = $product->stock;
-        
+
         return static::create([
             'user_id' => $userId ?? auth()->id(),
             'product_id' => $productId,
@@ -56,8 +50,8 @@ class StockAdjustment extends Model
             'type' => $type,
             'quantity' => $quantity,
             'previous_stock' => $previousStock,
-            'new_stock' => $type === 'in' 
-                ? $previousStock + $quantity 
+            'new_stock' => $type === 'in'
+                ? $previousStock + $quantity
                 : $previousStock - $quantity,
             'reason' => $reason,
         ]);
@@ -66,13 +60,8 @@ class StockAdjustment extends Model
     /**
      * Create a stock adjustment for a variant
      * Requirements: 6.1, 6.2
-     * 
-     * @param int $variantId
-     * @param string $type 'in' or 'out'
-     * @param int $quantity
-     * @param string $reason
-     * @param int|null $userId
-     * @return static
+     *
+     * @param  string  $type  'in' or 'out'
      */
     public static function createForVariant(
         int $variantId,
@@ -83,7 +72,7 @@ class StockAdjustment extends Model
     ): static {
         $variant = ProductVariant::findOrFail($variantId);
         $previousStock = $variant->stock;
-        
+
         return static::create([
             'user_id' => $userId ?? auth()->id(),
             'product_id' => $variant->product_id,
@@ -91,8 +80,8 @@ class StockAdjustment extends Model
             'type' => $type,
             'quantity' => $quantity,
             'previous_stock' => $previousStock,
-            'new_stock' => $type === 'in' 
-                ? $previousStock + $quantity 
+            'new_stock' => $type === 'in'
+                ? $previousStock + $quantity
                 : $previousStock - $quantity,
             'reason' => $reason,
         ]);
@@ -181,7 +170,7 @@ class StockAdjustment extends Model
 
     public function getTypeLabel(): string
     {
-        return match($this->type) {
+        return match ($this->type) {
             'in' => 'Masuk',
             'out' => 'Keluar',
             default => $this->type,
@@ -204,7 +193,7 @@ class StockAdjustment extends Model
         if ($this->isVariantAdjustment() && $this->variant) {
             return $this->variant->variant_name;
         }
-        
+
         return $this->product?->name ?? 'Unknown';
     }
 }

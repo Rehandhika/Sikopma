@@ -2,17 +2,16 @@
 
 namespace App\Livewire\Product;
 
-use Livewire\Component;
-use Livewire\WithFileUploads;
 use App\Models\Product;
 use App\Models\VariantOption;
+use App\Services\ActivityLogService;
 use App\Services\ProductImageService;
 use App\Services\ProductVariantService;
-use App\Services\ActivityLogService;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Str;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 #[Layout('layouts.app')]
 #[Title('Edit Produk')]
@@ -23,21 +22,34 @@ class EditProduct extends Component
     public Product $product;
 
     public $name = '';
+
     public $sku = '';
+
     public $price = '';
+
     public $cost_price = '';
+
     public $stock = 0;
+
     public $min_stock = 5;
+
     public $category = '';
+
     public $description = '';
+
     public $status = 'active';
+
     public $image;
+
     public $imagePreview = null;
+
     public $existingImage = null;
 
     // Variant properties - simplified with free text input
     public $has_variants = false;
+
     public $selectedVariantOptions = []; // IDs of variant option types (Ukuran, Warna, etc)
+
     public $variants = []; // Array of variant rows with free text values
 
     public function mount(Product $product)
@@ -74,6 +86,7 @@ class EditProduct extends Component
                         $optionTexts[$data['option_id']] = $data['value'];
                     }
                 }
+
                 return [
                     'id' => $variant->id,
                     'option_texts' => $optionTexts, // Free text values per option
@@ -100,7 +113,7 @@ class EditProduct extends Component
             'has_variants' => 'boolean',
         ];
 
-        if (!$this->has_variants) {
+        if (! $this->has_variants) {
             $rules['stock'] = 'required|integer|min:0';
             $rules['min_stock'] = 'required|integer|min:0';
         }
@@ -148,6 +161,7 @@ class EditProduct extends Component
     {
         if (empty($this->selectedVariantOptions)) {
             $this->dispatch('toast', message: 'Pilih tipe varian terlebih dahulu.', type: 'error');
+
             return;
         }
 
@@ -179,7 +193,7 @@ class EditProduct extends Component
             return ['count' => 0, 'total_stock' => 0, 'price_range' => null];
         }
 
-        $prices = collect($this->variants)->pluck('price')->filter()->map(fn($p) => (float) $p);
+        $prices = collect($this->variants)->pluck('price')->filter()->map(fn ($p) => (float) $p);
         $totalStock = collect($this->variants)->sum('stock');
 
         return [
@@ -206,6 +220,7 @@ class EditProduct extends Component
                 ];
             }
         }
+
         return $optionValues;
     }
 
@@ -217,11 +232,13 @@ class EditProduct extends Component
         if ($this->has_variants) {
             if (empty($this->variants)) {
                 $this->dispatch('toast', message: 'Produk dengan varian harus memiliki minimal 1 varian.', type: 'error');
+
                 return;
             }
 
             if (empty($this->selectedVariantOptions)) {
                 $this->dispatch('toast', message: 'Pilih minimal satu tipe varian.', type: 'error');
+
                 return;
             }
 
@@ -229,17 +246,19 @@ class EditProduct extends Component
             $combinations = [];
             foreach ($this->variants as $index => $variant) {
                 $values = collect($variant['option_texts'])
-                    ->filter(fn($v) => trim($v) !== '')
-                    ->map(fn($v) => strtolower(trim($v)))
+                    ->filter(fn ($v) => trim($v) !== '')
+                    ->map(fn ($v) => strtolower(trim($v)))
                     ->sortKeys()
                     ->implode('|');
-                
+
                 if (empty($values)) {
-                    $this->dispatch('toast', message: 'Varian #' . ($index + 1) . ' belum diisi.', type: 'error');
+                    $this->dispatch('toast', message: 'Varian #'.($index + 1).' belum diisi.', type: 'error');
+
                     return;
                 }
                 if (isset($combinations[$values])) {
                     $this->dispatch('toast', message: 'Ada kombinasi varian yang duplikat.', type: 'error');
+
                     return;
                 }
                 $combinations[$values] = true;
@@ -248,6 +267,7 @@ class EditProduct extends Component
 
         if ($this->has_variants && $this->status === 'active' && empty($this->variants)) {
             $this->dispatch('toast', message: 'Tidak dapat mengaktifkan produk tanpa varian.', type: 'error');
+
             return;
         }
 
@@ -257,7 +277,8 @@ class EditProduct extends Component
                 $imageService = app(ProductImageService::class);
                 $imagePath = $imageService->upload($this->image, $this->product->image);
             } catch (\Exception $e) {
-                $this->dispatch('toast', message: 'Gagal upload gambar: ' . $e->getMessage(), type: 'error');
+                $this->dispatch('toast', message: 'Gagal upload gambar: '.$e->getMessage(), type: 'error');
+
                 return;
             }
         }
@@ -279,19 +300,19 @@ class EditProduct extends Component
         if ($this->has_variants) {
             $variantService = app(ProductVariantService::class);
             $variantOptions = VariantOption::findMany($this->selectedVariantOptions);
-            
+
             $existingVariantIds = $this->product->variants()->pluck('id')->toArray();
             $updatedVariantIds = [];
 
             foreach ($this->variants as $variantData) {
                 $optionValues = $this->buildOptionValues($variantData['option_texts'], $variantOptions);
-                
-                if (!empty($variantData['id'])) {
+
+                if (! empty($variantData['id'])) {
                     $variant = $this->product->variants()->find($variantData['id']);
                     if ($variant) {
                         $variant->update([
                             'option_values' => $optionValues,
-                            'variant_name' => $this->product->name . ' - ' . collect($optionValues)->pluck('value')->implode(' / '),
+                            'variant_name' => $this->product->name.' - '.collect($optionValues)->pluck('value')->implode(' / '),
                             'price' => $variantData['price'],
                             'cost_price' => $variantData['cost_price'],
                             'stock' => $variantData['stock'],
@@ -312,7 +333,7 @@ class EditProduct extends Component
             }
 
             $variantsToDelete = array_diff($existingVariantIds, $updatedVariantIds);
-            if (!empty($variantsToDelete)) {
+            if (! empty($variantsToDelete)) {
                 $this->product->variants()->whereIn('id', $variantsToDelete)->delete();
             }
 
@@ -329,6 +350,7 @@ class EditProduct extends Component
         ActivityLogService::logProductUpdated($this->name);
 
         $this->dispatch('toast', message: 'Produk berhasil diperbarui.', type: 'success');
+
         return redirect()->route('admin.products.index');
     }
 

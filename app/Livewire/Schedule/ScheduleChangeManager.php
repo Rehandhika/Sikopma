@@ -2,12 +2,17 @@
 
 namespace App\Livewire\Schedule;
 
+use App\Models\ScheduleAssignment;
+use App\Models\ScheduleChangeRequest;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Lazy;
+use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Livewire\Attributes\{Title, Layout, Url, Lazy};
-use App\Models\{ScheduleChangeRequest, ScheduleAssignment, User};
-use Carbon\Carbon;
-use Illuminate\Support\Facades\{DB, Auth, Cache};
 
 #[Title('Pengajuan Perubahan Jadwal')]
 #[Layout('layouts.app')]
@@ -24,16 +29,24 @@ class ScheduleChangeManager extends Component
 
     // Form state
     public bool $showForm = false;
+
     public ?int $selectedAssignment = null;
+
     public string $changeType = 'reschedule'; // reschedule atau cancel
+
     public string $requestedDate = '';
+
     public int $requestedSession = 0;
+
     public string $reason = '';
 
     // Modal state
     public ?int $viewingId = null;
+
     public ?int $reviewingId = null;
+
     public string $reviewAction = '';
+
     public string $reviewNotes = '';
 
     public function mount(): void
@@ -90,11 +103,12 @@ class ScheduleChangeManager extends Component
         ]);
 
         $assignment = ScheduleAssignment::find($this->selectedAssignment);
-        
+
         // Validasi: minimal 24 jam sebelum jadwal
         $deadline = $assignment->date->copy()->setTimeFromTimeString($assignment->time_start)->subHours(24);
         if (now()->gt($deadline)) {
             $this->addError('selectedAssignment', 'Pengajuan minimal 24 jam sebelum jadwal');
+
             return;
         }
 
@@ -105,6 +119,7 @@ class ScheduleChangeManager extends Component
             ->exists();
         if ($exists) {
             $this->addError('selectedAssignment', 'Sudah ada pengajuan untuk jadwal ini');
+
             return;
         }
 
@@ -116,6 +131,7 @@ class ScheduleChangeManager extends Component
                 ->exists();
             if ($conflict) {
                 $this->addError('requestedDate', 'Anda sudah punya jadwal di waktu tersebut');
+
                 return;
             }
         }
@@ -152,7 +168,7 @@ class ScheduleChangeManager extends Component
             ->where('user_id', Auth::id())
             ->where('status', 'pending')
             ->update(['status' => 'cancelled']);
-        
+
         $this->viewingId = null;
         $this->clearCache();
         $this->dispatch('toast', message: 'Pengajuan dibatalkan', type: 'success');
@@ -176,12 +192,14 @@ class ScheduleChangeManager extends Component
     public function submitReview(): void
     {
         $request = ScheduleChangeRequest::with('originalAssignment')->find($this->reviewingId);
-        if (!$request || $request->status !== 'pending') return;
+        if (! $request || $request->status !== 'pending') {
+            return;
+        }
 
         DB::beginTransaction();
         try {
             $newStatus = $this->reviewAction === 'approved' ? 'approved' : 'rejected';
-            
+
             $request->update([
                 'status' => $newStatus,
                 'admin_response' => $this->reviewNotes,
@@ -193,7 +211,7 @@ class ScheduleChangeManager extends Component
             // Jika disetujui, proses perubahan jadwal
             if ($newStatus === 'approved') {
                 $assignment = $request->originalAssignment;
-                
+
                 if ($request->change_type === 'cancel') {
                     // Batalkan jadwal - hapus assignment
                     $assignment->delete();
@@ -212,17 +230,17 @@ class ScheduleChangeManager extends Component
             }
 
             DB::commit();
-            
+
             $this->closeReview();
             $this->viewingId = null;
             $this->clearCache();
-            
+
             $msg = $this->reviewAction === 'approved' ? 'Pengajuan disetujui dan diproses' : 'Pengajuan ditolak';
             $this->dispatch('toast', message: $msg, type: 'success');
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->dispatch('toast', message: 'Gagal memproses: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal memproses: '.$e->getMessage(), type: 'error');
         }
     }
 
@@ -233,6 +251,7 @@ class ScheduleChangeManager extends Component
             2 => ['start' => '10:20', 'end' => '12:50'],
             3 => ['start' => '13:30', 'end' => '16:00'],
         ];
+
         return $times[$session][$type] ?? '00:00';
     }
 
@@ -249,7 +268,7 @@ class ScheduleChangeManager extends Component
         $isAdmin = Auth::user()->hasAnyRole(['Super Admin', 'Ketua', 'Wakil Ketua', 'BPH']);
 
         // Stats
-        $stats = Cache::remember("schedule_change_stats_{$userId}_{$this->activeTab}", 60, function () use ($userId, $isAdmin) {
+        $stats = Cache::remember("schedule_change_stats_{$userId}_{$this->activeTab}", 60, function () use ($userId) {
             if ($this->activeTab === 'my-requests') {
                 return [
                     'pending' => ScheduleChangeRequest::where('user_id', $userId)->where('status', 'pending')->count(),
@@ -257,6 +276,7 @@ class ScheduleChangeManager extends Component
                     'rejected' => ScheduleChangeRequest::where('user_id', $userId)->whereIn('status', ['rejected', 'cancelled'])->count(),
                 ];
             }
+
             return [
                 'pending' => ScheduleChangeRequest::where('status', 'pending')->count(),
                 'approved' => ScheduleChangeRequest::where('status', 'approved')->count(),
@@ -279,7 +299,7 @@ class ScheduleChangeManager extends Component
         ])->latest()->paginate(10);
 
         // My assignments for form
-        $myAssignments = $this->showForm 
+        $myAssignments = $this->showForm
             ? ScheduleAssignment::where('user_id', $userId)
                 ->where('date', '>=', now()->format('Y-m-d'))
                 ->orderBy('date')
@@ -291,7 +311,7 @@ class ScheduleChangeManager extends Component
             ? ScheduleChangeRequest::with([
                 'user:id,name,nim',
                 'originalAssignment:id,date,session,time_start,time_end',
-                'adminResponder:id,name'
+                'adminResponder:id,name',
             ])->find($this->viewingId)
             : null;
 

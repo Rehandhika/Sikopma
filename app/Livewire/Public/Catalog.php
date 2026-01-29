@@ -2,17 +2,18 @@
 
 namespace App\Livewire\Public;
 
-use App\Models\Product;
 use App\Models\Banner;
+use App\Models\Product;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Illuminate\Support\Facades\Cache;
 
 class Catalog extends Component
 {
     use WithPagination;
 
     public string $search = '';
+
     public string $category = '';
 
     protected $queryString = [
@@ -36,12 +37,12 @@ class Catalog extends Component
         $search = $this->search;
         $category = $this->category;
         $cacheKey = "products:public:page:{$page}:search:{$search}:category:{$category}";
-        
+
         $products = Cache::remember($cacheKey, 300, function () use ($search, $category, $page) {
             return Product::query()
                 ->select([
-                    'id', 'name', 'slug', 'price', 'stock', 'min_stock', 
-                    'category', 'image', 'is_featured', 'status', 'is_public', 'display_order', 'has_variants'
+                    'id', 'name', 'slug', 'price', 'stock', 'min_stock',
+                    'category', 'image', 'is_featured', 'status', 'is_public', 'display_order', 'has_variants',
                 ])
                 ->withVariantStats() // Eager load variant statistics untuk performa
                 ->with(['activeVariants' => function ($q) {
@@ -51,9 +52,9 @@ class Catalog extends Component
                 ->active()
                 ->when($search, function ($query) use ($search) {
                     $query->where(function ($q) use ($search) {
-                        $q->where('name', 'like', '%' . $search . '%')
-                          ->orWhere('description', 'like', '%' . $search . '%')
-                          ->orWhere('sku', 'like', '%' . $search . '%');
+                        $q->where('name', 'like', '%'.$search.'%')
+                            ->orWhere('description', 'like', '%'.$search.'%')
+                            ->orWhere('sku', 'like', '%'.$search.'%');
                     });
                 })
                 ->when($category, function ($query) use ($category) {

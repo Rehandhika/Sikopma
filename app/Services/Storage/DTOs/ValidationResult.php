@@ -51,7 +51,7 @@ class ValidationResult
      */
     public function isFailed(): bool
     {
-        return !$this->valid;
+        return ! $this->valid;
     }
 
     /**

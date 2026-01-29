@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AvailabilityDetail extends Model
@@ -50,7 +50,7 @@ class AvailabilityDetail extends Model
      */
     public function getDayLabelAttribute(): string
     {
-        return match($this->day) {
+        return match ($this->day) {
             'monday' => 'Senin',
             'tuesday' => 'Selasa',
             'wednesday' => 'Rabu',
@@ -67,7 +67,7 @@ class AvailabilityDetail extends Model
      */
     public function getSessionLabelAttribute(): string
     {
-        return match($this->session) {
+        return match ($this->session) {
             '1' => '07:30 - 10:00',
             '2' => '10:20 - 12:50',
             '3' => '13:30 - 16:00',

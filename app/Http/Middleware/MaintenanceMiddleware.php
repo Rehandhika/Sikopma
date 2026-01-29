@@ -47,7 +47,7 @@ class MaintenanceMiddleware
         }
 
         // Skip if maintenance is not active
-        if (!$this->isMaintenanceActive()) {
+        if (! $this->isMaintenanceActive()) {
             return $next($request);
         }
 
@@ -56,7 +56,7 @@ class MaintenanceMiddleware
             // Share maintenance status with views for banner
             View::share('maintenanceActive', true);
             View::share('maintenanceData', $this->getMaintenanceData());
-            
+
             return $next($request);
         }
 
@@ -99,8 +99,8 @@ class MaintenanceMiddleware
         }
 
         $routeName = $request->route()?->getName();
-        
-        if (!$routeName) {
+
+        if (! $routeName) {
             return false;
         }
 

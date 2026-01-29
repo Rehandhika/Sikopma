@@ -5,12 +5,12 @@ namespace App\Services\Storage;
 use App\Services\Storage\DTOs\StorageStats;
 use App\Services\Storage\DTOs\ThresholdResult;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * StorageMonitor - Service untuk monitoring penggunaan storage.
- * 
+ *
  * Bertanggung jawab untuk:
  * - Tracking total storage per file type
  * - Counting files per category
@@ -45,11 +45,11 @@ class StorageMonitor implements StorageMonitorInterface
         }
 
         $byType = $this->getUsageByType();
-        
+
         // Calculate totals
         $totalBytes = 0;
         $totalFiles = 0;
-        
+
         foreach ($byType as $typeStats) {
             $totalBytes += $typeStats['bytes'];
             $totalFiles += $typeStats['files'];
@@ -58,10 +58,10 @@ class StorageMonitor implements StorageMonitorInterface
         // Get available disk space
         $availableBytes = $this->getAvailableDiskSpace();
         $totalDiskSpace = $this->getTotalDiskSpace();
-        
+
         // Calculate usage percentage
-        $usagePercentage = $totalDiskSpace > 0 
-            ? round(($totalBytes / $totalDiskSpace) * 100, 2) 
+        $usagePercentage = $totalDiskSpace > 0
+            ? round(($totalBytes / $totalDiskSpace) * 100, 2)
             : 0;
 
         $stats = new StorageStats(
@@ -70,7 +70,7 @@ class StorageMonitor implements StorageMonitorInterface
             byType: $byType,
             availableBytes: $availableBytes,
             usagePercentage: $usagePercentage,
-            generatedAt: new \DateTimeImmutable()
+            generatedAt: new \DateTimeImmutable
         );
 
         // Cache the result
@@ -107,8 +107,8 @@ class StorageMonitor implements StorageMonitorInterface
 
         // Calculate percentages
         foreach ($result as $type => &$stats) {
-            $stats['percentage'] = $totalBytes > 0 
-                ? round(($stats['bytes'] / $totalBytes) * 100, 2) 
+            $stats['percentage'] = $totalBytes > 0
+                ? round(($stats['bytes'] / $totalBytes) * 100, 2)
                 : 0;
         }
 
@@ -169,12 +169,11 @@ class StorageMonitor implements StorageMonitorInterface
         return ThresholdResult::ok($usagePercentage, $warningThreshold, $criticalThreshold);
     }
 
-
     /**
      * Scan directory and calculate total size and file count.
      *
-     * @param string $disk Storage disk name
-     * @param string $path Directory path
+     * @param  string  $disk  Storage disk name
+     * @param  string  $path  Directory path
      * @return array{bytes: int, files: int}
      */
     protected function scanDirectory(string $disk, string $path): array
@@ -184,8 +183,8 @@ class StorageMonitor implements StorageMonitorInterface
 
         try {
             $storage = Storage::disk($disk);
-            
-            if (!$storage->exists($path)) {
+
+            if (! $storage->exists($path)) {
                 return ['bytes' => 0, 'files' => 0];
             }
 
@@ -221,9 +220,9 @@ class StorageMonitor implements StorageMonitorInterface
     /**
      * Get files with their sizes from a directory.
      *
-     * @param string $disk Storage disk name
-     * @param string $path Directory path
-     * @param string $type File type
+     * @param  string  $disk  Storage disk name
+     * @param  string  $path  Directory path
+     * @param  string  $type  File type
      * @return Collection<int, array{path: string, size: int, type: string, modified_at: string}>
      */
     protected function getFilesWithSize(string $disk, string $path, string $type): Collection
@@ -232,8 +231,8 @@ class StorageMonitor implements StorageMonitorInterface
 
         try {
             $storage = Storage::disk($disk);
-            
-            if (!$storage->exists($path)) {
+
+            if (! $storage->exists($path)) {
                 return $result;
             }
 
@@ -279,12 +278,13 @@ class StorageMonitor implements StorageMonitorInterface
             // Use public disk path as reference
             $path = Storage::disk('public')->path('');
             $available = disk_free_space($path);
-            
+
             return $available !== false ? (int) $available : 0;
         } catch (\Exception $e) {
             Log::error('StorageMonitor: Failed to get available disk space', [
                 'error' => $e->getMessage(),
             ]);
+
             return 0;
         }
     }
@@ -300,20 +300,19 @@ class StorageMonitor implements StorageMonitorInterface
             // Use public disk path as reference
             $path = Storage::disk('public')->path('');
             $total = disk_total_space($path);
-            
+
             return $total !== false ? (int) $total : 0;
         } catch (\Exception $e) {
             Log::error('StorageMonitor: Failed to get total disk space', [
                 'error' => $e->getMessage(),
             ]);
+
             return 0;
         }
     }
 
     /**
      * Check if cached statistics are still valid.
-     *
-     * @return bool
      */
     protected function isCacheValid(): bool
     {
@@ -326,8 +325,6 @@ class StorageMonitor implements StorageMonitorInterface
 
     /**
      * Clear cached statistics.
-     *
-     * @return void
      */
     public function clearCache(): void
     {
@@ -337,10 +334,6 @@ class StorageMonitor implements StorageMonitorInterface
 
     /**
      * Format bytes to human readable string.
-     *
-     * @param int $bytes
-     * @param int $precision
-     * @return string
      */
     protected function formatBytes(int $bytes, int $precision = 2): string
     {
@@ -352,15 +345,14 @@ class StorageMonitor implements StorageMonitorInterface
 
         $bytes /= pow(1024, $pow);
 
-        return round($bytes, $precision) . ' ' . $units[$pow];
+        return round($bytes, $precision).' '.$units[$pow];
     }
 
     /**
      * Get storage growth data for trending.
      * Note: This requires historical data storage which is not implemented yet.
      *
-     * @param int $days Number of days to look back
-     * @return array
+     * @param  int  $days  Number of days to look back
      */
     public function getGrowthTrend(int $days = 30): array
     {

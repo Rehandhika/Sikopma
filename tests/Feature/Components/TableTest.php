@@ -19,7 +19,7 @@ class TableTest extends TestCase
                 </x-data.table-row>
             </x-data.table>
         ');
-        
+
         $view->assertSee('Name');
         $view->assertSee('Email');
         $view->assertSee('John Doe');
@@ -40,7 +40,7 @@ class TableTest extends TestCase
                 </x-data.table-row>
             </x-data.table>
         ');
-        
+
         $view->assertSee('Row 1');
         $view->assertSee('divide-y-0', false); // Striped removes dividers
         $view->assertSee('bg-gray-50 dark:bg-gray-800/50', false); // Striped styling
@@ -58,7 +58,7 @@ class TableTest extends TestCase
                 </x-data.table-row>
             </x-data.table>
         ');
-        
+
         $view->assertSee('Compact Row');
         $view->assertSee('px-4 py-2', false); // Compact padding in header
     }
@@ -75,7 +75,7 @@ class TableTest extends TestCase
                 </x-data.table-row>
             </x-data.table>
         ');
-        
+
         $view->assertSee('Row');
         $view->assertDontSee('overflow-x-auto', false);
     }
@@ -92,7 +92,7 @@ class TableTest extends TestCase
                 </x-data.table-row>
             </x-data.table>
         ');
-        
+
         $view->assertSee('Hoverable Row');
         $view->assertSee('bg-gray-100 dark:bg-gray-800', false); // Requirement 9.2 - hover state
     }
@@ -109,7 +109,7 @@ class TableTest extends TestCase
                 </x-data.table-row>
             </x-data.table>
         ');
-        
+
         $view->assertSee('Non-hoverable Row');
     }
 
@@ -126,7 +126,7 @@ class TableTest extends TestCase
                 </x-data.table-row>
             </x-data.table>
         ');
-        
+
         $view->assertSee('bg-gray-50 dark:bg-gray-800', false); // Requirement 9.1 - gray background
         $view->assertSee('uppercase', false); // Requirement 9.1 - uppercase text
         $view->assertSee('text-xs', false); // Consistent typography
@@ -145,7 +145,7 @@ class TableTest extends TestCase
                 </x-data.table-row>
             </x-data.table>
         ');
-        
+
         $view->assertSee('dark:bg-gray-800', false); // Header dark mode
         $view->assertSee('dark:bg-gray-900', false); // Body dark mode
         $view->assertSee('dark:divide-gray-700', false); // Divider dark mode
@@ -164,7 +164,7 @@ class TableTest extends TestCase
                 </x-data.table-row>
             </x-data.table>
         ');
-        
+
         $view->assertSee('px-6 py-3', false); // Requirement 9.4 - header padding
     }
 
@@ -186,7 +186,7 @@ class TableTest extends TestCase
                 </x-data.table-row>
             </x-data.table>
         ');
-        
+
         $view->assertSee('John Doe');
         $view->assertSee('john@example.com');
         $view->assertSee('overflow-x-auto', false); // Responsive
@@ -206,7 +206,7 @@ class TableTest extends TestCase
                 </x-data.table-row>
             </x-data.table>
         ');
-        
+
         $view->assertSee('No Header Row');
         $view->assertDontSee('<thead', false);
     }
@@ -223,7 +223,7 @@ class TableTest extends TestCase
                 </x-data.table-row>
             </x-data.table>
         ');
-        
+
         $view->assertSee('Empty Headers');
         $view->assertDontSee('<thead', false);
     }

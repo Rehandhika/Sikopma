@@ -14,7 +14,7 @@ class ThumbnailService
     public static function getThumbnailUrl(string $originalPath, int $width = 80, int $height = 80): string
     {
         $thumbnailPath = self::getThumbnailPath($originalPath, $width, $height);
-        
+
         // Return cached thumbnail if exists
         if (Storage::exists($thumbnailPath)) {
             return Storage::url($thumbnailPath);
@@ -23,6 +23,7 @@ class ThumbnailService
         // Generate thumbnail on-demand
         try {
             self::generateThumbnail($originalPath, $thumbnailPath, $width, $height);
+
             return Storage::url($thumbnailPath);
         } catch (\Exception $e) {
             // Fallback to original if thumbnail generation fails
@@ -38,7 +39,7 @@ class ThumbnailService
         $pathInfo = pathinfo($originalPath);
         $directory = $pathInfo['dirname'];
         $filename = $pathInfo['filename'];
-        
+
         return "{$directory}/thumbnails/{$filename}_{$width}x{$height}.webp";
     }
 
@@ -49,8 +50,8 @@ class ThumbnailService
     private static function generateThumbnail(string $originalPath, string $thumbnailPath, int $width, int $height): void
     {
         $fullPath = Storage::path($originalPath);
-        
-        if (!file_exists($fullPath)) {
+
+        if (! file_exists($fullPath)) {
             throw new \Exception("Original file not found: {$originalPath}");
         }
 
@@ -65,11 +66,11 @@ class ThumbnailService
             IMAGETYPE_PNG => imagecreatefrompng($fullPath),
             IMAGETYPE_GIF => imagecreatefromgif($fullPath),
             IMAGETYPE_WEBP => imagecreatefromwebp($fullPath),
-            default => throw new \Exception("Unsupported image type"),
+            default => throw new \Exception('Unsupported image type'),
         };
 
         if ($sourceImage === false) {
-            throw new \Exception("Failed to create image from file");
+            throw new \Exception('Failed to create image from file');
         }
 
         // Get original dimensions
@@ -87,7 +88,7 @@ class ThumbnailService
 
         // Create thumbnail
         $thumbnail = imagecreatetruecolor($width, $height);
-        
+
         // Preserve transparency for PNG
         imagealphablending($thumbnail, false);
         imagesavealpha($thumbnail, true);
@@ -101,7 +102,7 @@ class ThumbnailService
 
         // Create thumbnail directory if not exists
         $thumbnailDir = dirname(Storage::path($thumbnailPath));
-        if (!is_dir($thumbnailDir)) {
+        if (! is_dir($thumbnailDir)) {
             mkdir($thumbnailDir, 0755, true);
         }
 

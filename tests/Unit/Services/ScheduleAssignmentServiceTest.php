@@ -2,15 +2,9 @@
 
 namespace Tests\Unit\Services;
 
-use Tests\TestCase;
 use App\Services\ScheduleAssignmentService;
-use App\Models\ScheduleAssignment;
-use App\Models\LeaveAffectedSchedule;
-use App\Models\User;
-use App\Models\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Collection;
-use Carbon\Carbon;
+use Tests\TestCase;
 
 class ScheduleAssignmentServiceTest extends TestCase
 {
@@ -21,7 +15,7 @@ class ScheduleAssignmentServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new ScheduleAssignmentService();
+        $this->service = new ScheduleAssignmentService;
     }
 
     /** @test */
@@ -51,4 +45,3 @@ class ScheduleAssignmentServiceTest extends TestCase
         $this->assertContains('excused', ScheduleAssignmentService::VALID_STATUSES);
     }
 }
-

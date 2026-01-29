@@ -2,27 +2,20 @@
 
 namespace App\Services;
 
+use App\Models\Attendance;
+use App\Models\LeaveAffectedSchedule;
 use App\Models\LeaveRequest;
 use App\Models\ScheduleAssignment;
-use App\Models\LeaveAffectedSchedule;
-use App\Models\Attendance;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Exception;
 
 class LeaveService
 {
     /**
      * Submit a new leave request
      *
-     * @param int $userId
-     * @param string $leaveType
-     * @param Carbon $startDate
-     * @param Carbon $endDate
-     * @param string $reason
-     * @param string|null $attachmentPath
-     * @return LeaveRequest
      * @throws Exception
      */
     public function submitRequest(
@@ -63,9 +56,6 @@ class LeaveService
 
     /**
      * Get schedule assignments affected by leave request
-     *
-     * @param LeaveRequest $request
-     * @return Collection
      */
     public function getAffectedAssignments(LeaveRequest $request): Collection
     {
@@ -80,10 +70,6 @@ class LeaveService
     /**
      * Approve leave request
      *
-     * @param LeaveRequest $request
-     * @param int $reviewerId
-     * @param string|null $notes
-     * @return bool
      * @throws Exception
      */
     public function approve(
@@ -105,7 +91,7 @@ class LeaveService
             $dates = $conflictingAttendances->pluck('date')->map(function ($date) {
                 return $date->format('d/m/Y');
             })->join(', ');
-            
+
             throw new Exception("Cannot approve leave request. User already has attendance records on: {$dates}");
         }
 
@@ -144,6 +130,7 @@ class LeaveService
             );
 
             DB::commit();
+
             return true;
         } catch (Exception $e) {
             DB::rollBack();
@@ -154,10 +141,6 @@ class LeaveService
     /**
      * Reject leave request
      *
-     * @param LeaveRequest $request
-     * @param int $reviewerId
-     * @param string $notes
-     * @return bool
      * @throws Exception
      */
     public function reject(
@@ -194,14 +177,12 @@ class LeaveService
     /**
      * Cancel leave request
      *
-     * @param LeaveRequest $request
-     * @return bool
      * @throws Exception
      */
     public function cancel(LeaveRequest $request): bool
     {
         // Only pending or approved requests can be cancelled
-        if (!in_array($request->status, ['pending', 'approved'])) {
+        if (! in_array($request->status, ['pending', 'approved'])) {
             throw new Exception('Only pending or approved leave requests can be cancelled');
         }
 
@@ -243,6 +224,7 @@ class LeaveService
             );
 
             DB::commit();
+
             return true;
         } catch (Exception $e) {
             DB::rollBack();
@@ -253,7 +235,6 @@ class LeaveService
     /**
      * Validate sick leave requirements
      *
-     * @param LeaveRequest $request
      * @return array ['valid' => bool, 'errors' => array]
      */
     public function validateSickLeave(LeaveRequest $request): array
@@ -274,4 +255,3 @@ class LeaveService
         ];
     }
 }
-

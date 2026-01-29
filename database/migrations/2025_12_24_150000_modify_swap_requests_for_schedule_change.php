@@ -2,19 +2,19 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     /**
-     * Mengubah konsep swap_requests dari "tukar dengan orang lain" 
+     * Mengubah konsep swap_requests dari "tukar dengan orang lain"
      * menjadi "pengajuan pindah/ubah jadwal sendiri"
      */
     public function up(): void
     {
         $driver = Schema::getConnection()->getDriverName();
-        
+
         if ($driver === 'sqlite') {
             // For SQLite, we need to recreate the table
             $this->upSqlite();
@@ -23,7 +23,7 @@ return new class extends Migration
             $this->upMysql();
         }
     }
-    
+
     private function upMysql(): void
     {
         // Drop existing indexes and foreign keys first
@@ -38,19 +38,21 @@ return new class extends Migration
             Schema::table('swap_requests', function (Blueprint $table) {
                 $table->dropIndex('idx_swaps_target_status');
             });
-        } catch (\Exception $e) {}
-        
+        } catch (\Exception $e) {
+        }
+
         try {
             Schema::table('swap_requests', function (Blueprint $table) {
                 $table->dropIndex('swap_requests_target_status_index');
             });
-        } catch (\Exception $e) {}
+        } catch (\Exception $e) {
+        }
 
         // Drop columns that are not needed
         Schema::table('swap_requests', function (Blueprint $table) {
             $table->dropColumn([
                 'target_id',
-                'target_assignment_id', 
+                'target_assignment_id',
                 'target_response',
                 'target_responded_at',
             ]);
@@ -83,7 +85,7 @@ return new class extends Migration
             $table->index(['status', 'created_at'], 'idx_schedule_change_status_created');
         });
     }
-    
+
     private function upSqlite(): void
     {
         // For SQLite, create new table with new structure
@@ -104,25 +106,25 @@ return new class extends Migration
             $table->timestamp('admin_responded_at')->nullable();
             $table->timestamp('completed_at')->nullable();
             $table->timestamps();
-            
+
             $table->index(['user_id', 'status'], 'idx_schedule_change_user_status');
             $table->index(['status', 'created_at'], 'idx_schedule_change_status_created');
-            
+
             // Add foreign key with SET NULL on delete
             $table->foreign('original_assignment_id')
                 ->references('id')
                 ->on('schedule_assignments')
                 ->onDelete('set null');
         });
-        
+
         // Copy data from old table if exists
         if (Schema::hasTable('swap_requests')) {
             $oldData = DB::table('swap_requests')->get();
             foreach ($oldData as $row) {
-                $status = in_array($row->status, ['target_approved', 'target_rejected', 'admin_approved', 'admin_rejected']) 
-                    ? 'cancelled' 
+                $status = in_array($row->status, ['target_approved', 'target_rejected', 'admin_approved', 'admin_rejected'])
+                    ? 'cancelled'
                     : $row->status;
-                    
+
                 DB::table('schedule_change_requests')->insert([
                     'id' => $row->id,
                     'user_id' => $row->requester_id,
@@ -139,7 +141,7 @@ return new class extends Migration
                     'updated_at' => $row->updated_at,
                 ]);
             }
-            
+
             // Drop old table
             Schema::dropIfExists('swap_requests');
         }
@@ -148,14 +150,14 @@ return new class extends Migration
     public function down(): void
     {
         $driver = Schema::getConnection()->getDriverName();
-        
+
         if ($driver === 'sqlite') {
             $this->downSqlite();
         } else {
             $this->downMysql();
         }
     }
-    
+
     private function downMysql(): void
     {
         // Rename table back
@@ -186,7 +188,7 @@ return new class extends Migration
             $table->timestamp('target_responded_at')->nullable();
         });
     }
-    
+
     private function downSqlite(): void
     {
         // For SQLite, recreate old table structure
@@ -205,7 +207,7 @@ return new class extends Migration
             $table->text('review_notes')->nullable();
             $table->timestamps();
         });
-        
+
         // Copy data back
         if (Schema::hasTable('schedule_change_requests')) {
             $data = DB::table('schedule_change_requests')->get();
@@ -227,7 +229,7 @@ return new class extends Migration
                     'updated_at' => $row->updated_at,
                 ]);
             }
-            
+
             Schema::dropIfExists('schedule_change_requests');
         }
     }

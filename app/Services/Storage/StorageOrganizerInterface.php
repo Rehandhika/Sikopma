@@ -14,9 +14,9 @@ interface StorageOrganizerInterface
      * Generate path untuk file baru.
      * Format: {type}/{year}/{month}/{uuid}.{ext}
      *
-     * @param string $type Tipe file (product, banner, attendance, profile, leave, report)
-     * @param string $extension Extension file (webp, jpg, png, pdf, etc.)
-     * @param array $options Opsi tambahan ['day' => null] untuk attendance
+     * @param  string  $type  Tipe file (product, banner, attendance, profile, leave, report)
+     * @param  string  $extension  Extension file (webp, jpg, png, pdf, etc.)
+     * @param  array  $options  Opsi tambahan ['day' => null] untuk attendance
      * @return string Path yang di-generate
      */
     public function generatePath(string $type, string $extension, array $options = []): string;
@@ -24,8 +24,8 @@ interface StorageOrganizerInterface
     /**
      * Get variant path dari original path.
      *
-     * @param string $originalPath Path file original
-     * @param string $size Nama variant (thumbnail, medium, large, etc.)
+     * @param  string  $originalPath  Path file original
+     * @param  string  $size  Nama variant (thumbnail, medium, large, etc.)
      * @return string Path untuk variant
      */
     public function getVariantPath(string $originalPath, string $size): string;
@@ -33,9 +33,9 @@ interface StorageOrganizerInterface
     /**
      * Get thumbnail path dari original path.
      *
-     * @param string $originalPath Path file original
-     * @param int $width Lebar thumbnail
-     * @param int $height Tinggi thumbnail
+     * @param  string  $originalPath  Path file original
+     * @param  int  $width  Lebar thumbnail
+     * @param  int  $height  Tinggi thumbnail
      * @return string Path untuk thumbnail
      */
     public function getThumbnailPath(string $originalPath, int $width, int $height): string;
@@ -43,7 +43,7 @@ interface StorageOrganizerInterface
     /**
      * Parse path untuk extract metadata.
      *
-     * @param string $path Path file
+     * @param  string  $path  Path file
      * @return PathInfo Informasi path yang di-parse
      */
     public function parsePath(string $path): PathInfo;
@@ -51,7 +51,7 @@ interface StorageOrganizerInterface
     /**
      * Sanitize filename untuk mencegah path traversal attacks.
      *
-     * @param string $filename Filename yang akan di-sanitize
+     * @param  string  $filename  Filename yang akan di-sanitize
      * @return string Filename yang sudah di-sanitize
      */
     public function sanitizeFilename(string $filename): string;
@@ -59,7 +59,7 @@ interface StorageOrganizerInterface
     /**
      * Validate apakah type file valid.
      *
-     * @param string $type Tipe file
+     * @param  string  $type  Tipe file
      * @return bool True jika valid
      */
     public function isValidType(string $type): bool;

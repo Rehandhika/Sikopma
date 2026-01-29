@@ -9,16 +9,14 @@ use App\Models\Product;
 use App\Models\Report;
 use App\Models\User;
 use App\Services\Storage\DTOs\MigrationResult;
-use App\Services\Storage\Exceptions\FileProcessingException;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
  * MigrationTool - Tool untuk migrasi file existing ke struktur baru.
- * 
+ *
  * Bertanggung jawab untuk:
  * - Scan file existing yang perlu dimigrasi
  * - Migrasi file ke struktur direktori baru: {type}/{year}/{month}/{uuid}.{ext}
@@ -86,8 +84,8 @@ class MigrationTool implements MigrationToolInterface
 
         foreach ($types as $fileType) {
             $mapping = $this->typeModelMapping[$fileType] ?? null;
-            
-            if (!$mapping) {
+
+            if (! $mapping) {
                 continue;
             }
 
@@ -96,7 +94,7 @@ class MigrationTool implements MigrationToolInterface
             $includeDeleted = $mapping['include_deleted'] ?? false;
 
             $query = $modelClass::query();
-            
+
             if ($includeDeleted && method_exists($modelClass, 'withTrashed')) {
                 $query->withTrashed();
             }
@@ -109,12 +107,12 @@ class MigrationTool implements MigrationToolInterface
 
             foreach ($records as $record) {
                 $path = $record->{$column};
-                
+
                 if (empty($path)) {
                     continue;
                 }
 
-                $needsMigration = !$this->isNewPathFormat($path);
+                $needsMigration = ! $this->isNewPathFormat($path);
                 $needsVariants = $this->checkNeedsVariants($path, $fileType);
                 $config = config("filestorage.types.{$fileType}");
                 $disk = $config['disk'] ?? 'public';
@@ -143,15 +141,14 @@ class MigrationTool implements MigrationToolInterface
         return $files;
     }
 
-
     /**
      * {@inheritdoc}
      */
     public function migrateFile(string $oldPath, string $type, bool $preserveOriginal = true): MigrationResult
     {
         $config = config("filestorage.types.{$type}");
-        
-        if (!$config) {
+
+        if (! $config) {
             return MigrationResult::forSingleFile(
                 $oldPath,
                 '',
@@ -164,7 +161,7 @@ class MigrationTool implements MigrationToolInterface
         $disk = $config['disk'] ?? 'public';
 
         // Check if file exists
-        if (!Storage::disk($disk)->exists($oldPath)) {
+        if (! Storage::disk($disk)->exists($oldPath)) {
             return MigrationResult::forSingleFile(
                 $oldPath,
                 '',
@@ -178,7 +175,7 @@ class MigrationTool implements MigrationToolInterface
         if ($this->isNewPathFormat($oldPath)) {
             // Just generate missing variants
             $variants = $this->generateMissingVariants($oldPath, $type);
-            
+
             return MigrationResult::forSingleFile(
                 $oldPath,
                 $oldPath,
@@ -191,11 +188,11 @@ class MigrationTool implements MigrationToolInterface
         try {
             // Get file extension
             $extension = pathinfo($oldPath, PATHINFO_EXTENSION);
-            
+
             // Determine if we should convert to WebP
             $convertToWebp = $config['convert_to_webp'] ?? false;
             $isImage = $this->isImageExtension($extension);
-            
+
             if ($convertToWebp && $isImage) {
                 $extension = 'webp';
             }
@@ -209,12 +206,12 @@ class MigrationTool implements MigrationToolInterface
 
             // Ensure target directory exists
             $newDir = dirname($newFullPath);
-            if (!is_dir($newDir)) {
+            if (! is_dir($newDir)) {
                 mkdir($newDir, 0755, true);
             }
 
             // Process and copy file
-            if ($isImage && ($convertToWebp || !empty($config['variants']))) {
+            if ($isImage && ($convertToWebp || ! empty($config['variants']))) {
                 // Process image (resize if needed, convert to WebP if configured)
                 $processedImage = $this->imageProcessor->process(
                     $oldFullPath,
@@ -238,7 +235,7 @@ class MigrationTool implements MigrationToolInterface
             $dbUpdated = $this->updateDatabaseReferences($oldPath, $newPath, $type);
 
             // Delete original if not preserving
-            if (!$preserveOriginal) {
+            if (! $preserveOriginal) {
                 $this->deleteOldFile($oldPath, $type, $disk);
             }
 
@@ -280,7 +277,7 @@ class MigrationTool implements MigrationToolInterface
     public function migrateAll(?string $type = null, bool $dryRun = true, int $batchSize = 100): MigrationResult
     {
         $files = $this->scanExistingFiles($type);
-        $filesToMigrate = $files->filter(fn($f) => $f['needs_migration'] || $f['needs_variants']);
+        $filesToMigrate = $files->filter(fn ($f) => $f['needs_migration'] || $f['needs_variants']);
 
         $result = MigrationResult::empty($dryRun);
         $processed = 0;
@@ -334,15 +331,14 @@ class MigrationTool implements MigrationToolInterface
         return $result;
     }
 
-
     /**
      * {@inheritdoc}
      */
     public function updateDatabaseReferences(string $oldPath, string $newPath, string $type): bool
     {
         $mapping = $this->typeModelMapping[$type] ?? null;
-        
-        if (!$mapping) {
+
+        if (! $mapping) {
             return false;
         }
 
@@ -352,7 +348,7 @@ class MigrationTool implements MigrationToolInterface
 
         try {
             $query = $modelClass::query();
-            
+
             if ($includeDeleted && method_exists($modelClass, 'withTrashed')) {
                 $query->withTrashed();
             }
@@ -389,20 +385,20 @@ class MigrationTool implements MigrationToolInterface
     public function generateMissingVariants(string $path, string $type): array
     {
         $config = config("filestorage.types.{$type}");
-        
-        if (!$config || empty($config['variants'])) {
+
+        if (! $config || empty($config['variants'])) {
             return [];
         }
 
         $disk = $config['disk'] ?? 'public';
-        
-        if (!Storage::disk($disk)->exists($path)) {
+
+        if (! Storage::disk($disk)->exists($path)) {
             return [];
         }
 
         // Check if it's an image
         $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-        if (!$this->isImageExtension($extension)) {
+        if (! $this->isImageExtension($extension)) {
             return [];
         }
 
@@ -412,7 +408,7 @@ class MigrationTool implements MigrationToolInterface
         foreach ($config['variants'] as $variantName => $variantConfig) {
             try {
                 $variantPath = $this->storageOrganizer->getVariantPath($path, $variantName);
-                
+
                 // Check if variant already exists
                 if (Storage::disk($disk)->exists($variantPath)) {
                     continue;
@@ -420,10 +416,10 @@ class MigrationTool implements MigrationToolInterface
 
                 // Generate variant
                 $variants = $this->imageProcessor->generateVariants($fullPath, $type, $fullPath);
-                
+
                 if (isset($variants[$variantName])) {
                     $generatedVariants[$variantName] = $this->getRelativePath($variants[$variantName]->path, $disk);
-                    
+
                     Log::info('MigrationTool: Variant generated', [
                         'original' => $path,
                         'variant' => $variantName,
@@ -449,13 +445,13 @@ class MigrationTool implements MigrationToolInterface
     {
         // New format: {type}/{year}/{month}/{uuid}.{ext}
         // Example: product/2026/01/550e8400-e29b-41d4-a716-446655440000.webp
-        
+
         // Normalize path
         $path = trim($path, '/\\');
         $path = str_replace('\\', '/', $path);
 
         // Check against pattern
-        if (!preg_match(self::NEW_PATH_PATTERN, $path)) {
+        if (! preg_match(self::NEW_PATH_PATTERN, $path)) {
             return false;
         }
 
@@ -471,7 +467,7 @@ class MigrationTool implements MigrationToolInterface
         $filename = pathinfo($parts[3], PATHINFO_FILENAME);
 
         // Validate type
-        if (!$this->storageOrganizer->isValidType($type)) {
+        if (! $this->storageOrganizer->isValidType($type)) {
             return false;
         }
 
@@ -488,7 +484,7 @@ class MigrationTool implements MigrationToolInterface
         }
 
         // Validate UUID format
-        if (!Str::isUuid($filename)) {
+        if (! Str::isUuid($filename)) {
             return false;
         }
 
@@ -501,31 +497,30 @@ class MigrationTool implements MigrationToolInterface
     public function getMigrationStats(?string $type = null): array
     {
         $files = $this->scanExistingFiles($type);
-        
+
         $stats = [
             'total_files' => $files->count(),
-            'migrated' => $files->filter(fn($f) => !$f['needs_migration'])->count(),
-            'pending' => $files->filter(fn($f) => $f['needs_migration'])->count(),
-            'missing_variants' => $files->filter(fn($f) => $f['needs_variants'])->count(),
+            'migrated' => $files->filter(fn ($f) => ! $f['needs_migration'])->count(),
+            'pending' => $files->filter(fn ($f) => $f['needs_migration'])->count(),
+            'missing_variants' => $files->filter(fn ($f) => $f['needs_variants'])->count(),
             'by_type' => [],
         ];
 
         $types = $type ? [$type] : $this->storageOrganizer->getValidTypes();
-        
+
         foreach ($types as $fileType) {
-            $typeFiles = $files->filter(fn($f) => $f['type'] === $fileType);
-            
+            $typeFiles = $files->filter(fn ($f) => $f['type'] === $fileType);
+
             $stats['by_type'][$fileType] = [
                 'total' => $typeFiles->count(),
-                'migrated' => $typeFiles->filter(fn($f) => !$f['needs_migration'])->count(),
-                'pending' => $typeFiles->filter(fn($f) => $f['needs_migration'])->count(),
-                'missing_variants' => $typeFiles->filter(fn($f) => $f['needs_variants'])->count(),
+                'migrated' => $typeFiles->filter(fn ($f) => ! $f['needs_migration'])->count(),
+                'pending' => $typeFiles->filter(fn ($f) => $f['needs_migration'])->count(),
+                'missing_variants' => $typeFiles->filter(fn ($f) => $f['needs_variants'])->count(),
             ];
         }
 
         return $stats;
     }
-
 
     /**
      * Check if file needs variants generated.
@@ -533,16 +528,16 @@ class MigrationTool implements MigrationToolInterface
     protected function checkNeedsVariants(string $path, string $type): bool
     {
         $config = config("filestorage.types.{$type}");
-        
-        if (!$config || empty($config['variants'])) {
+
+        if (! $config || empty($config['variants'])) {
             return false;
         }
 
         $disk = $config['disk'] ?? 'public';
-        
+
         // Check if it's an image
         $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-        if (!$this->isImageExtension($extension)) {
+        if (! $this->isImageExtension($extension)) {
             return false;
         }
 
@@ -550,8 +545,8 @@ class MigrationTool implements MigrationToolInterface
         foreach (array_keys($config['variants']) as $variantName) {
             try {
                 $variantPath = $this->storageOrganizer->getVariantPath($path, $variantName);
-                
-                if (!Storage::disk($disk)->exists($variantPath)) {
+
+                if (! Storage::disk($disk)->exists($variantPath)) {
                     return true;
                 }
             } catch (\Exception $e) {
@@ -569,6 +564,7 @@ class MigrationTool implements MigrationToolInterface
     protected function isImageExtension(string $extension): bool
     {
         $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
+
         return in_array(strtolower($extension), $imageExtensions, true);
     }
 
@@ -579,6 +575,7 @@ class MigrationTool implements MigrationToolInterface
     {
         $diskPath = Storage::disk($disk)->path('');
         $relativePath = str_replace($diskPath, '', $fullPath);
+
         return ltrim(str_replace('\\', '/', $relativePath), '/');
     }
 
@@ -595,12 +592,12 @@ class MigrationTool implements MigrationToolInterface
 
             // Delete variants
             $config = config("filestorage.types.{$type}");
-            
-            if (!empty($config['variants'])) {
+
+            if (! empty($config['variants'])) {
                 foreach (array_keys($config['variants']) as $variantName) {
                     try {
                         $variantPath = $this->storageOrganizer->getVariantPath($path, $variantName);
-                        
+
                         if (Storage::disk($disk)->exists($variantPath)) {
                             Storage::disk($disk)->delete($variantPath);
                         }
@@ -633,16 +630,16 @@ class MigrationTool implements MigrationToolInterface
         try {
             $directory = dirname($path);
             $filename = pathinfo($path, PATHINFO_FILENAME);
-            $thumbnailDir = $directory . '/thumbnails';
+            $thumbnailDir = $directory.'/thumbnails';
 
-            if (!Storage::disk($disk)->exists($thumbnailDir)) {
+            if (! Storage::disk($disk)->exists($thumbnailDir)) {
                 return;
             }
 
             $files = Storage::disk($disk)->files($thumbnailDir);
-            
+
             foreach ($files as $file) {
-                if (str_starts_with(basename($file), $filename . '_')) {
+                if (str_starts_with(basename($file), $filename.'_')) {
                     Storage::disk($disk)->delete($file);
                 }
             }

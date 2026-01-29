@@ -2,12 +2,12 @@
 
 namespace App\Livewire\Stock;
 
+use App\Models\Product;
+use App\Models\StockAdjustment as StockAdjustmentModel;
+use App\Services\ProductService;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Livewire\Attributes\Title;
-use App\Models\{Product, StockAdjustment as StockAdjustmentModel};
-use App\Services\ProductService;
-use Illuminate\Support\Facades\DB;
 
 #[Title('Penyesuaian Stok')]
 class StockAdjustment extends Component
@@ -15,14 +15,20 @@ class StockAdjustment extends Component
     use WithPagination;
 
     public $search = '';
+
     public $typeFilter = 'all';
+
     public $productFilter = 'all';
-    
+
     // Form properties
     public $showModal = false;
+
     public $product_id = '';
+
     public $type = 'in';
+
     public $quantity = 0;
+
     public $reason = '';
 
     protected $rules = [
@@ -63,7 +69,7 @@ class StockAdjustment extends Component
         $this->validate();
 
         $productService = app(ProductService::class);
-        
+
         try {
             $productService->adjustStock(
                 $this->product_id,
@@ -71,10 +77,10 @@ class StockAdjustment extends Component
                 $this->quantity,
                 $this->reason
             );
-            
+
             $this->dispatch('toast', message: 'Penyesuaian stok berhasil disimpan', type: 'success');
             $this->resetForm();
-            
+
         } catch (\Exception $e) {
             $this->dispatch('toast', message: $e->getMessage(), type: 'error');
         }
@@ -97,13 +103,13 @@ class StockAdjustment extends Component
     {
         $adjustments = StockAdjustmentModel::query()
             ->with(['product', 'user', 'variant'])
-            ->when($this->search, function($q) {
-                $q->whereHas('product', function($query) {
-                    $query->where('name', 'like', '%' . $this->search . '%');
+            ->when($this->search, function ($q) {
+                $q->whereHas('product', function ($query) {
+                    $query->where('name', 'like', '%'.$this->search.'%');
                 });
             })
-            ->when($this->typeFilter !== 'all', fn($q) => $q->where('type', $this->typeFilter))
-            ->when($this->productFilter !== 'all', fn($q) => $q->where('product_id', $this->productFilter))
+            ->when($this->typeFilter !== 'all', fn ($q) => $q->where('type', $this->typeFilter))
+            ->when($this->productFilter !== 'all', fn ($q) => $q->where('product_id', $this->productFilter))
             ->recent()
             ->paginate(20);
 

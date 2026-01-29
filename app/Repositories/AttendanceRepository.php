@@ -4,18 +4,13 @@ namespace App\Repositories;
 
 use App\Models\Attendance;
 use App\Models\ScheduleAssignment;
-use Illuminate\Support\Collection;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 
 class AttendanceRepository
 {
     /**
      * Get attendance statistics for a user
-     *
-     * @param int $userId
-     * @param Carbon|null $startDate
-     * @param Carbon|null $endDate
-     * @return array
      */
     public function getUserStats(int $userId, ?Carbon $startDate = null, ?Carbon $endDate = null): array
     {
@@ -38,11 +33,6 @@ class AttendanceRepository
 
     /**
      * Calculate attendance rate percentage
-     *
-     * @param int $userId
-     * @param Carbon $startDate
-     * @param Carbon $endDate
-     * @return float
      */
     public function calculateAttendanceRate(int $userId, Carbon $startDate, Carbon $endDate): float
     {
@@ -64,10 +54,6 @@ class AttendanceRepository
 
     /**
      * Get late attendance records for a user
-     *
-     * @param int $userId
-     * @param int $limit
-     * @return Collection
      */
     public function getLateRecords(int $userId, int $limit = 10): Collection
     {
@@ -81,11 +67,6 @@ class AttendanceRepository
 
     /**
      * Get attendance records for a specific date range
-     *
-     * @param Carbon $startDate
-     * @param Carbon $endDate
-     * @param array $filters
-     * @return Collection
      */
     public function getByDateRange(Carbon $startDate, Carbon $endDate, array $filters = []): Collection
     {
@@ -105,13 +86,11 @@ class AttendanceRepository
 
     /**
      * Get today's attendance summary
-     *
-     * @return array
      */
     public function getTodaySummary(): array
     {
         $today = today();
-        
+
         return [
             'scheduled' => ScheduleAssignment::where('date', $today)->count(),
             'checked_in' => Attendance::whereDate('check_in', $today)->count(),
@@ -123,22 +102,17 @@ class AttendanceRepository
 
     /**
      * Get absent count for a specific date
-     *
-     * @param Carbon $date
-     * @return int
      */
     private function getAbsentCount(Carbon $date): int
     {
         $scheduled = ScheduleAssignment::where('date', $date)->pluck('user_id');
         $checkedIn = Attendance::whereDate('check_in', $date)->pluck('user_id');
-        
+
         return $scheduled->diff($checkedIn)->count();
     }
 
     /**
      * Get users who haven't checked in today
-     *
-     * @return Collection
      */
     public function getNotCheckedInToday(): Collection
     {
@@ -157,9 +131,6 @@ class AttendanceRepository
 
     /**
      * Create attendance record
-     *
-     * @param array $data
-     * @return Attendance
      */
     public function create(array $data): Attendance
     {
@@ -168,10 +139,6 @@ class AttendanceRepository
 
     /**
      * Update attendance record
-     *
-     * @param int $id
-     * @param array $data
-     * @return bool
      */
     public function update(int $id, array $data): bool
     {

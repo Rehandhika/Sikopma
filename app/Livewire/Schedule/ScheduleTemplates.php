@@ -2,29 +2,37 @@
 
 namespace App\Livewire\Schedule;
 
-use Livewire\Component;
-use Livewire\WithPagination;
 use App\Models\Schedule;
 use App\Services\ActivityLogService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class ScheduleTemplates extends Component
 {
     use WithPagination;
 
     public $templates = [];
+
     public $selectedTemplate = null;
+
     public $showModal = false;
+
     public $isEditing = false;
-    
+
     // Form fields
     public $name;
+
     public $day;
+
     public $session;
+
     public $timeStart;
+
     public $timeEnd;
+
     public $description;
+
     public $isActive = true;
 
     protected $rules = [
@@ -69,7 +77,7 @@ class ScheduleTemplates extends Component
     public function editTemplate($id)
     {
         $template = Schedule::find($id);
-        
+
         if ($template) {
             $this->selectedTemplate = $template;
             $this->name = $template->name;
@@ -144,35 +152,36 @@ class ScheduleTemplates extends Component
 
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->dispatch('toast', message: 'Gagal menyimpan template: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal menyimpan template: '.$e->getMessage(), type: 'error');
         }
     }
 
     public function deleteTemplate($id)
     {
         $template = Schedule::find($id);
-        
+
         if ($template) {
             try {
                 // Check if template is being used in assignments
                 $hasAssignments = \App\Models\ScheduleAssignment::where('schedule_id', $template->id)->exists();
-                
+
                 if ($hasAssignments) {
                     $this->dispatch('toast', message: 'Template tidak dapat dihapus karena sudah digunakan dalam penugasan.', type: 'error');
+
                     return;
                 }
 
                 $templateName = $template->name;
                 $template->delete();
-                
+
                 // Log activity
                 ActivityLogService::log("Menghapus template jadwal '{$templateName}'");
-                
+
                 $this->dispatch('toast', message: 'Template berhasil dihapus!', type: 'success');
                 $this->loadTemplates();
 
             } catch (\Exception $e) {
-                $this->dispatch('toast', message: 'Gagal menghapus template: ' . $e->getMessage(), type: 'error');
+                $this->dispatch('toast', message: 'Gagal menghapus template: '.$e->getMessage(), type: 'error');
             }
         }
     }
@@ -180,9 +189,9 @@ class ScheduleTemplates extends Component
     public function toggleStatus($id)
     {
         $template = Schedule::find($id);
-        
+
         if ($template) {
-            $template->update(['is_active' => !$template->is_active]);
+            $template->update(['is_active' => ! $template->is_active]);
             $status = $template->is_active ? 'diaktifkan' : 'dinonaktifkan';
             $this->dispatch('toast', message: "Template berhasil $status!", type: 'success');
             $this->loadTemplates();
@@ -192,10 +201,10 @@ class ScheduleTemplates extends Component
     public function duplicateTemplate($id)
     {
         $template = Schedule::find($id);
-        
+
         if ($template) {
             $this->resetForm();
-            $this->name = $template->name . ' (Copy)';
+            $this->name = $template->name.' (Copy)';
             $this->day = $template->day;
             $this->session = $template->session;
             $this->timeStart = $template->time_start;

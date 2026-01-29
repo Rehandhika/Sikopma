@@ -2,18 +2,26 @@
 
 namespace App\Livewire\Schedule;
 
-use Livewire\Component;
-use App\Models\{Schedule, ScheduleAssignment, Availability, AvailabilityDetail, User};
+use App\Models\Availability;
+use App\Models\AvailabilityDetail;
+use App\Models\ScheduleAssignment;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Livewire\Component;
 
 class ScheduleGenerator extends Component
 {
     public $startDate;
+
     public $endDate;
+
     public $sessionId = 1;
+
     public $autoAssign = true;
+
     public $generateStatus = '';
+
     public $generatedCount = 0;
 
     public function mount()
@@ -34,6 +42,7 @@ class ScheduleGenerator extends Component
 
         if ($this->scheduleTemplates->isEmpty()) {
             $this->dispatch('toast', message: 'Tidak ada template jadwal yang aktif. Silakan buat template terlebih dahulu.', type: 'error');
+
             return;
         }
 
@@ -45,16 +54,16 @@ class ScheduleGenerator extends Component
             // Clear existing assignments for the period
             ScheduleAssignment::whereBetween('date', [
                 $this->startDate,
-                $this->endDate
+                $this->endDate,
             ])->delete();
 
             // Generate new assignments
             $assignments = $this->generateScheduleAssignments(false);
 
-            if (!empty($assignments)) {
+            if (! empty($assignments)) {
                 // Batch insert for performance
                 ScheduleAssignment::insert($assignments);
-                
+
                 // Create notifications for assigned users
                 $this->createScheduleNotifications($assignments);
             }
@@ -72,7 +81,7 @@ class ScheduleGenerator extends Component
         } catch (\Exception $e) {
             DB::rollBack();
             $this->generationStatus = 'error';
-            $this->dispatch('toast', message: 'Gagal generate jadwal: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal generate jadwal: '.$e->getMessage(), type: 'error');
         } finally {
             $this->isGenerating = false;
         }
@@ -94,13 +103,13 @@ class ScheduleGenerator extends Component
 
         while ($current <= $endDate) {
             $dayName = strtolower($current->englishName);
-            
+
             // Get templates for this day
             $dayTemplates = $this->scheduleTemplates->where('day', $dayName);
-            
+
             foreach ($dayTemplates as $template) {
                 $user = $this->selectOptimalUser($template, $current, $userAvailabilities, $userAssignmentCounts);
-                
+
                 if ($user) {
                     $assignments[] = [
                         'user_id' => $user->id,
@@ -115,7 +124,7 @@ class ScheduleGenerator extends Component
                     ];
 
                     // Track assignment count
-                    if (!isset($userAssignmentCounts[$user->id])) {
+                    if (! isset($userAssignmentCounts[$user->id])) {
                         $userAssignmentCounts[$user->id] = 0;
                     }
                     $userAssignmentCounts[$user->id]++;
@@ -132,27 +141,27 @@ class ScheduleGenerator extends Component
     {
         return AvailabilityDetail::whereHas('availability', function ($query) use ($weekStart) {
             $query->where('week_start', $weekStart->format('Y-m-d'))
-                  ->where('status', 'active');
+                ->where('status', 'active');
         })
-        ->with('availability.user')
-        ->get()
-        ->groupBy(function ($detail) {
-            return $detail->availability->user_id;
-        })
-        ->map(function ($userDetails) {
-            return [
-                'user_id' => $userDetails->first()->availability->user_id,
-                'user' => $userDetails->first()->availability->user,
-                'available_days' => $userDetails->pluck('day')->unique()->toArray(),
-                'time_slots' => $userDetails->map(function ($detail) {
-                    return [
-                        'day' => $detail->day,
-                        'start_time' => $detail->start_time,
-                        'end_time' => $detail->end_time,
-                    ];
-                })->groupBy('day'),
-            ];
-        });
+            ->with('availability.user')
+            ->get()
+            ->groupBy(function ($detail) {
+                return $detail->availability->user_id;
+            })
+            ->map(function ($userDetails) {
+                return [
+                    'user_id' => $userDetails->first()->availability->user_id,
+                    'user' => $userDetails->first()->availability->user,
+                    'available_days' => $userDetails->pluck('day')->unique()->toArray(),
+                    'time_slots' => $userDetails->map(function ($detail) {
+                        return [
+                            'day' => $detail->day,
+                            'start_time' => $detail->start_time,
+                            'end_time' => $detail->end_time,
+                        ];
+                    })->groupBy('day'),
+                ];
+            });
     }
 
     private function selectOptimalUser($template, $date, $userAvailabilities, $userAssignmentCounts)
@@ -162,7 +171,7 @@ class ScheduleGenerator extends Component
 
         foreach ($userAvailabilities as $userId => $availability) {
             // Check if user is available on this day
-            if (!in_array($dayName, $availability['available_days'])) {
+            if (! in_array($dayName, $availability['available_days'])) {
                 continue;
             }
 
@@ -177,7 +186,7 @@ class ScheduleGenerator extends Component
                 return $templateStart >= $slotStart && $templateEnd <= $slotEnd;
             });
 
-            if (!$isTimeAvailable) {
+            if (! $isTimeAvailable) {
                 continue;
             }
 
@@ -212,7 +221,7 @@ class ScheduleGenerator extends Component
     private function createScheduleNotifications($assignments)
     {
         $userAssignments = collect($assignments)->groupBy('user_id');
-        
+
         foreach ($userAssignments as $userId => $userSchedules) {
             $user = User::find($userId);
             if ($user) {
@@ -233,7 +242,7 @@ class ScheduleGenerator extends Component
         try {
             $deletedCount = ScheduleAssignment::whereBetween('date', [
                 $this->startDate,
-                $this->endDate
+                $this->endDate,
             ])->delete();
 
             $this->dispatch('toast', message: "Berhasil menghapus {$deletedCount} jadwal.", type: 'success');
@@ -243,7 +252,7 @@ class ScheduleGenerator extends Component
             $this->previewAssignments = [];
 
         } catch (\Exception $e) {
-            $this->dispatch('toast', message: 'Gagal menghapus jadwal: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal menghapus jadwal: '.$e->getMessage(), type: 'error');
         }
     }
 
@@ -284,8 +293,6 @@ class ScheduleGenerator extends Component
             'coverage_rate' => $totalPossible > 0 ? round(($assignments->count() / $totalPossible) * 100, 1) : 0,
         ];
     }
-
-
 
     public function render()
     {

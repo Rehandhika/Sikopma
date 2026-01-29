@@ -2,14 +2,14 @@
 
 namespace App\Livewire\Schedule;
 
-use App\Models\Schedule;
 use App\Models\AssignmentEditHistory;
+use App\Models\Schedule;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 /**
  * EditHistory Livewire Component
- * 
+ *
  * Displays the edit history for a schedule, showing all changes made
  * to assignments with details about who made the changes and why.
  */
@@ -66,11 +66,11 @@ class EditHistory extends Component
         }
 
         // Apply search
-        if (!empty($this->search)) {
+        if (! empty($this->search)) {
             $query->where(function ($q) {
-                $q->where('reason', 'like', '%' . $this->search . '%')
+                $q->where('reason', 'like', '%'.$this->search.'%')
                     ->orWhereHas('editor', function ($q2) {
-                        $q2->where('name', 'like', '%' . $this->search . '%');
+                        $q2->where('name', 'like', '%'.$this->search.'%');
                     });
             });
         }

@@ -10,9 +10,8 @@ class ActivityLogService
 {
     /**
      * Log an activity with detailed description
-     * 
-     * @param string $activity The activity description
-     * @return ActivityLog|null
+     *
+     * @param  string  $activity  The activity description
      */
     public static function log(string $activity): ?ActivityLog
     {
@@ -23,7 +22,8 @@ class ActivityLogService
             ]);
         } catch (\Exception $e) {
             // Log error but don't interrupt user action
-            Log::error('Failed to create activity log: ' . $e->getMessage());
+            Log::error('Failed to create activity log: '.$e->getMessage());
+
             return null;
         }
     }

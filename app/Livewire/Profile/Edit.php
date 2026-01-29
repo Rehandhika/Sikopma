@@ -2,36 +2,45 @@
 
 namespace App\Livewire\Profile;
 
+use App\Services\ActivityLogService;
+use App\Services\Storage\FileStorageServiceInterface;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use App\Services\Storage\FileStorageServiceInterface;
-use App\Services\ActivityLogService;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Rule;
 
 class Edit extends Component
 {
     use WithFileUploads;
 
     public $user;
-    
+
     // Profile fields
     public $name;
+
     public $email;
+
     public $nim;
+
     public $phone;
+
     public $address;
+
     public $photo;
+
     public $photoPreview = null;
+
     public $current_photo;
-    
+
     // Password fields
     public $current_password;
+
     public $new_password;
+
     public $new_password_confirmation;
-    
+
     public $activeTab = 'profile';
 
     protected FileStorageServiceInterface $fileStorageService;
@@ -57,7 +66,7 @@ class Edit extends Component
         $this->validate([
             'photo' => 'image|max:2048',
         ]);
-        
+
         if ($this->photo) {
             $this->photoPreview = $this->photo->temporaryUrl();
         }
@@ -105,13 +114,13 @@ class Edit extends Component
                 'user_id' => $this->user->id,
                 'error' => $e->getMessage(),
             ]);
-            $this->dispatch('toast', message: 'Terjadi kesalahan: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Terjadi kesalahan: '.$e->getMessage(), type: 'error');
         }
     }
 
     /**
      * Upload profile photo using FileStorageService.
-     * 
+     *
      * @return string|null Photo path or null on failure
      */
     protected function uploadProfilePhoto(): ?string
@@ -143,8 +152,6 @@ class Edit extends Component
     /**
      * Legacy method for uploading profile photo.
      * Used as fallback when FileStorageService fails.
-     * 
-     * @return string|null
      */
     protected function uploadProfilePhotoLegacy(): ?string
     {
@@ -153,7 +160,7 @@ class Edit extends Component
             if ($this->current_photo) {
                 Storage::disk('public')->delete($this->current_photo);
             }
-            
+
             // Store new photo
             return $this->photo->store('photos', 'public');
         } catch (\Exception $e) {
@@ -161,6 +168,7 @@ class Edit extends Component
                 'user_id' => $this->user->id,
                 'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -174,8 +182,9 @@ class Edit extends Component
 
         try {
             // Verify current password
-            if (!Hash::check($this->current_password, $this->user->password)) {
+            if (! Hash::check($this->current_password, $this->user->password)) {
                 $this->addError('current_password', 'Password saat ini tidak sesuai');
+
                 return;
             }
 
@@ -192,7 +201,7 @@ class Edit extends Component
 
             $this->dispatch('toast', message: 'Password berhasil diubah', type: 'success');
         } catch (\Exception $e) {
-            $this->dispatch('toast', message: 'Terjadi kesalahan: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Terjadi kesalahan: '.$e->getMessage(), type: 'error');
         }
     }
 
@@ -210,10 +219,10 @@ class Edit extends Component
 
                 $this->user->update(['photo' => null]);
                 $this->current_photo = null;
-                
+
                 // Log activity
                 ActivityLogService::logProfilePhotoDeleted();
-                
+
                 $this->dispatch('toast', message: 'Foto profil berhasil dihapus', type: 'success');
             }
         } catch (\Exception $e) {
@@ -221,18 +230,16 @@ class Edit extends Component
                 'user_id' => $this->user->id,
                 'error' => $e->getMessage(),
             ]);
-            $this->dispatch('toast', message: 'Terjadi kesalahan: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Terjadi kesalahan: '.$e->getMessage(), type: 'error');
         }
     }
 
     /**
      * Get profile photo URL.
-     * 
-     * @return string|null
      */
     public function getProfilePhotoUrl(): ?string
     {
-        if (!$this->current_photo) {
+        if (! $this->current_photo) {
             return null;
         }
 
@@ -243,18 +250,17 @@ class Edit extends Component
             if (Storage::disk('public')->exists($this->current_photo)) {
                 return Storage::disk('public')->url($this->current_photo);
             }
+
             return null;
         }
     }
 
     /**
      * Get profile photo thumbnail URL.
-     * 
-     * @return string|null
      */
     public function getProfilePhotoThumbnailUrl(): ?string
     {
-        if (!$this->current_photo) {
+        if (! $this->current_photo) {
             return null;
         }
 
@@ -265,6 +271,7 @@ class Edit extends Component
             if (Storage::disk('public')->exists($this->current_photo)) {
                 return Storage::disk('public')->url($this->current_photo);
             }
+
             return null;
         }
     }

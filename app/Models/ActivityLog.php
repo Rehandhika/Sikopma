@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ActivityLog extends Model
@@ -31,9 +31,9 @@ class ActivityLog extends Model
 
     /**
      * Scope for recent activity logs
-     * 
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param int $days Number of days to look back (default: 90)
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  int  $days  Number of days to look back (default: 90)
      */
     public function scopeRecent($query, int $days = 90)
     {
@@ -42,9 +42,8 @@ class ActivityLog extends Model
 
     /**
      * Scope for filtering by specific user
-     * 
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param int $userId
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      */
     public function scopeByUser($query, int $userId)
     {
@@ -53,32 +52,32 @@ class ActivityLog extends Model
 
     /**
      * Scope for searching activity description
-     * 
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $term Search term
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $term  Search term
      */
     public function scopeSearch($query, string $term)
     {
-        return $query->where('activity', 'like', '%' . $term . '%');
+        return $query->where('activity', 'like', '%'.$term.'%');
     }
 
     /**
      * Scope for filtering by date range
-     * 
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param mixed $startDate
-     * @param mixed $endDate
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  mixed  $startDate
+     * @param  mixed  $endDate
      */
     public function scopeDateRange($query, $startDate, $endDate)
     {
         if ($startDate) {
             $query->where('created_at', '>=', $startDate);
         }
-        
+
         if ($endDate) {
             $query->where('created_at', '<=', $endDate);
         }
-        
+
         return $query;
     }
 }

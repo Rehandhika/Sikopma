@@ -21,7 +21,6 @@ class FileDownloadController extends Controller
     /**
      * Download file dengan signed URL.
      *
-     * @param Request $request
      * @return StreamedResponse|\Illuminate\Http\Response
      */
     public function download(Request $request)
@@ -40,7 +39,7 @@ class FileDownloadController extends Controller
         ]);
 
         // Check if file exists
-        if (!Storage::disk($disk)->exists($path)) {
+        if (! Storage::disk($disk)->exists($path)) {
             abort(404, __('filestorage.storage.file_not_found', ['path' => $path]));
         }
 
@@ -57,7 +56,6 @@ class FileDownloadController extends Controller
     /**
      * View file inline (for images/PDFs).
      *
-     * @param Request $request
      * @return StreamedResponse|\Illuminate\Http\Response
      */
     public function view(Request $request)
@@ -76,7 +74,7 @@ class FileDownloadController extends Controller
         ]);
 
         // Check if file exists
-        if (!Storage::disk($disk)->exists($path)) {
+        if (! Storage::disk($disk)->exists($path)) {
             abort(404, __('filestorage.storage.file_not_found', ['path' => $path]));
         }
 

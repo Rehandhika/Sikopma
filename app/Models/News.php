@@ -3,9 +3,9 @@
 namespace App\Models;
 
 use App\Services\Storage\FileStorageServiceInterface;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Storage;
 
 class News extends Model
@@ -51,7 +51,7 @@ class News extends Model
     {
         return $query->where(function ($q) {
             $q->whereNull('expires_at')
-              ->orWhere('expires_at', '>', now());
+                ->orWhere('expires_at', '>', now());
         });
     }
 
@@ -59,14 +59,14 @@ class News extends Model
     {
         return $query->where(function ($q) {
             $q->whereNull('published_at')
-              ->orWhere('published_at', '<=', now());
+                ->orWhere('published_at', '<=', now());
         });
     }
 
     public function scopeOrdered($query)
     {
         return $query->orderBy('priority', 'asc')
-                     ->orderBy('published_at', 'desc');
+            ->orderBy('published_at', 'desc');
     }
 
     // Accessors
@@ -75,7 +75,7 @@ class News extends Model
         if ($this->image_path) {
             return $this->getStorageUrl($this->image_path, 'desktop');
         }
-        
+
         return null;
     }
 
@@ -84,7 +84,7 @@ class News extends Model
         if ($this->image_path) {
             return $this->getStorageUrl($this->image_path, 'mobile');
         }
-        
+
         return null;
     }
 
@@ -93,7 +93,7 @@ class News extends Model
         if ($this->image_path) {
             return $this->getStorageUrl($this->image_path, 'tablet');
         }
-        
+
         return null;
     }
 
@@ -102,7 +102,7 @@ class News extends Model
         if ($this->image_path) {
             return $this->getStorageUrl($this->image_path, 'desktop');
         }
-        
+
         return null;
     }
 
@@ -111,13 +111,13 @@ class News extends Model
         if ($this->image_path) {
             return $this->getStorageUrl($this->image_path, 'mobile');
         }
-        
+
         return null;
     }
 
     public function getStatusAttribute(): string
     {
-        if (!$this->is_active) {
+        if (! $this->is_active) {
             return 'inactive';
         }
 
@@ -130,10 +130,6 @@ class News extends Model
 
     /**
      * Get storage URL for image with fallback support.
-     * 
-     * @param string $path
-     * @param string|null $variant
-     * @return string|null
      */
     protected function getStorageUrl(string $path, ?string $variant = null): ?string
     {
@@ -141,7 +137,7 @@ class News extends Model
             // Try using FileStorageService
             $fileStorageService = app(FileStorageServiceInterface::class);
             $url = $fileStorageService->getUrl($path, $variant);
-            
+
             if ($url) {
                 return $url;
             }
@@ -156,7 +152,7 @@ class News extends Model
 
         // Fallback: direct storage URL
         if (Storage::disk('public')->exists($path)) {
-            return asset('storage/' . $path);
+            return asset('storage/'.$path);
         }
 
         return null;
@@ -164,10 +160,6 @@ class News extends Model
 
     /**
      * Get URL for legacy news format (news/uuid_size.jpg).
-     * 
-     * @param string $path
-     * @param string|null $variant
-     * @return string|null
      */
     protected function getLegacyUrl(string $path, ?string $variant = null): ?string
     {
@@ -187,12 +179,12 @@ class News extends Model
         $legacyPath = "{$directory}/{$filename}_{$size}.{$extension}";
 
         if (Storage::disk('public')->exists($legacyPath)) {
-            return asset('storage/' . $legacyPath);
+            return asset('storage/'.$legacyPath);
         }
 
         // Fallback to original path
         if (Storage::disk('public')->exists($path)) {
-            return asset('storage/' . $path);
+            return asset('storage/'.$path);
         }
 
         return null;

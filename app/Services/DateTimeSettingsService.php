@@ -13,6 +13,7 @@ class DateTimeSettingsService
      * Cache key prefix for datetime settings
      */
     protected const CACHE_PREFIX = 'datetime_settings';
+
     protected const CACHE_TTL = 3600; // 1 hour
 
     /**
@@ -50,13 +51,14 @@ class DateTimeSettingsService
     public function getDateFormatOptions(): array
     {
         $now = Carbon::now();
+
         return [
-            'd/m/Y' => 'd/m/Y - ' . $now->format('d/m/Y'),
-            'd-m-Y' => 'd-m-Y - ' . $now->format('d-m-Y'),
-            'd M Y' => 'd M Y - ' . $now->format('d M Y'),
-            'd F Y' => 'd F Y - ' . $now->format('d F Y'),
-            'Y-m-d' => 'Y-m-d - ' . $now->format('Y-m-d'),
-            'm/d/Y' => 'm/d/Y - ' . $now->format('m/d/Y'),
+            'd/m/Y' => 'd/m/Y - '.$now->format('d/m/Y'),
+            'd-m-Y' => 'd-m-Y - '.$now->format('d-m-Y'),
+            'd M Y' => 'd M Y - '.$now->format('d M Y'),
+            'd F Y' => 'd F Y - '.$now->format('d F Y'),
+            'Y-m-d' => 'Y-m-d - '.$now->format('Y-m-d'),
+            'm/d/Y' => 'm/d/Y - '.$now->format('m/d/Y'),
         ];
     }
 
@@ -66,11 +68,12 @@ class DateTimeSettingsService
     public function getTimeFormatOptions(): array
     {
         $now = Carbon::now();
+
         return [
-            'H:i' => '24 jam - ' . $now->format('H:i'),
-            'H:i:s' => '24 jam dengan detik - ' . $now->format('H:i:s'),
-            'h:i A' => '12 jam - ' . $now->format('h:i A'),
-            'h:i:s A' => '12 jam dengan detik - ' . $now->format('h:i:s A'),
+            'H:i' => '24 jam - '.$now->format('H:i'),
+            'H:i:s' => '24 jam dengan detik - '.$now->format('H:i:s'),
+            'h:i A' => '12 jam - '.$now->format('h:i A'),
+            'h:i:s A' => '12 jam dengan detik - '.$now->format('h:i:s A'),
         ];
     }
 
@@ -80,13 +83,14 @@ class DateTimeSettingsService
     public function getDateTimeFormatOptions(): array
     {
         $now = Carbon::now();
+
         return [
-            'd/m/Y H:i' => 'd/m/Y H:i - ' . $now->format('d/m/Y H:i'),
-            'd-m-Y H:i' => 'd-m-Y H:i - ' . $now->format('d-m-Y H:i'),
-            'd M Y H:i' => 'd M Y H:i - ' . $now->format('d M Y H:i'),
-            'd F Y H:i' => 'd F Y H:i - ' . $now->format('d F Y H:i'),
-            'Y-m-d H:i' => 'Y-m-d H:i - ' . $now->format('Y-m-d H:i'),
-            'd/m/Y h:i A' => 'd/m/Y h:i A - ' . $now->format('d/m/Y h:i A'),
+            'd/m/Y H:i' => 'd/m/Y H:i - '.$now->format('d/m/Y H:i'),
+            'd-m-Y H:i' => 'd-m-Y H:i - '.$now->format('d-m-Y H:i'),
+            'd M Y H:i' => 'd M Y H:i - '.$now->format('d M Y H:i'),
+            'd F Y H:i' => 'd F Y H:i - '.$now->format('d F Y H:i'),
+            'Y-m-d H:i' => 'Y-m-d H:i - '.$now->format('Y-m-d H:i'),
+            'd/m/Y h:i A' => 'd/m/Y h:i A - '.$now->format('d/m/Y h:i A'),
         ];
     }
 
@@ -119,11 +123,11 @@ class DateTimeSettingsService
     public function get(string $key, $default = null)
     {
         $default = $default ?? ($this->defaults[$key] ?? null);
-        
+
         return Cache::remember(
-            self::CACHE_PREFIX . '.' . $key,
+            self::CACHE_PREFIX.'.'.$key,
             self::CACHE_TTL,
-            fn() => SystemSetting::get($key, $default)
+            fn () => SystemSetting::get($key, $default)
         );
     }
 
@@ -133,7 +137,7 @@ class DateTimeSettingsService
     public function set(string $key, $value): void
     {
         SystemSetting::set($key, $value, 'string');
-        Cache::forget(self::CACHE_PREFIX . '.' . $key);
+        Cache::forget(self::CACHE_PREFIX.'.'.$key);
         $this->clearAllCache();
     }
 
@@ -143,13 +147,14 @@ class DateTimeSettingsService
     public function getAll(): array
     {
         return Cache::remember(
-            self::CACHE_PREFIX . '.all',
+            self::CACHE_PREFIX.'.all',
             self::CACHE_TTL,
             function () {
                 $settings = [];
                 foreach ($this->defaults as $key => $default) {
                     $settings[$key] = SystemSetting::get($key, $default);
                 }
+
                 return $settings;
             }
         );
@@ -173,7 +178,7 @@ class DateTimeSettingsService
      */
     protected function getSettingType(string $key): string
     {
-        return match($key) {
+        return match ($key) {
             'use_24_hour' => 'boolean',
             'first_day_of_week' => 'integer',
             default => 'string',
@@ -185,9 +190,9 @@ class DateTimeSettingsService
      */
     public function clearAllCache(): void
     {
-        Cache::forget(self::CACHE_PREFIX . '.all');
+        Cache::forget(self::CACHE_PREFIX.'.all');
         foreach (array_keys($this->defaults) as $key) {
-            Cache::forget(self::CACHE_PREFIX . '.' . $key);
+            Cache::forget(self::CACHE_PREFIX.'.'.$key);
         }
     }
 
@@ -236,15 +241,17 @@ class DateTimeSettingsService
      */
     public function formatDate($date): string
     {
-        if (!$date) return '-';
-        
+        if (! $date) {
+            return '-';
+        }
+
         $carbon = $date instanceof Carbon ? $date : Carbon::parse($date);
         $carbon->setTimezone($this->getTimezone());
-        
+
         if ($this->getLocale() === 'id') {
             $carbon->locale('id');
         }
-        
+
         return $carbon->format($this->getDateFormat());
     }
 
@@ -253,11 +260,13 @@ class DateTimeSettingsService
      */
     public function formatTime($time): string
     {
-        if (!$time) return '-';
-        
+        if (! $time) {
+            return '-';
+        }
+
         $carbon = $time instanceof Carbon ? $time : Carbon::parse($time);
         $carbon->setTimezone($this->getTimezone());
-        
+
         return $carbon->format($this->getTimeFormat());
     }
 
@@ -266,15 +275,17 @@ class DateTimeSettingsService
      */
     public function formatDateTime($datetime): string
     {
-        if (!$datetime) return '-';
-        
+        if (! $datetime) {
+            return '-';
+        }
+
         $carbon = $datetime instanceof Carbon ? $datetime : Carbon::parse($datetime);
         $carbon->setTimezone($this->getTimezone());
-        
+
         if ($this->getLocale() === 'id') {
             $carbon->locale('id');
         }
-        
+
         return $carbon->format($this->getDateTimeFormat());
     }
 
@@ -283,12 +294,14 @@ class DateTimeSettingsService
      */
     public function formatDateHuman($date): string
     {
-        if (!$date) return '-';
-        
+        if (! $date) {
+            return '-';
+        }
+
         $carbon = $date instanceof Carbon ? $date : Carbon::parse($date);
         $carbon->setTimezone($this->getTimezone());
         $carbon->locale($this->getLocale());
-        
+
         return $carbon->isoFormat('dddd, D MMMM YYYY');
     }
 
@@ -297,12 +310,14 @@ class DateTimeSettingsService
      */
     public function formatDateTimeHuman($datetime): string
     {
-        if (!$datetime) return '-';
-        
+        if (! $datetime) {
+            return '-';
+        }
+
         $carbon = $datetime instanceof Carbon ? $datetime : Carbon::parse($datetime);
         $carbon->setTimezone($this->getTimezone());
         $carbon->locale($this->getLocale());
-        
+
         return $carbon->isoFormat('dddd, D MMMM YYYY HH:mm');
     }
 
@@ -315,7 +330,7 @@ class DateTimeSettingsService
         if ($this->isCustomDateTimeEnabled()) {
             return $this->getCustomDateTime();
         }
-        
+
         return Carbon::now($this->getTimezone());
     }
 
@@ -334,13 +349,13 @@ class DateTimeSettingsService
     {
         $customDate = $this->get('custom_date');
         $customTime = $this->get('custom_time', '00:00');
-        
-        if (!$customDate) {
+
+        if (! $customDate) {
             return Carbon::now($this->getTimezone());
         }
-        
-        $dateTimeString = $customDate . ' ' . $customTime;
-        
+
+        $dateTimeString = $customDate.' '.$customTime;
+
         return Carbon::createFromFormat('Y-m-d H:i', $dateTimeString, $this->getTimezone());
     }
 
@@ -397,12 +412,14 @@ class DateTimeSettingsService
      */
     public function diffForHumans($datetime): string
     {
-        if (!$datetime) return '-';
-        
+        if (! $datetime) {
+            return '-';
+        }
+
         $carbon = $datetime instanceof Carbon ? $datetime : Carbon::parse($datetime);
         $carbon->setTimezone($this->getTimezone());
         $carbon->locale($this->getLocale());
-        
+
         return $carbon->diffForHumans();
     }
 
@@ -413,7 +430,7 @@ class DateTimeSettingsService
     {
         $settings = $this->getAll();
         $customSettings = $this->getCustomDateTimeSettings();
-        
+
         return [
             'timezone' => $settings['timezone'],
             'timezone_offset' => $this->getTimezoneOffset($settings['timezone']),
@@ -443,6 +460,7 @@ class DateTimeSettingsService
     {
         $tz = new DateTimeZone($timezone);
         $now = new \DateTime('now', $tz);
+
         return $tz->getOffset($now) / 3600;
     }
 }

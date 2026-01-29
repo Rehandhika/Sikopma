@@ -8,7 +8,7 @@ use Illuminate\Support\Collection;
 
 /**
  * Interface untuk StorageMonitor.
- * 
+ *
  * Bertanggung jawab untuk:
  * - Monitoring total storage usage
  * - Breakdown usage per file type
@@ -19,8 +19,6 @@ interface StorageMonitorInterface
 {
     /**
      * Get storage statistics.
-     *
-     * @return StorageStats
      */
     public function getStatistics(): StorageStats;
 
@@ -34,15 +32,13 @@ interface StorageMonitorInterface
     /**
      * Get largest files in storage.
      *
-     * @param int $limit Maximum number of files to return
+     * @param  int  $limit  Maximum number of files to return
      * @return Collection<int, array{path: string, size: int, type: string, modified_at: string}>
      */
     public function getLargestFiles(int $limit = 10): Collection;
 
     /**
      * Check if storage exceeds configured thresholds.
-     *
-     * @return ThresholdResult
      */
     public function checkThreshold(): ThresholdResult;
 }

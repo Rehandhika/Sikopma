@@ -2,16 +2,15 @@
 
 namespace App\Livewire\Product;
 
-use Livewire\Component;
-use Livewire\WithFileUploads;
 use App\Models\Product;
 use App\Models\VariantOption;
+use App\Services\ActivityLogService;
 use App\Services\ProductImageService;
 use App\Services\ProductVariantService;
-use App\Services\ActivityLogService;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
-use Illuminate\Support\Str;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 #[Layout('layouts.app')]
 #[Title('Tambah Produk')]
@@ -20,20 +19,32 @@ class CreateProduct extends Component
     use WithFileUploads;
 
     public $name = '';
+
     public $sku = '';
+
     public $price = '';
+
     public $cost_price = '';
+
     public $stock = 0;
+
     public $min_stock = 5;
+
     public $category = '';
+
     public $description = '';
+
     public $status = 'active';
+
     public $image;
+
     public $imagePreview = null;
 
     // Variant properties - simplified with free text input
     public $has_variants = false;
+
     public $selectedVariantOptions = []; // IDs of variant option types
+
     public $variants = []; // Array of variant rows with free text values
 
     protected function rules()
@@ -50,7 +61,7 @@ class CreateProduct extends Component
             'has_variants' => 'boolean',
         ];
 
-        if (!$this->has_variants) {
+        if (! $this->has_variants) {
             $rules['stock'] = 'required|integer|min:0';
             $rules['min_stock'] = 'required|integer|min:0';
         }
@@ -82,7 +93,7 @@ class CreateProduct extends Component
 
     public function updatedHasVariants($value)
     {
-        if (!$value) {
+        if (! $value) {
             $this->variants = [];
             $this->selectedVariantOptions = [];
         }
@@ -95,6 +106,7 @@ class CreateProduct extends Component
     {
         if (empty($this->selectedVariantOptions)) {
             $this->dispatch('toast', message: 'Pilih tipe varian terlebih dahulu.', type: 'error');
+
             return;
         }
 
@@ -125,7 +137,7 @@ class CreateProduct extends Component
             return ['count' => 0, 'total_stock' => 0, 'price_range' => null];
         }
 
-        $prices = collect($this->variants)->pluck('price')->filter()->map(fn($p) => (float) $p);
+        $prices = collect($this->variants)->pluck('price')->filter()->map(fn ($p) => (float) $p);
         $totalStock = collect($this->variants)->sum('stock');
 
         return [
@@ -152,6 +164,7 @@ class CreateProduct extends Component
                 ];
             }
         }
+
         return $optionValues;
     }
 
@@ -163,11 +176,13 @@ class CreateProduct extends Component
         if ($this->has_variants) {
             if (empty($this->variants)) {
                 $this->dispatch('toast', message: 'Produk dengan varian harus memiliki minimal 1 varian.', type: 'error');
+
                 return;
             }
 
             if (empty($this->selectedVariantOptions)) {
                 $this->dispatch('toast', message: 'Pilih minimal satu tipe varian.', type: 'error');
+
                 return;
             }
 
@@ -175,17 +190,19 @@ class CreateProduct extends Component
             $combinations = [];
             foreach ($this->variants as $index => $variant) {
                 $values = collect($variant['option_texts'])
-                    ->filter(fn($v) => trim($v) !== '')
-                    ->map(fn($v) => strtolower(trim($v)))
+                    ->filter(fn ($v) => trim($v) !== '')
+                    ->map(fn ($v) => strtolower(trim($v)))
                     ->sortKeys()
                     ->implode('|');
-                
+
                 if (empty($values)) {
-                    $this->dispatch('toast', message: 'Varian #' . ($index + 1) . ' belum diisi.', type: 'error');
+                    $this->dispatch('toast', message: 'Varian #'.($index + 1).' belum diisi.', type: 'error');
+
                     return;
                 }
                 if (isset($combinations[$values])) {
                     $this->dispatch('toast', message: 'Ada kombinasi varian yang duplikat.', type: 'error');
+
                     return;
                 }
                 $combinations[$values] = true;
@@ -194,6 +211,7 @@ class CreateProduct extends Component
 
         if ($this->has_variants && $this->status === 'active' && empty($this->variants)) {
             $this->dispatch('toast', message: 'Tidak dapat mengaktifkan produk tanpa varian.', type: 'error');
+
             return;
         }
 
@@ -203,7 +221,8 @@ class CreateProduct extends Component
                 $imageService = app(ProductImageService::class);
                 $imagePath = $imageService->upload($this->image);
             } catch (\Exception $e) {
-                $this->dispatch('toast', message: 'Gagal upload gambar: ' . $e->getMessage(), type: 'error');
+                $this->dispatch('toast', message: 'Gagal upload gambar: '.$e->getMessage(), type: 'error');
+
                 return;
             }
         }
@@ -222,7 +241,7 @@ class CreateProduct extends Component
             'image' => $imagePath,
         ]);
 
-        if ($this->has_variants && !empty($this->variants)) {
+        if ($this->has_variants && ! empty($this->variants)) {
             $variantService = app(ProductVariantService::class);
             $variantOptions = VariantOption::findMany($this->selectedVariantOptions);
 
@@ -244,6 +263,7 @@ class CreateProduct extends Component
         ActivityLogService::logProductCreated($this->name);
 
         $this->dispatch('toast', message: 'Produk berhasil ditambahkan.', type: 'success');
+
         return redirect()->route('admin.products.index');
     }
 

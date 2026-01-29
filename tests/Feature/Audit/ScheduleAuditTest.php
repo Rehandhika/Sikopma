@@ -2,20 +2,20 @@
 
 namespace Tests\Feature\Audit;
 
-use App\Models\User;
-use App\Models\Schedule;
-use App\Models\ScheduleAssignment;
-use Carbon\Carbon;
-use Livewire\Livewire;
-use App\Livewire\Schedule\Index;
 use App\Livewire\Schedule\CreateSchedule;
 use App\Livewire\Schedule\EditSchedule;
+use App\Livewire\Schedule\Index;
 use App\Livewire\Schedule\MySchedule;
 use App\Livewire\Schedule\ScheduleCalendar;
+use App\Models\Schedule;
+use App\Models\ScheduleAssignment;
+use App\Models\User;
+use Carbon\Carbon;
+use Livewire\Livewire;
 
 /**
  * Schedule Module Audit Tests
- * 
+ *
  * Tests schedule CRUD operations, viewing, and calendar functionality.
  * Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.7, 5.8
  */
@@ -122,7 +122,7 @@ class ScheduleAuditTest extends AuditTestCase
 
     /**
      * Test schedule index displays schedules.
-     * Requirement 5.1: WHEN an authorized user accesses schedule index 
+     * Requirement 5.1: WHEN an authorized user accesses schedule index
      * THEN the System SHALL display list of schedules with correct status indicators
      */
     public function test_schedule_index_displays_schedules(): void
@@ -139,7 +139,7 @@ class ScheduleAuditTest extends AuditTestCase
 
         // Verify schedules are displayed
         $component->assertStatus(200);
-        
+
         // Verify status indicators are present
         $component->assertSee('draft');
         $component->assertSee('published');
@@ -168,7 +168,7 @@ class ScheduleAuditTest extends AuditTestCase
 
     /**
      * Test schedule creation page is accessible.
-     * Requirement 5.2: WHEN an admin creates a new schedule 
+     * Requirement 5.2: WHEN an admin creates a new schedule
      * THEN the System SHALL validate required fields and create the schedule with draft status
      */
     public function test_schedule_creation_page_accessible(): void
@@ -181,7 +181,7 @@ class ScheduleAuditTest extends AuditTestCase
 
     /**
      * Test schedule creation with validation.
-     * Requirement 5.2: WHEN an admin creates a new schedule 
+     * Requirement 5.2: WHEN an admin creates a new schedule
      * THEN the System SHALL validate required fields and create the schedule with draft status
      */
     public function test_schedule_creation_with_validation(): void
@@ -233,7 +233,7 @@ class ScheduleAuditTest extends AuditTestCase
 
     /**
      * Test schedule editing preserves data.
-     * Requirement 5.3: WHEN an admin edits a schedule 
+     * Requirement 5.3: WHEN an admin edits a schedule
      * THEN the System SHALL load existing data and save changes without data loss
      */
     public function test_schedule_editing_preserves_data(): void
@@ -254,7 +254,7 @@ class ScheduleAuditTest extends AuditTestCase
 
     /**
      * Test schedule publishing changes status.
-     * Requirement 5.4: WHEN an admin publishes a schedule 
+     * Requirement 5.4: WHEN an admin publishes a schedule
      * THEN the System SHALL change status to published and make it visible to assigned members
      */
     public function test_schedule_publishing_changes_status(): void
@@ -297,7 +297,7 @@ class ScheduleAuditTest extends AuditTestCase
 
     /**
      * Test schedule deletion handles assignments.
-     * Requirement 5.8: WHEN a schedule is deleted 
+     * Requirement 5.8: WHEN a schedule is deleted
      * THEN the System SHALL handle related assignments appropriately
      */
     public function test_schedule_deletion_handles_assignments(): void
@@ -353,7 +353,7 @@ class ScheduleAuditTest extends AuditTestCase
 
     /**
      * Test my-schedule shows only user's assignments.
-     * Requirement 5.5: WHEN a member views their schedule (my-schedule) 
+     * Requirement 5.5: WHEN a member views their schedule (my-schedule)
      * THEN the System SHALL display only their assigned shifts
      */
     public function test_my_schedule_shows_only_users_assignments(): void
@@ -448,7 +448,7 @@ class ScheduleAuditTest extends AuditTestCase
 
     /**
      * Test calendar renders assignments correctly.
-     * Requirement 5.7: WHEN the schedule calendar is accessed 
+     * Requirement 5.7: WHEN the schedule calendar is accessed
      * THEN the System SHALL render all scheduled assignments in correct date positions
      */
     public function test_calendar_renders_assignments_correctly(): void
@@ -506,9 +506,9 @@ class ScheduleAuditTest extends AuditTestCase
         // Verify month changed
         if ($initialMonth == '12') {
             $this->assertEquals('01', $newMonth);
-            $this->assertEquals((string)((int)$initialYear + 1), $newYear);
+            $this->assertEquals((string) ((int) $initialYear + 1), $newYear);
         } else {
-            $expectedMonth = str_pad((int)$initialMonth + 1, 2, '0', STR_PAD_LEFT);
+            $expectedMonth = str_pad((int) $initialMonth + 1, 2, '0', STR_PAD_LEFT);
             $this->assertEquals($expectedMonth, $newMonth);
         }
 

@@ -13,13 +13,13 @@ return new class extends Migration
     {
         Schema::table('notifications', function (Blueprint $table) {
             // Add read_at column if not exists
-            if (!Schema::hasColumn('notifications', 'read_at')) {
+            if (! Schema::hasColumn('notifications', 'read_at')) {
                 $table->timestamp('read_at')->nullable()->after('is_read');
                 $table->index('read_at');
             }
-            
+
             // Add action_url column if not exists
-            if (!Schema::hasColumn('notifications', 'action_url')) {
+            if (! Schema::hasColumn('notifications', 'action_url')) {
                 $table->string('action_url')->nullable()->after('read_at');
             }
         });
@@ -35,7 +35,7 @@ return new class extends Migration
                 $table->dropIndex(['read_at']);
                 $table->dropColumn('read_at');
             }
-            
+
             if (Schema::hasColumn('notifications', 'action_url')) {
                 $table->dropColumn('action_url');
             }

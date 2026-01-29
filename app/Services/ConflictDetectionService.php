@@ -2,12 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\AvailabilityDetail;
 use App\Models\Schedule;
 use App\Models\ScheduleAssignment;
-use App\Models\ScheduleConfiguration;
 use App\Models\User;
-use App\Models\AvailabilityDetail;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -20,17 +18,24 @@ class ConflictDetectionService
      * Conflict types
      */
     const TYPE_DUPLICATE_USER_IN_SLOT = 'duplicate_user_in_slot';
+
     const TYPE_DOUBLE_ASSIGNMENT = 'double_assignment';
+
     const TYPE_INACTIVE_USER = 'inactive_user';
+
     const TYPE_AVAILABILITY_MISMATCH = 'availability_mismatch';
+
     const TYPE_OVERSTAFFED_SLOT = 'overstaffed_slot';
+
     const TYPE_CONSECUTIVE_SHIFT = 'consecutive_shift';
 
     /**
      * Severity levels
      */
     const SEVERITY_CRITICAL = 'critical';
+
     const SEVERITY_WARNING = 'warning';
+
     const SEVERITY_INFO = 'info';
 
     /**
@@ -82,8 +87,7 @@ class ConflictDetectionService
 
     /**
      * Detect all conflicts in a schedule
-     * 
-     * @param Schedule $schedule
+     *
      * @return array Structured array with conflicts categorized by severity
      */
     public function detectAllConflicts(Schedule $schedule): array
@@ -104,9 +108,6 @@ class ConflictDetectionService
     /**
      * Detect duplicate users in the same slot
      * Same user appears multiple times in one slot (should never happen with proper validation)
-     * 
-     * @param Schedule $schedule
-     * @return array
      */
     public function detectDuplicateUsersInSlot(Schedule $schedule): array
     {
@@ -156,9 +157,6 @@ class ConflictDetectionService
      * Detect double assignments
      * User assigned to multiple slots at the same time (shouldn't happen but check anyway)
      * This is different from duplicate - this checks if user has multiple different assignments at same time
-     * 
-     * @param Schedule $schedule
-     * @return array
      */
     public function detectDoubleAssignments(Schedule $schedule): array
     {
@@ -167,12 +165,12 @@ class ConflictDetectionService
         // This would only happen if there's a data integrity issue
         // In multi-user slots, a user can only be in ONE slot at a time
         // But we check to be safe
-        
+
         $assignments = ScheduleAssignment::where('schedule_id', $schedule->id)
             ->with('user:id,name')
             ->get()
-            ->groupBy(function($assignment) {
-                return $assignment->user_id . '_' . $assignment->date . '_' . $assignment->session;
+            ->groupBy(function ($assignment) {
+                return $assignment->user_id.'_'.$assignment->date.'_'.$assignment->session;
             });
 
         foreach ($assignments as $key => $group) {
@@ -192,16 +190,13 @@ class ConflictDetectionService
     /**
      * Detect inactive users
      * Assignments with users who are not active
-     * 
-     * @param Schedule $schedule
-     * @return array
      */
     public function detectInactiveUsers(Schedule $schedule): array
     {
         $conflicts = [];
 
         $inactiveAssignments = ScheduleAssignment::where('schedule_id', $schedule->id)
-            ->whereHas('user', function($query) {
+            ->whereHas('user', function ($query) {
                 $query->where('status', '!=', 'active');
             })
             ->with('user:id,name,status')
@@ -234,9 +229,6 @@ class ConflictDetectionService
     /**
      * Detect availability mismatches
      * Users assigned when marked unavailable
-     * 
-     * @param Schedule $schedule
-     * @return array
      */
     public function detectAvailabilityMismatches(Schedule $schedule): array
     {
@@ -249,17 +241,17 @@ class ConflictDetectionService
         foreach ($assignments as $assignment) {
             // Get day name from date
             $dayName = strtolower($assignment->date->englishDayOfWeek);
-            
+
             // Check if user marked this slot as unavailable
-            $isUnavailable = AvailabilityDetail::whereHas('availability', function($query) use ($schedule, $assignment) {
+            $isUnavailable = AvailabilityDetail::whereHas('availability', function ($query) use ($schedule, $assignment) {
                 $query->where('user_id', $assignment->user_id)
-                      ->where('schedule_id', $schedule->id)
-                      ->where('status', 'submitted');
+                    ->where('schedule_id', $schedule->id)
+                    ->where('status', 'submitted');
             })
-            ->where('day', $dayName)
-            ->where('session', $assignment->session)
-            ->where('is_available', false)
-            ->exists();
+                ->where('day', $dayName)
+                ->where('session', $assignment->session)
+                ->where('is_available', false)
+                ->exists();
 
             if ($isUnavailable) {
                 $conflicts[] = [
@@ -288,9 +280,6 @@ class ConflictDetectionService
     /**
      * Detect overstaffed slots
      * Slots exceeding max_users_per_slot configuration
-     * 
-     * @param Schedule $schedule
-     * @return array
      */
     public function detectOverstaffedSlots(Schedule $schedule): array
     {
@@ -298,7 +287,7 @@ class ConflictDetectionService
 
         // Get max users per slot from configuration
         $maxUsersPerSlot = $this->configService->get('max_users_per_slot');
-        
+
         // If no limit is set, no overstaffing is possible
         if ($maxUsersPerSlot === null) {
             return $conflicts;
@@ -345,9 +334,6 @@ class ConflictDetectionService
 
     /**
      * Categorize conflicts by severity level
-     * 
-     * @param array $conflicts
-     * @return array
      */
     public function categorizeConflicts(array $conflicts): array
     {
@@ -360,7 +346,7 @@ class ConflictDetectionService
 
         foreach ($conflicts as $conflict) {
             $severity = $conflict['severity'] ?? self::SEVERITY_INFO;
-            
+
             if (isset($categorized[$severity])) {
                 $categorized[$severity][] = $conflict;
             }
@@ -382,13 +368,10 @@ class ConflictDetectionService
 
     /**
      * Format conflict for display
-     * 
-     * @param array $conflict
-     * @return string
      */
     public function formatConflictMessage(array $conflict): string
     {
-        $icon = match($conflict['severity'] ?? self::SEVERITY_INFO) {
+        $icon = match ($conflict['severity'] ?? self::SEVERITY_INFO) {
             self::SEVERITY_CRITICAL => '❌',
             self::SEVERITY_WARNING => '⚠️',
             self::SEVERITY_INFO => 'ℹ️',
@@ -405,9 +388,6 @@ class ConflictDetectionService
 
     /**
      * Get conflicts grouped by type
-     * 
-     * @param array $conflicts
-     * @return array
      */
     public function groupConflictsByType(array $conflicts): array
     {
@@ -415,8 +395,8 @@ class ConflictDetectionService
 
         foreach ($conflicts as $conflict) {
             $type = $conflict['type'] ?? 'unknown';
-            
-            if (!isset($grouped[$type])) {
+
+            if (! isset($grouped[$type])) {
                 $grouped[$type] = [
                     'type' => $type,
                     'severity' => $conflict['severity'] ?? self::SEVERITY_INFO,
@@ -425,7 +405,7 @@ class ConflictDetectionService
                     'conflicts' => [],
                 ];
             }
-            
+
             $grouped[$type]['count']++;
             $grouped[$type]['conflicts'][] = $conflict;
         }
@@ -435,40 +415,30 @@ class ConflictDetectionService
 
     /**
      * Check if schedule has critical conflicts
-     * 
-     * @param Schedule $schedule
-     * @return bool
      */
     public function hasCriticalConflicts(Schedule $schedule): bool
     {
         $conflicts = $this->detectAllConflicts($schedule);
+
         return $conflicts['summary']['has_critical'];
     }
 
     /**
      * Get conflict count by severity
-     * 
-     * @param Schedule $schedule
-     * @param string $severity
-     * @return int
      */
     public function getConflictCount(Schedule $schedule, string $severity = 'all'): int
     {
         $conflicts = $this->detectAllConflicts($schedule);
-        
+
         if ($severity === 'all') {
             return $conflicts['summary']['total'];
         }
-        
+
         return count($conflicts[$severity] ?? []);
     }
 
     /**
      * Get conflicts for a specific user
-     * 
-     * @param Schedule $schedule
-     * @param int $userId
-     * @return array
      */
     public function getConflictsForUser(Schedule $schedule, int $userId): array
     {
@@ -486,11 +456,6 @@ class ConflictDetectionService
 
     /**
      * Get conflicts for a specific slot
-     * 
-     * @param Schedule $schedule
-     * @param string $date
-     * @param int $session
-     * @return array
      */
     public function getConflictsForSlot(Schedule $schedule, string $date, int $session): array
     {
@@ -500,7 +465,7 @@ class ConflictDetectionService
         foreach ($allConflicts['all'] as $conflict) {
             $conflictDate = $conflict['date'] ?? null;
             $conflictSession = $conflict['session'] ?? null;
-            
+
             if ($conflictDate === $date && $conflictSession === $session) {
                 $slotConflicts[] = $conflict;
             }

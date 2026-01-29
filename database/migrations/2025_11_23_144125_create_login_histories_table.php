@@ -20,7 +20,7 @@ return new class extends Migration
             $table->enum('status', ['success', 'failed'])->default('success');
             $table->string('failure_reason')->nullable();
             $table->timestamps();
-            
+
             $table->index(['user_id', 'logged_in_at']);
             $table->index('status');
         });

@@ -12,7 +12,7 @@ class CardTest extends TestCase
     public function test_card_component_renders_with_defaults(): void
     {
         $view = $this->blade('<x-ui.card>Test Content</x-ui.card>');
-        
+
         $view->assertSee('Test Content');
         $view->assertSee('rounded-xl'); // Requirement 8.1
         $view->assertSee('bg-white dark:bg-gray-800', false); // Requirement 8.5
@@ -25,7 +25,7 @@ class CardTest extends TestCase
     public function test_card_component_renders_without_padding(): void
     {
         $view = $this->blade('<x-ui.card :padding="false">Test Content</x-ui.card>');
-        
+
         $view->assertSee('Test Content');
         $view->assertDontSee('px-6 py-4', false);
     }
@@ -36,7 +36,7 @@ class CardTest extends TestCase
     public function test_card_component_renders_with_hover_state(): void
     {
         $view = $this->blade('<x-ui.card :hover="true">Test Content</x-ui.card>');
-        
+
         $view->assertSee('hover:shadow-lg', false);
         $view->assertSee('hover:border-gray-300', false);
     }
@@ -47,7 +47,7 @@ class CardTest extends TestCase
     public function test_card_component_renders_with_clickable_cursor(): void
     {
         $view = $this->blade('<x-ui.card :clickable="true">Test Content</x-ui.card>');
-        
+
         $view->assertSee('cursor-pointer', false);
     }
 
@@ -57,7 +57,7 @@ class CardTest extends TestCase
     public function test_card_component_renders_without_border(): void
     {
         $view = $this->blade('<x-ui.card :bordered="false">Test Content</x-ui.card>');
-        
+
         $view->assertDontSee('border border-gray-200', false);
     }
 
@@ -74,7 +74,7 @@ class CardTest extends TestCase
                 Body Content
             </x-ui.card>
         ');
-        
+
         $view->assertSee('Header Content');
         $view->assertSee('Body Content');
         $view->assertSee('border-b', false); // Header should have bottom border
@@ -93,7 +93,7 @@ class CardTest extends TestCase
                 </x-slot:footer>
             </x-ui.card>
         ');
-        
+
         $view->assertSee('Body Content');
         $view->assertSee('Footer Button');
         $view->assertSee('border-t', false); // Footer should have top border
@@ -111,7 +111,7 @@ class CardTest extends TestCase
                 <x-slot:footer>Footer</x-slot:footer>
             </x-ui.card>
         ');
-        
+
         $view->assertSee('Header');
         $view->assertSee('Body');
         $view->assertSee('Footer');
@@ -127,7 +127,7 @@ class CardTest extends TestCase
                 Body Content
             </x-ui.card>
         ');
-        
+
         $view->assertSee('Card Title');
         $view->assertSee('Card Subtitle');
         $view->assertSee('Body Content');
@@ -148,7 +148,7 @@ class CardTest extends TestCase
                 <x-slot:footer>Footer</x-slot:footer>
             </x-ui.card>
         ');
-        
+
         $view->assertSee('hover:shadow-lg', false);
         $view->assertSee('cursor-pointer', false);
         $view->assertSee('shadow-lg', false);
@@ -163,7 +163,7 @@ class CardTest extends TestCase
     public function test_card_component_supports_dark_mode(): void
     {
         $view = $this->blade('<x-ui.card>Test</x-ui.card>');
-        
+
         $view->assertSee('dark:bg-gray-800', false); // Requirement 8.5
         $view->assertSee('dark:border-gray-700', false); // Requirement 8.2
     }
@@ -174,7 +174,7 @@ class CardTest extends TestCase
     public function test_card_component_uses_consistent_border_radius(): void
     {
         $view = $this->blade('<x-ui.card>Test</x-ui.card>');
-        
+
         $view->assertSee('rounded-xl', false); // Requirement 8.1
     }
 
@@ -186,7 +186,7 @@ class CardTest extends TestCase
         // With padding (default)
         $viewWithPadding = $this->blade('<x-ui.card :padding="true">Test</x-ui.card>');
         $viewWithPadding->assertSee('px-6 py-4', false);
-        
+
         // Without padding
         $viewWithoutPadding = $this->blade('<x-ui.card :padding="false">Test</x-ui.card>');
         $viewWithoutPadding->assertDontSee('px-6 py-4', false);
@@ -198,10 +198,9 @@ class CardTest extends TestCase
     public function test_card_component_supports_hover_state_for_interactive_cards(): void
     {
         $view = $this->blade('<x-ui.card :hover="true" :clickable="true">Interactive Card</x-ui.card>');
-        
+
         $view->assertSee('hover:shadow-lg', false); // Requirement 8.6
         $view->assertSee('cursor-pointer', false); // Requirement 8.6
         $view->assertSee('Interactive Card');
     }
 }
-

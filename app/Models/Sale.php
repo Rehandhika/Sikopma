@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 
 class Sale extends Model
@@ -50,7 +51,7 @@ class Sale extends Model
     public function scopeThisMonth($query)
     {
         return $query->whereMonth('date', now()->month)
-                     ->whereYear('date', now()->year);
+            ->whereYear('date', now()->year);
     }
 
     public function scopeByCashier($query, $cashierId)
@@ -75,19 +76,19 @@ class Sale extends Model
     {
         $date = $forDate ? \Carbon\Carbon::parse($forDate)->format('Ymd') : now()->format('Ymd');
         $prefix = "INV-{$date}-";
-        
+
         // Get max sequence with row locking
         $maxSeq = static::withTrashed()
-            ->where('invoice_number', 'like', $prefix . '%')
+            ->where('invoice_number', 'like', $prefix.'%')
             ->lockForUpdate()
             ->selectRaw("MAX(CAST(SUBSTRING_INDEX(invoice_number, '-', -1) AS UNSIGNED)) as max_seq")
             ->value('max_seq');
-        
+
         $newNumber = ($maxSeq ?? 0) + 1;
-        
-        return $prefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+
+        return $prefix.str_pad($newNumber, 4, '0', STR_PAD_LEFT);
     }
-    
+
     /**
      * Generate multiple unique invoice numbers for batch insert
      * Must be called within a database transaction for proper locking
@@ -97,24 +98,24 @@ class Sale extends Model
         if ($count <= 0) {
             return [];
         }
-        
+
         $date = $forDate ? \Carbon\Carbon::parse($forDate)->format('Ymd') : now()->format('Ymd');
         $prefix = "INV-{$date}-";
-        
+
         // Get max sequence with row locking to prevent race conditions
         $maxSeq = static::withTrashed()
-            ->where('invoice_number', 'like', $prefix . '%')
+            ->where('invoice_number', 'like', $prefix.'%')
             ->lockForUpdate()
             ->selectRaw("MAX(CAST(SUBSTRING_INDEX(invoice_number, '-', -1) AS UNSIGNED)) as max_seq")
             ->value('max_seq');
-        
+
         $startNumber = ($maxSeq ?? 0) + 1;
-        
+
         $invoices = [];
         for ($i = 0; $i < $count; $i++) {
-            $invoices[] = $prefix . str_pad($startNumber + $i, 4, '0', STR_PAD_LEFT);
+            $invoices[] = $prefix.str_pad($startNumber + $i, 4, '0', STR_PAD_LEFT);
         }
-        
+
         return $invoices;
     }
 }

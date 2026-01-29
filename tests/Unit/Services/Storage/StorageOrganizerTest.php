@@ -14,7 +14,7 @@ class StorageOrganizerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->organizer = new StorageOrganizer();
+        $this->organizer = new StorageOrganizer;
     }
 
     /**
@@ -23,7 +23,7 @@ class StorageOrganizerTest extends TestCase
     public function test_generate_path_creates_correct_format(): void
     {
         $path = $this->organizer->generatePath('product', 'webp');
-        
+
         // Should match pattern: product/YYYY/MM/uuid.webp
         $this->assertMatchesRegularExpression(
             '/^product\/\d{4}\/\d{2}\/[a-f0-9-]{36}\.webp$/',
@@ -37,7 +37,7 @@ class StorageOrganizerTest extends TestCase
     public function test_generate_path_with_day_for_attendance(): void
     {
         $path = $this->organizer->generatePath('attendance', 'webp', ['day' => 15]);
-        
+
         // Should match pattern: attendance/YYYY/MM/DD/uuid.webp
         $this->assertMatchesRegularExpression(
             '/^attendance\/\d{4}\/\d{2}\/15\/[a-f0-9-]{36}\.webp$/',
@@ -51,7 +51,7 @@ class StorageOrganizerTest extends TestCase
     public function test_generate_path_pads_single_digit_day(): void
     {
         $path = $this->organizer->generatePath('attendance', 'webp', ['day' => 5]);
-        
+
         // Should have padded day: 05
         $this->assertMatchesRegularExpression(
             '/^attendance\/\d{4}\/\d{2}\/05\/[a-f0-9-]{36}\.webp$/',
@@ -65,7 +65,7 @@ class StorageOrganizerTest extends TestCase
     public function test_generate_path_throws_exception_for_invalid_type(): void
     {
         $this->expectException(FileValidationException::class);
-        
+
         $this->organizer->generatePath('invalid_type', 'webp');
     }
 
@@ -75,7 +75,7 @@ class StorageOrganizerTest extends TestCase
     public function test_generate_path_sanitizes_extension(): void
     {
         $path = $this->organizer->generatePath('product', '.WEBP');
-        
+
         // Extension should be lowercase without leading dot
         $this->assertStringEndsWith('.webp', $path);
     }
@@ -87,7 +87,7 @@ class StorageOrganizerTest extends TestCase
     {
         $originalPath = 'product/2026/01/abc-123.webp';
         $variantPath = $this->organizer->getVariantPath($originalPath, 'thumbnail');
-        
+
         $this->assertEquals('product/2026/01/thumbnail/abc-123.webp', $variantPath);
     }
 
@@ -98,7 +98,7 @@ class StorageOrganizerTest extends TestCase
     {
         $originalPath = 'attendance/2026/01/15/abc-123.webp';
         $variantPath = $this->organizer->getVariantPath($originalPath, 'thumbnail');
-        
+
         $this->assertEquals('attendance/2026/01/15/thumbnail/abc-123.webp', $variantPath);
     }
 
@@ -109,7 +109,7 @@ class StorageOrganizerTest extends TestCase
     {
         $originalPath = 'product/2026/01/abc-123.webp';
         $thumbnailPath = $this->organizer->getThumbnailPath($originalPath, 150, 150);
-        
+
         $this->assertEquals('product/2026/01/thumbnails/abc-123_150x150.webp', $thumbnailPath);
     }
 
@@ -120,7 +120,7 @@ class StorageOrganizerTest extends TestCase
     {
         $originalPath = 'attendance/2026/01/15/abc-123.webp';
         $thumbnailPath = $this->organizer->getThumbnailPath($originalPath, 80, 80);
-        
+
         $this->assertEquals('attendance/2026/01/15/thumbnails/abc-123_80x80.webp', $thumbnailPath);
     }
 
@@ -131,7 +131,7 @@ class StorageOrganizerTest extends TestCase
     {
         $path = 'product/2026/01/abc-123.webp';
         $pathInfo = $this->organizer->parsePath($path);
-        
+
         $this->assertInstanceOf(PathInfo::class, $pathInfo);
         $this->assertEquals('product', $pathInfo->type);
         $this->assertEquals('2026', $pathInfo->year);
@@ -149,7 +149,7 @@ class StorageOrganizerTest extends TestCase
     {
         $path = 'attendance/2026/01/15/abc-123.webp';
         $pathInfo = $this->organizer->parsePath($path);
-        
+
         $this->assertEquals('attendance', $pathInfo->type);
         $this->assertEquals('2026', $pathInfo->year);
         $this->assertEquals('01', $pathInfo->month);
@@ -165,7 +165,7 @@ class StorageOrganizerTest extends TestCase
     {
         $path = 'product/2026/01/thumbnail/abc-123.webp';
         $pathInfo = $this->organizer->parsePath($path);
-        
+
         $this->assertEquals('product', $pathInfo->type);
         $this->assertEquals('thumbnail', $pathInfo->variant);
         $this->assertEquals('abc-123', $pathInfo->filename);
@@ -178,7 +178,7 @@ class StorageOrganizerTest extends TestCase
     {
         $path = 'attendance/2026/01/15/thumbnail/abc-123.webp';
         $pathInfo = $this->organizer->parsePath($path);
-        
+
         $this->assertEquals('attendance', $pathInfo->type);
         $this->assertEquals('15', $pathInfo->day);
         $this->assertEquals('thumbnail', $pathInfo->variant);
@@ -191,7 +191,7 @@ class StorageOrganizerTest extends TestCase
     public function test_parse_path_throws_exception_for_invalid_path(): void
     {
         $this->expectException(FileValidationException::class);
-        
+
         $this->organizer->parsePath('invalid/path');
     }
 
@@ -202,7 +202,7 @@ class StorageOrganizerTest extends TestCase
     {
         $dangerous = '../../../etc/passwd';
         $sanitized = $this->organizer->sanitizeFilename($dangerous);
-        
+
         $this->assertStringNotContainsString('..', $sanitized);
         $this->assertStringNotContainsString('/', $sanitized);
     }
@@ -214,7 +214,7 @@ class StorageOrganizerTest extends TestCase
     {
         $dangerous = "file\0name.txt";
         $sanitized = $this->organizer->sanitizeFilename($dangerous);
-        
+
         $this->assertStringNotContainsString("\0", $sanitized);
     }
 
@@ -225,7 +225,7 @@ class StorageOrganizerTest extends TestCase
     {
         $dangerous = 'file:name*with?bad<chars>.txt';
         $sanitized = $this->organizer->sanitizeFilename($dangerous);
-        
+
         $this->assertStringNotContainsString(':', $sanitized);
         $this->assertStringNotContainsString('*', $sanitized);
         $this->assertStringNotContainsString('?', $sanitized);
@@ -240,7 +240,7 @@ class StorageOrganizerTest extends TestCase
     {
         $dangerous = '../../../';
         $sanitized = $this->organizer->sanitizeFilename($dangerous);
-        
+
         // Should be a valid UUID
         $this->assertMatchesRegularExpression('/^[a-f0-9-]{36}$/', $sanitized);
     }
@@ -274,7 +274,7 @@ class StorageOrganizerTest extends TestCase
     public function test_get_valid_types_returns_all_configured_types(): void
     {
         $types = $this->organizer->getValidTypes();
-        
+
         $this->assertContains('product', $types);
         $this->assertContains('banner', $types);
         $this->assertContains('attendance', $types);
@@ -290,10 +290,10 @@ class StorageOrganizerTest extends TestCase
     {
         // This should sanitize the path before parsing
         $path = '../product/2026/01/abc-123.webp';
-        
+
         // After sanitization, it should be: product/2026/01/abc-123.webp
         $pathInfo = $this->organizer->parsePath($path);
-        
+
         $this->assertEquals('product', $pathInfo->type);
     }
 }

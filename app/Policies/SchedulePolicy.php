@@ -49,7 +49,7 @@ class SchedulePolicy
     public function edit(User $user, Schedule $schedule): bool
     {
         // Check if user has Admin or Super Admin role
-        if (!$user->hasRole(['Super Admin', 'Admin'])) {
+        if (! $user->hasRole(['Super Admin', 'Admin'])) {
             return false;
         }
 

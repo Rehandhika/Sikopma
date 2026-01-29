@@ -2,27 +2,33 @@
 
 namespace App\Livewire\Schedule;
 
-use Livewire\Component;
 use App\Models\User;
 use Carbon\Carbon;
+use Livewire\Component;
 
 class UserSelector extends Component
 {
     // Props
     public $date;
+
     public $session;
+
     public $currentAssignments = [];
+
     public $show = false;
-    
+
     // Search
     public $search = '';
-    
+
     // Users data
     public $users = [];
+
     public $availableUsers = [];
+
     public $notAvailableUsers = [];
+
     public $inactiveUsers = [];
-    
+
     protected $listeners = [
         'open-user-selector' => 'openModal',
         'close-user-selector' => 'closeModal',
@@ -38,7 +44,7 @@ class UserSelector extends Component
         $this->currentAssignments = $currentAssignments;
         $this->search = '';
         $this->show = true;
-        
+
         $this->loadUsers();
     }
 
@@ -57,43 +63,43 @@ class UserSelector extends Component
     public function loadUsers(): void
     {
         $dayName = strtolower(Carbon::parse($this->date)->englishDayOfWeek);
-        
+
         // Get all users with their availability data
-        $allUsers = User::with(['availabilities.details' => function($query) use ($dayName) {
+        $allUsers = User::with(['availabilities.details' => function ($query) use ($dayName) {
             $query->where('day', $dayName)
-                  ->where('session', $this->session);
+                ->where('session', $this->session);
         }])
-        ->when($this->search, function($query) {
-            $query->where(function($q) {
-                $q->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('nim', 'like', '%' . $this->search . '%');
-            });
-        })
-        ->get();
-        
+            ->when($this->search, function ($query) {
+                $query->where(function ($q) {
+                    $q->where('name', 'like', '%'.$this->search.'%')
+                        ->orWhere('nim', 'like', '%'.$this->search.'%');
+                });
+            })
+            ->get();
+
         // Categorize users
         $this->availableUsers = [];
         $this->notAvailableUsers = [];
         $this->inactiveUsers = [];
-        
+
         foreach ($allUsers as $user) {
             // Count current assignments for this user
-            $currentShifts = collect($this->currentAssignments)->flatten(1)->filter(function($assignment) use ($user) {
+            $currentShifts = collect($this->currentAssignments)->flatten(1)->filter(function ($assignment) use ($user) {
                 return $assignment && $assignment['user_id'] == $user->id;
             })->count();
-            
+
             // Check if user already assigned at this time
-            $hasConflict = collect($this->currentAssignments)->flatten(1)->contains(function($assignment) use ($user) {
-                return $assignment && 
-                       $assignment['user_id'] == $user->id && 
-                       $assignment['date'] == $this->date && 
+            $hasConflict = collect($this->currentAssignments)->flatten(1)->contains(function ($assignment) use ($user) {
+                return $assignment &&
+                       $assignment['user_id'] == $user->id &&
+                       $assignment['date'] == $this->date &&
                        $assignment['session'] == $this->session;
             });
-            
+
             // Check availability status
             $isAvailable = false;
             $isNotAvailable = false;
-            
+
             foreach ($user->availabilities as $availability) {
                 foreach ($availability->details as $detail) {
                     if ($detail->day === $dayName && $detail->session == $this->session) {
@@ -105,7 +111,7 @@ class UserSelector extends Component
                     }
                 }
             }
-            
+
             // Determine availability level
             $availabilityLevel = 'unknown';
             if ($isAvailable) {
@@ -113,7 +119,7 @@ class UserSelector extends Component
             } elseif ($isNotAvailable) {
                 $availabilityLevel = 'low';
             }
-            
+
             $userData = [
                 'id' => $user->id,
                 'name' => $user->name,
@@ -126,7 +132,7 @@ class UserSelector extends Component
                 'is_not_available' => $isNotAvailable,
                 'availability_level' => $availabilityLevel,
             ];
-            
+
             // Categorize
             if ($user->status !== 'active') {
                 $this->inactiveUsers[] = $userData;
@@ -141,14 +147,14 @@ class UserSelector extends Component
                 $this->availableUsers[] = $userData;
             }
         }
-        
+
         // Sort available users by current shifts (ascending)
-        usort($this->availableUsers, function($a, $b) {
+        usort($this->availableUsers, function ($a, $b) {
             return $a['current_shifts'] <=> $b['current_shifts'];
         });
-        
+
         // Sort not available users by current shifts
-        usort($this->notAvailableUsers, function($a, $b) {
+        usort($this->notAvailableUsers, function ($a, $b) {
             return $a['current_shifts'] <=> $b['current_shifts'];
         });
     }
@@ -188,6 +194,7 @@ class UserSelector extends Component
             2 => '10:20 - 12:50',
             3 => '13:30 - 16:00',
         ];
+
         return $times[$this->session] ?? '';
     }
 
@@ -197,11 +204,11 @@ class UserSelector extends Component
     public function getUserInitials(string $name): string
     {
         $words = explode(' ', $name);
-        
+
         if (count($words) >= 2) {
-            return strtoupper(substr($words[0], 0, 1) . substr($words[1], 0, 1));
+            return strtoupper(substr($words[0], 0, 1).substr($words[1], 0, 1));
         }
-        
+
         return strtoupper(substr($name, 0, 2));
     }
 

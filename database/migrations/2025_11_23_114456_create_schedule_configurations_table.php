@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('type'); // integer, float, boolean, json, string
             $table->text('description')->nullable();
             $table->timestamps();
-            
+
             // Index for fast lookups
             $table->index('key');
         });

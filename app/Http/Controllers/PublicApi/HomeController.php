@@ -14,7 +14,7 @@ class HomeController extends Controller
     private function respondCachedJson(Request $request, array $payload, int $maxAge, int $staleWhileRevalidate): Response
     {
         $json = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        $etag = '"' . sha1((string) $json) . '"';
+        $etag = '"'.sha1((string) $json).'"';
 
         $headers = [
             'Content-Type' => 'application/json; charset=UTF-8',

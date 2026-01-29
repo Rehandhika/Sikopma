@@ -26,16 +26,16 @@ class SetTimezone
     {
         // Get timezone from system settings
         $timezone = $this->dateTimeService->getTimezone();
-        
+
         // Set PHP default timezone
         date_default_timezone_set($timezone);
-        
+
         // Set Carbon default timezone
         Carbon::setLocale($this->dateTimeService->getLocale());
-        
+
         // Update config at runtime
         config(['app.timezone' => $timezone]);
-        
+
         return $next($request);
     }
 }

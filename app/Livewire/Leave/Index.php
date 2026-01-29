@@ -2,9 +2,9 @@
 
 namespace App\Livewire\Leave;
 
+use App\Models\LeaveRequest;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\LeaveRequest;
 
 class Index extends Component
 {
@@ -15,7 +15,7 @@ class Index extends Component
     public function cancelRequest($id)
     {
         $leave = LeaveRequest::find($id);
-        
+
         if ($leave && $leave->user_id === auth()->id() && $leave->status === 'pending') {
             $leave->update(['status' => 'cancelled']);
             $this->dispatch('toast', message: 'Permintaan cuti dibatalkan', type: 'success');
@@ -26,7 +26,7 @@ class Index extends Component
     {
         $leaves = LeaveRequest::query()
             ->where('user_id', auth()->id())
-            ->when($this->statusFilter, fn($q) => $q->where('status', $this->statusFilter))
+            ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
             ->with(['reviewer:id,name', 'affectedSchedules'])
             ->orderBy('created_at', 'desc')
             ->paginate(15);

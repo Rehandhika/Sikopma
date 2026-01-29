@@ -2,28 +2,33 @@
 
 namespace App\Livewire\Schedule;
 
-use Livewire\Component;
-use Livewire\Attributes\Computed;
-use App\Models\{Availability, AvailabilityDetail};
+use App\Models\Availability;
+use App\Models\AvailabilityDetail;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\{DB, Cache};
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Computed;
+use Livewire\Component;
 
 class AvailabilityManager extends Component
 {
     public int $weekOffset = 0;
+
     public array $grid = [];
-    
+
     private const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday'];
+
     private const DAY_LABELS = [
-        'monday' => 'Senin', 
-        'tuesday' => 'Selasa', 
-        'wednesday' => 'Rabu', 
-        'thursday' => 'Kamis'
+        'monday' => 'Senin',
+        'tuesday' => 'Selasa',
+        'wednesday' => 'Rabu',
+        'thursday' => 'Kamis',
     ];
+
     private const SESSIONS = [
-        '1' => '07:30 - 10:00', 
-        '2' => '10:20 - 12:50', 
-        '3' => '13:30 - 16:00'
+        '1' => '07:30 - 10:00',
+        '2' => '10:20 - 12:50',
+        '3' => '13:30 - 16:00',
     ];
 
     public function mount(): void
@@ -46,7 +51,7 @@ class AvailabilityManager extends Component
     #[Computed]
     public function weekLabel(): string
     {
-        return $this->weekStart->format('d M') . ' - ' . $this->weekEnd->format('d M Y');
+        return $this->weekStart->format('d M').' - '.$this->weekEnd->format('d M Y');
     }
 
     #[Computed]
@@ -67,9 +72,12 @@ class AvailabilityManager extends Component
         $count = 0;
         foreach ($this->grid as $sessions) {
             foreach ($sessions as $val) {
-                if ($val) $count++;
+                if ($val) {
+                    $count++;
+                }
             }
         }
+
         return $count;
     }
 
@@ -90,7 +98,7 @@ class AvailabilityManager extends Component
      */
     public function getCanEditProperty(): bool
     {
-        return $this->weekOffset >= 0 && !$this->isSubmitted;
+        return $this->weekOffset >= 0 && ! $this->isSubmitted;
     }
 
     public function updatedWeekOffset(): void
@@ -100,19 +108,23 @@ class AvailabilityManager extends Component
 
     public function toggle(string $day, string $session): void
     {
-        if (!$this->canEdit) return;
-        $this->grid[$day][$session] = !($this->grid[$day][$session] ?? false);
+        if (! $this->canEdit) {
+            return;
+        }
+        $this->grid[$day][$session] = ! ($this->grid[$day][$session] ?? false);
     }
 
     public function toggleDay(string $day): void
     {
-        if (!$this->canEdit) return;
-        
+        if (! $this->canEdit) {
+            return;
+        }
+
         $allSelected = collect(array_keys(self::SESSIONS))
-            ->every(fn($s) => $this->grid[$day][$s] ?? false);
-        
+            ->every(fn ($s) => $this->grid[$day][$s] ?? false);
+
         foreach (array_keys(self::SESSIONS) as $s) {
-            $this->grid[$day][$s] = !$allSelected;
+            $this->grid[$day][$s] = ! $allSelected;
         }
     }
 
@@ -127,11 +139,13 @@ class AvailabilityManager extends Component
 
         if ($alreadySubmitted) {
             $this->dispatch('toast', message: 'Ketersediaan sudah dikirim untuk minggu ini.', type: 'error');
+
             return;
         }
 
         if ($this->totalSelected === 0) {
             $this->dispatch('toast', message: 'Pilih minimal satu sesi.', type: 'error');
+
             return;
         }
 
@@ -142,7 +156,7 @@ class AvailabilityManager extends Component
                     ->where('user_id', auth()->id())
                     ->where('week_start_date', $this->weekStart->format('Y-m-d'))
                     ->pluck('id');
-                
+
                 if ($existingIds->isNotEmpty()) {
                     AvailabilityDetail::whereIn('availability_id', $existingIds)->delete();
                     Availability::whereIn('id', $existingIds)->delete();
@@ -180,9 +194,9 @@ class AvailabilityManager extends Component
             });
 
             $this->dispatch('toast', message: 'Ketersediaan berhasil dikirim!', type: 'success');
-            
+
         } catch (\Exception $e) {
-            $this->dispatch('toast', message: 'Gagal menyimpan: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal menyimpan: '.$e->getMessage(), type: 'error');
         }
     }
 

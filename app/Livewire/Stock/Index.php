@@ -2,13 +2,13 @@
 
 namespace App\Livewire\Stock;
 
+use App\Models\Product;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\Product;
 
 /**
  * Stock Management Index Component
- * 
+ *
  * Displays product stock levels and statistics
  */
 class Index extends Component
@@ -16,6 +16,7 @@ class Index extends Component
     use WithPagination;
 
     public $search = '';
+
     public $stockFilter = 'all'; // all, low, out
 
     /**
@@ -36,10 +37,10 @@ class Index extends Component
     public function render()
     {
         $products = Product::query()
-            ->when($this->search, fn($q) => $q->where('name', 'like', '%' . $this->search . '%')
-                ->orWhere('sku', 'like', '%' . $this->search . '%'))
-            ->when($this->stockFilter === 'low', fn($q) => $q->whereColumn('stock', '<=', 'min_stock')->where('stock', '>', 0))
-            ->when($this->stockFilter === 'out', fn($q) => $q->where('stock', 0))
+            ->when($this->search, fn ($q) => $q->where('name', 'like', '%'.$this->search.'%')
+                ->orWhere('sku', 'like', '%'.$this->search.'%'))
+            ->when($this->stockFilter === 'low', fn ($q) => $q->whereColumn('stock', '<=', 'min_stock')->where('stock', '>', 0))
+            ->when($this->stockFilter === 'out', fn ($q) => $q->where('stock', 0))
             ->orderBy('name')
             ->paginate(20);
 

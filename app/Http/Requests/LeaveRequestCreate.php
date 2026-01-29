@@ -22,24 +22,24 @@ class LeaveRequestCreate extends FormRequest
     {
         $maxDays = config('sikopma.leave.max_days_per_month', 5);
         $minAdvanceDays = config('sikopma.leave.min_advance_notice_days', 3);
-        
+
         return [
             'leave_type_id' => [
                 'required',
                 'integer',
-                Rule::exists('leave_types', 'id')->where('is_active', true)
+                Rule::exists('leave_types', 'id')->where('is_active', true),
             ],
             'date_from' => [
                 'required',
                 'date',
-                'after_or_equal:' . now()->addDays($minAdvanceDays)->format('Y-m-d'),
-                'before_or_equal:' . now()->addMonths(3)->format('Y-m-d')
+                'after_or_equal:'.now()->addDays($minAdvanceDays)->format('Y-m-d'),
+                'before_or_equal:'.now()->addMonths(3)->format('Y-m-d'),
             ],
             'date_to' => [
                 'required',
                 'date',
                 'after_or_equal:date_from',
-                'before_or_equal:' . now()->addMonths(3)->format('Y-m-d')
+                'before_or_equal:'.now()->addMonths(3)->format('Y-m-d'),
             ],
             'reason' => 'required|string|max:1000|min:10',
             'notes' => 'nullable|string|max:500',
@@ -54,7 +54,7 @@ class LeaveRequestCreate extends FormRequest
     public function messages(): array
     {
         $minAdvanceDays = config('sikopma.leave.min_advance_notice_days', 3);
-        
+
         return [
             'leave_type_id.required' => 'Jenis cuti harus dipilih.',
             'leave_type_id.exists' => 'Jenis cuti tidak valid.',
@@ -81,16 +81,16 @@ class LeaveRequestCreate extends FormRequest
     public function getValidatedData(): array
     {
         $data = $this->validated();
-        
+
         // Sanitize text inputs to prevent XSS
         $data['reason'] = strip_tags($data['reason']);
         $data['reason'] = trim($data['reason']);
-        
+
         if (isset($data['notes'])) {
             $data['notes'] = strip_tags($data['notes']);
             $data['notes'] = trim($data['notes']);
         }
-        
+
         if (isset($data['emergency_contact'])) {
             $data['emergency_contact'] = strip_tags($data['emergency_contact']);
             $data['emergency_contact'] = trim($data['emergency_contact']);
@@ -113,18 +113,18 @@ class LeaveRequestCreate extends FormRequest
             $userId = auth()->id();
             $dateFrom = $this->date_from;
             $dateTo = $this->date_to;
-            
+
             if ($dateFrom && $dateTo) {
                 // Check for overlapping leave requests
                 $existingLeave = \App\Models\LeaveRequest::where('user_id', $userId)
                     ->whereIn('status', ['pending', 'approved'])
                     ->where(function ($query) use ($dateFrom, $dateTo) {
                         $query->whereBetween('date_from', [$dateFrom, $dateTo])
-                              ->orWhereBetween('date_to', [$dateFrom, $dateTo])
-                              ->orWhere(function ($subQuery) use ($dateFrom, $dateTo) {
-                                  $subQuery->where('date_from', '<=', $dateFrom)
-                                           ->where('date_to', '>=', $dateTo);
-                              });
+                            ->orWhereBetween('date_to', [$dateFrom, $dateTo])
+                            ->orWhere(function ($subQuery) use ($dateFrom, $dateTo) {
+                                $subQuery->where('date_from', '<=', $dateFrom)
+                                    ->where('date_to', '>=', $dateTo);
+                            });
                     })
                     ->exists();
 
@@ -141,7 +141,7 @@ class LeaveRequestCreate extends FormRequest
                     ->sum('days');
 
                 $requestedDays = \Carbon\Carbon::parse($dateFrom)->diffInDays(\Carbon\Carbon::parse($dateTo)) + 1;
-                
+
                 if ($currentMonthLeaves + $requestedDays > $maxDaysPerMonth) {
                     $validator->errors()->add('date_from', "Total cuti bulan ini tidak boleh melebihi {$maxDaysPerMonth} hari.");
                 }
@@ -152,7 +152,7 @@ class LeaveRequestCreate extends FormRequest
                     ->where('status', 'scheduled')
                     ->exists();
 
-                if (!$hasSchedules) {
+                if (! $hasSchedules) {
                     $validator->errors()->add('date_from', 'Tidak ada jadwal kerja pada periode yang dipilih.');
                 }
             }

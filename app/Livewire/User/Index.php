@@ -2,15 +2,15 @@
 
 namespace App\Livewire\User;
 
-use Livewire\Component;
-use Livewire\WithPagination;
-use Livewire\Attributes\Title;
-use Livewire\Attributes\Computed;
-use Livewire\Attributes\Url;
 use App\Models\User;
 use App\Services\ActivityLogService;
-use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
+use Livewire\Component;
+use Livewire\WithPagination;
+use Spatie\Permission\Models\Role;
 
 #[Title('Manajemen Anggota')]
 class Index extends Component
@@ -19,25 +19,35 @@ class Index extends Component
 
     #[Url(as: 'q')]
     public string $search = '';
-    
+
     #[Url(as: 'role')]
     public string $roleFilter = '';
-    
+
     #[Url(as: 'status')]
     public string $statusFilter = '';
 
     public bool $showModal = false;
+
     public bool $editMode = false;
+
     public ?int $userId = null;
-    
+
     public string $nim = '';
+
     public string $name = '';
+
     public string $email = '';
+
     public string $phone = '';
+
     public string $address = '';
+
     public string $password = '';
+
     public string $password_confirmation = '';
+
     public array $selectedRoles = [];
+
     public string $status = 'active';
 
     protected int $perPage = 15;
@@ -45,9 +55,9 @@ class Index extends Component
     protected function rules(): array
     {
         $rules = [
-            'nim' => ['required', 'string', 'max:20', 'unique:users,nim' . ($this->editMode ? ',' . $this->userId : '')],
+            'nim' => ['required', 'string', 'max:20', 'unique:users,nim'.($this->editMode ? ','.$this->userId : '')],
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:users,email' . ($this->editMode ? ',' . $this->userId : '')],
+            'email' => ['required', 'email', 'unique:users,email'.($this->editMode ? ','.$this->userId : '')],
             'phone' => ['nullable', 'string', 'max:20'],
             'address' => ['nullable', 'string', 'max:500'],
             'selectedRoles' => ['required', 'array', 'min:1'],
@@ -105,7 +115,7 @@ class Index extends Component
                 });
             })
             ->when($this->roleFilter, function ($q) {
-                $q->whereHas('roles', fn($query) => $query->where('name', $this->roleFilter));
+                $q->whereHas('roles', fn ($query) => $query->where('name', $this->roleFilter));
             })
             ->when($this->statusFilter, function ($q) {
                 $q->where('status', $this->statusFilter);
@@ -133,7 +143,7 @@ class Index extends Component
     public function edit(int $id): void
     {
         $user = User::with('roles:id,name')->findOrFail($id);
-        
+
         $this->userId = $user->id;
         $this->nim = $user->nim ?? '';
         $this->name = $user->name;
@@ -144,7 +154,7 @@ class Index extends Component
         $this->selectedRoles = $user->roles->pluck('name')->toArray();
         $this->password = '';
         $this->password_confirmation = '';
-        
+
         $this->editMode = true;
         $this->showModal = true;
     }
@@ -156,7 +166,7 @@ class Index extends Component
         try {
             if ($this->editMode) {
                 $user = User::findOrFail($this->userId);
-                
+
                 $user->update([
                     'nim' => $this->nim,
                     'name' => $this->name,
@@ -172,7 +182,7 @@ class Index extends Component
 
                 $user->syncRoles($this->selectedRoles);
                 $message = 'Anggota berhasil diperbarui';
-                
+
                 // Log activity
                 ActivityLogService::logUserUpdated($this->name);
             } else {
@@ -188,7 +198,7 @@ class Index extends Component
 
                 $user->syncRoles($this->selectedRoles);
                 $message = 'Anggota berhasil ditambahkan';
-                
+
                 // Log activity
                 ActivityLogService::logUserCreated($this->name);
             }
@@ -196,7 +206,7 @@ class Index extends Component
             $this->dispatch('toast', message: $message, type: 'success');
             $this->closeModal();
         } catch (\Exception $e) {
-            $this->dispatch('toast', message: 'Terjadi kesalahan: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Terjadi kesalahan: '.$e->getMessage(), type: 'error');
         }
     }
 
@@ -204,25 +214,27 @@ class Index extends Component
     {
         try {
             $user = User::findOrFail($id);
-            
+
             if ($user->hasRole('super-admin')) {
                 $this->dispatch('toast', message: 'Super Admin tidak dapat dihapus', type: 'error');
+
                 return;
             }
 
             if ($user->id === auth()->id()) {
                 $this->dispatch('toast', message: 'Anda tidak dapat menghapus akun sendiri', type: 'error');
+
                 return;
             }
 
             $user->delete();
-            
+
             // Log activity
             ActivityLogService::logUserDeleted($user->name);
-            
+
             $this->dispatch('toast', message: 'Anggota berhasil dihapus', type: 'success');
         } catch (\Exception $e) {
-            $this->dispatch('toast', message: 'Terjadi kesalahan: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Terjadi kesalahan: '.$e->getMessage(), type: 'error');
         }
     }
 
@@ -230,14 +242,15 @@ class Index extends Component
     {
         try {
             $user = User::findOrFail($id);
-            
+
             if ($user->hasRole('super-admin')) {
                 $this->dispatch('toast', message: 'Status Super Admin tidak dapat diubah', type: 'error');
+
                 return;
             }
 
             $user->update([
-                'status' => $user->status === 'active' ? 'inactive' : 'active'
+                'status' => $user->status === 'active' ? 'inactive' : 'active',
             ]);
 
             // Log activity
@@ -245,7 +258,7 @@ class Index extends Component
 
             $this->dispatch('toast', message: 'Status berhasil diubah', type: 'success');
         } catch (\Exception $e) {
-            $this->dispatch('toast', message: 'Terjadi kesalahan: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Terjadi kesalahan: '.$e->getMessage(), type: 'error');
         }
     }
 
@@ -265,7 +278,7 @@ class Index extends Component
     {
         $this->reset([
             'userId', 'nim', 'name', 'email', 'phone', 'address',
-            'password', 'password_confirmation', 'selectedRoles'
+            'password', 'password_confirmation', 'selectedRoles',
         ]);
         $this->status = 'active';
         $this->resetValidation();

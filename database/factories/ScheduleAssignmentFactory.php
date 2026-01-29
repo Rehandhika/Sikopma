@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\ScheduleAssignment;
 use App\Models\Schedule;
+use App\Models\ScheduleAssignment;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -16,7 +16,7 @@ class ScheduleAssignmentFactory extends Factory
     {
         $date = Carbon::today();
         $session = $this->faker->numberBetween(1, 3);
-        
+
         $sessionTimes = [
             1 => ['start' => '07:30:00', 'end' => '10:00:00'],
             2 => ['start' => '10:20:00', 'end' => '12:50:00'],

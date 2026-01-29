@@ -2,21 +2,27 @@
 
 namespace App\Livewire\Attendance;
 
-use Livewire\Component;
-use Livewire\Attributes\{Lazy, Computed, On};
 use App\Models\Attendance;
 use App\Models\ScheduleAssignment;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\{DB, Cache};
+use Illuminate\Support\Facades\Cache;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Lazy;
+use Livewire\Component;
 
 #[Lazy]
 class Index extends Component
 {
     public $todayStatus;
+
     public $currentSchedule;
+
     public $canCheckIn = false;
+
     public $canCheckOut = false;
+
     public $recentAttendances;
+
     public $monthlyStats;
 
     public function mount()
@@ -50,8 +56,8 @@ class Index extends Component
             ->first();
 
         // Check if can check in/out
-        $this->canCheckIn = $this->currentSchedule && !$this->todayStatus;
-        $this->canCheckOut = $this->todayStatus && !$this->todayStatus->check_out;
+        $this->canCheckIn = $this->currentSchedule && ! $this->todayStatus;
+        $this->canCheckOut = $this->todayStatus && ! $this->todayStatus->check_out;
 
         // Recent 7 days attendance
         $this->recentAttendances = Attendance::where('user_id', $user->id)
@@ -67,8 +73,8 @@ class Index extends Component
     #[Computed(cache: true)]
     private function calculateMonthlyStats($userId)
     {
-        $cacheKey = "monthly_stats_{$userId}_" . Carbon::now()->format('Y-m');
-        
+        $cacheKey = "monthly_stats_{$userId}_".Carbon::now()->format('Y-m');
+
         return Cache::remember($cacheKey, 3600, function () use ($userId) {
             $startOfMonth = Carbon::now()->startOfMonth();
             $endOfMonth = Carbon::now()->endOfMonth();
@@ -98,8 +104,9 @@ class Index extends Component
 
     public function checkIn()
     {
-        if (!$this->canCheckIn) {
+        if (! $this->canCheckIn) {
             $this->dispatch('toast', message: 'Tidak dapat check-in saat ini', type: 'error');
+
             return;
         }
 
@@ -110,6 +117,7 @@ class Index extends Component
 
         if ($existingAttendance) {
             $this->dispatch('toast', message: 'Anda sudah check-in untuk jadwal ini', type: 'error');
+
             return;
         }
 
@@ -133,8 +141,9 @@ class Index extends Component
 
     public function checkOut()
     {
-        if (!$this->canCheckOut) {
+        if (! $this->canCheckOut) {
             $this->dispatch('toast', message: 'Tidak dapat check-out saat ini', type: 'error');
+
             return;
         }
 

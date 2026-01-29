@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LeaveAffectedSchedule extends Model
@@ -45,6 +45,6 @@ class LeaveAffectedSchedule extends Model
      */
     public function hasReplacement(): bool
     {
-        return !is_null($this->replacement_user_id);
+        return ! is_null($this->replacement_user_id);
     }
 }

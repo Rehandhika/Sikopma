@@ -57,12 +57,13 @@ class StoreStatusService
         if ($setting->manual_mode) {
             $shouldBeOpen = $setting->manual_is_open;
             $reason = $setting->manual_close_reason ?? 'Mode manual aktif';
-            
-            if ($shouldBeOpen && !$setting->is_open) {
+
+            if ($shouldBeOpen && ! $setting->is_open) {
                 $this->openStore($setting, $reason);
-            } elseif (!$shouldBeOpen && $setting->is_open) {
+            } elseif (! $shouldBeOpen && $setting->is_open) {
                 $this->closeStore($setting, $reason);
             }
+
             return;
         }
 
@@ -72,6 +73,7 @@ class StoreStatusService
                 $reason = $setting->manual_close_reason ?? 'Tutup sementara';
                 $this->closeStore($setting, $reason);
             }
+
             return;
         }
 
@@ -86,17 +88,18 @@ class StoreStatusService
         // Priority 3 & 4: Auto Mode with optional Manual Open Override
         $now = $this->now();
         $dayOfWeek = strtolower($now->format('l'));
-        
+
         // Check operating day (Monday-Thursday only)
         $operatingHours = $setting->operating_hours ?? $this->getDefaultOperatingHours();
         $todaySchedule = $operatingHours[$dayOfWeek] ?? null;
-        
+
         // If not an operating day and no manual override
-        if (!$todaySchedule || !$todaySchedule['is_open']) {
-            if (!$setting->manual_open_override) {
+        if (! $todaySchedule || ! $todaySchedule['is_open']) {
+            if (! $setting->manual_open_override) {
                 if ($setting->is_open) {
                     $this->closeStore($setting, 'Koperasi hanya buka Senin - Kamis');
                 }
+
                 return;
             }
         }
@@ -105,26 +108,27 @@ class StoreStatusService
         if ($todaySchedule && $todaySchedule['is_open']) {
             $openTime = Carbon::parse($todaySchedule['open'], $this->dateTimeService->getTimezone());
             $closeTime = Carbon::parse($todaySchedule['close'], $this->dateTimeService->getTimezone());
-            
+
             $isWithinHours = $now->between($openTime, $closeTime);
-            
+
             // If outside operating hours and no manual override
-            if (!$isWithinHours && !$setting->manual_open_override) {
+            if (! $isWithinHours && ! $setting->manual_open_override) {
                 if ($setting->is_open) {
                     $this->closeStore($setting, 'Di luar jam operasional');
                 }
+
                 return;
             }
         }
 
         // Check active attendances
         $activeAttendances = $this->getActiveAttendances();
-        
+
         if ($activeAttendances->isNotEmpty()) {
             $attendeeNames = $activeAttendances->pluck('user.name')->toArray();
-            $reason = 'Dijaga oleh: ' . implode(', ', $attendeeNames);
-            
-            if (!$setting->is_open) {
+            $reason = 'Dijaga oleh: '.implode(', ', $attendeeNames);
+
+            if (! $setting->is_open) {
                 $this->openStore($setting, $reason);
             } elseif ($setting->status_reason !== $reason) {
                 // Update reason if attendees changed
@@ -162,7 +166,7 @@ class StoreStatusService
         ]);
 
         Cache::forget('store_status');
-        
+
         Log::channel('store')->info('Store OPENED', [
             'reason' => $reason,
             'timestamp' => $this->now()->toDateTimeString(),
@@ -188,7 +192,7 @@ class StoreStatusService
         ]);
 
         Cache::forget('store_status');
-        
+
         Log::channel('store')->info('Store CLOSED', [
             'reason' => $reason,
             'timestamp' => $this->now()->toDateTimeString(),
@@ -209,8 +213,8 @@ class StoreStatusService
     {
         return Cache::remember('store_status', 30, function () {
             $setting = StoreSetting::first();
-            
-            if (!$setting) {
+
+            if (! $setting) {
                 return [
                     'is_open' => false,
                     'reason' => 'Sistem belum dikonfigurasi',
@@ -254,7 +258,7 @@ class StoreStatusService
                     'name' => $setting->academic_holiday_name,
                     'start_date' => $setting->academic_holiday_start->toDateString(),
                     'end_date' => $setting->academic_holiday_end->toDateString(),
-                    'formatted_period' => $setting->academic_holiday_start->locale('id')->isoFormat('D MMMM') . ' - ' . 
+                    'formatted_period' => $setting->academic_holiday_start->locale('id')->isoFormat('D MMMM').' - '.
                                          $setting->academic_holiday_end->locale('id')->isoFormat('D MMMM YYYY'),
                 ];
             }
@@ -306,12 +310,13 @@ class StoreStatusService
             if ($setting->custom_next_open_date && $setting->custom_next_open_date->isFuture()) {
                 return $setting->custom_next_open_date->locale($locale)->isoFormat('dddd, D MMMM YYYY');
             }
-            
+
             // If in academic holiday period
             if ($setting->isInAcademicHoliday()) {
                 $endDate = $setting->academic_holiday_end;
                 // Next open is the day after holiday ends
                 $nextOpenDate = $endDate->copy()->addDay();
+
                 return $nextOpenDate->locale($locale)->isoFormat('dddd, D MMMM YYYY');
             }
         }
@@ -320,6 +325,7 @@ class StoreStatusService
         $activeHoliday = \App\Models\AcademicHoliday::active()->current()->first();
         if ($activeHoliday) {
             $nextOpenDate = $activeHoliday->end_date->copy()->addDay();
+
             return $nextOpenDate->locale($locale)->isoFormat('dddd, D MMMM YYYY');
         }
 
@@ -360,7 +366,7 @@ class StoreStatusService
 
             if ($nextSchedule && $nextSchedule['is_open']) {
                 $nextDate = $now->copy()->addDays($i);
-                
+
                 // Check if next date falls within academic holiday
                 $holidayOnDate = \App\Models\AcademicHoliday::active()->inRange($nextDate)->first();
                 if ($holidayOnDate) {
@@ -369,15 +375,18 @@ class StoreStatusService
                     // Find next operating day after holiday
                     $postHolidayDay = strtolower($nextDate->format('l'));
                     $postHolidaySchedule = $operatingHours[$postHolidayDay] ?? null;
-                    
+
                     if ($postHolidaySchedule && $postHolidaySchedule['is_open']) {
                         $nextOpenTime = Carbon::parse($postHolidaySchedule['open'], $this->dateTimeService->getTimezone())->setDateFrom($nextDate);
+
                         return $nextOpenTime->locale($locale)->isoFormat('dddd, D MMMM YYYY [pukul] HH:mm');
                     }
+
                     continue;
                 }
-                
+
                 $nextOpenTime = Carbon::parse($nextSchedule['open'], $this->dateTimeService->getTimezone())->setDateFrom($nextDate);
+
                 return $nextOpenTime->locale($locale)->isoFormat('dddd, D MMM YYYY [pukul] HH:mm');
             }
         }
@@ -444,8 +453,8 @@ class StoreStatusService
             'admin' => auth()->user()?->name ?? 'System',
             'message' => $message,
             'next_open_date' => $nextOpenDate?->toDateString(),
-            'holiday_period' => $holidayStart && $holidayEnd 
-                ? "{$holidayStart->toDateString()} - {$holidayEnd->toDateString()}" 
+            'holiday_period' => $holidayStart && $holidayEnd
+                ? "{$holidayStart->toDateString()} - {$holidayEnd->toDateString()}"
                 : null,
             'holiday_name' => $holidayName,
             'timestamp' => $this->now()->toDateTimeString(),
@@ -499,9 +508,9 @@ class StoreStatusService
 
     /**
      * Manually close the store for a specified duration
-     * 
-     * @param string $reason Reason for closing
-     * @param Carbon|null $until When the temporary close expires (null = indefinite)
+     *
+     * @param  string  $reason  Reason for closing
+     * @param  Carbon|null  $until  When the temporary close expires (null = indefinite)
      */
     public function manualClose(string $reason, ?Carbon $until = null): void
     {
@@ -535,8 +544,8 @@ class StoreStatusService
     /**
      * Enable or disable manual open override
      * Allows opening outside normal operating days/hours if staff attendance exists
-     * 
-     * @param bool $enable True to enable override, false to disable
+     *
+     * @param  bool  $enable  True to enable override, false to disable
      */
     public function manualOpenOverride(bool $enable): void
     {
@@ -556,7 +565,7 @@ class StoreStatusService
             'manual_set_at' => $this->now(),
         ]);
 
-        Log::channel('store')->info('Manual open override ' . ($enable ? 'enabled' : 'disabled'), [
+        Log::channel('store')->info('Manual open override '.($enable ? 'enabled' : 'disabled'), [
             'admin' => auth()->user()?->name ?? 'System',
             'timestamp' => $this->now()->toDateTimeString(),
         ]);
@@ -567,9 +576,9 @@ class StoreStatusService
     /**
      * Toggle manual mode for full admin control
      * In manual mode, status is completely controlled by admin, ignoring attendance
-     * 
-     * @param bool $isOpen The desired status (true = open, false = closed)
-     * @param string|null $reason Optional reason for the status
+     *
+     * @param  bool  $isOpen  The desired status (true = open, false = closed)
+     * @param  string|null  $reason  Optional reason for the status
      */
     public function toggleManualMode(bool $isOpen, ?string $reason = null): void
     {

@@ -6,15 +6,14 @@ use App\Models\Banner;
 use App\Models\News;
 use App\Services\BannerService;
 use App\Services\NewsService;
-use App\Services\ActivityLogService;
-use Livewire\Component;
-use Livewire\WithPagination;
-use Livewire\WithFileUploads;
 use Livewire\Attributes\Validate;
+use Livewire\Component;
+use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 
 class BannerNewsManagement extends Component
 {
-    use WithPagination, WithFileUploads;
+    use WithFileUploads, WithPagination;
 
     // Tab state
     public string $activeTab = 'banner';
@@ -22,44 +21,49 @@ class BannerNewsManagement extends Component
     // Banner form properties
     #[Validate('nullable|string|max:255')]
     public $bannerTitle = '';
-    
+
     #[Validate('required_without:editingBannerId|image|mimes:jpg,jpeg,png|max:5120')]
     public $bannerImage;
-    
+
     #[Validate('required|integer|min:0')]
     public $bannerPriority = 0;
-    
+
     public $editingBannerId = null;
+
     public $showBannerForm = false;
+
     public $bannerImagePreview = null;
 
     // News form properties
     #[Validate('nullable|string|max:255')]
     public $newsTitle = '';
-    
+
     #[Validate('nullable|string')]
     public $newsContent = '';
-    
+
     #[Validate('nullable|url|max:500')]
     public $newsLink = '';
-    
+
     #[Validate('nullable|image|mimes:jpg,jpeg,png|max:5120')]
     public $newsImage;
-    
+
     #[Validate('required|integer|min:0')]
     public $newsPriority = 0;
-    
+
     #[Validate('nullable|date')]
     public $newsPublishedAt;
-    
+
     #[Validate('nullable|date|after:newsPublishedAt')]
     public $newsExpiresAt;
-    
+
     public $editingNewsId = null;
+
     public $showNewsForm = false;
+
     public $newsImagePreview = null;
 
     protected BannerService $bannerService;
+
     protected NewsService $newsService;
 
     public function boot(BannerService $bannerService, NewsService $newsService)
@@ -71,7 +75,7 @@ class BannerNewsManagement extends Component
     public function mount()
     {
         // Check authorization - only Super Admin or Ketua can access
-        if (!auth()->user()->hasAnyRole(['Super Admin', 'Ketua'])) {
+        if (! auth()->user()->hasAnyRole(['Super Admin', 'Ketua'])) {
             abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
     }
@@ -96,7 +100,7 @@ class BannerNewsManagement extends Component
     public function editBanner(int $id)
     {
         $banner = Banner::findOrFail($id);
-        
+
         $this->editingBannerId = $banner->id;
         $this->bannerTitle = $banner->title;
         $this->bannerPriority = $banner->priority;
@@ -108,7 +112,7 @@ class BannerNewsManagement extends Component
     public function updatedBannerImage()
     {
         $this->validateOnly('bannerImage');
-        
+
         if ($this->bannerImage) {
             $this->bannerImagePreview = $this->bannerImage->temporaryUrl();
         }
@@ -136,7 +140,7 @@ class BannerNewsManagement extends Component
                     'title' => $this->bannerTitle,
                     'priority' => $this->bannerPriority,
                 ], $this->bannerImage);
-                
+
                 $this->dispatch('toast', message: 'Banner berhasil diperbarui', type: 'success');
             } else {
                 // Create new banner
@@ -144,15 +148,15 @@ class BannerNewsManagement extends Component
                     'title' => $this->bannerTitle,
                     'priority' => $this->bannerPriority,
                 ], $this->bannerImage);
-                
+
                 $this->dispatch('toast', message: 'Banner berhasil dibuat', type: 'success');
             }
 
             $this->resetBannerForm();
             $this->showBannerForm = false;
-            
+
         } catch (\Exception $e) {
-            $this->dispatch('toast', message: 'Gagal menyimpan banner: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal menyimpan banner: '.$e->getMessage(), type: 'error');
         }
     }
 
@@ -161,11 +165,11 @@ class BannerNewsManagement extends Component
         try {
             $banner = Banner::findOrFail($id);
             $this->bannerService->delete($banner);
-            
+
             $this->dispatch('toast', message: 'Banner berhasil dihapus', type: 'success');
-            
+
         } catch (\Exception $e) {
-            $this->dispatch('toast', message: 'Gagal menghapus banner: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal menghapus banner: '.$e->getMessage(), type: 'error');
         }
     }
 
@@ -174,13 +178,13 @@ class BannerNewsManagement extends Component
         try {
             $banner = Banner::findOrFail($id);
             $this->bannerService->toggleStatus($banner);
-            
+
             $freshBanner = $banner->fresh();
             $statusText = $freshBanner->is_active ? 'diaktifkan' : 'dinonaktifkan';
             $this->dispatch('toast', message: "Banner berhasil {$statusText}", type: 'success');
-            
+
         } catch (\Exception $e) {
-            $this->dispatch('toast', message: 'Gagal mengubah status banner: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal mengubah status banner: '.$e->getMessage(), type: 'error');
         }
     }
 
@@ -211,7 +215,7 @@ class BannerNewsManagement extends Component
     public function editNews(int $id)
     {
         $news = News::findOrFail($id);
-        
+
         $this->editingNewsId = $news->id;
         $this->newsTitle = $news->title ?? '';
         $this->newsContent = $news->content ?? '';
@@ -227,7 +231,7 @@ class BannerNewsManagement extends Component
     public function updatedNewsImage()
     {
         $this->validateOnly('newsImage');
-        
+
         if ($this->newsImage) {
             $this->newsImagePreview = $this->newsImage->temporaryUrl();
         }
@@ -265,20 +269,20 @@ class BannerNewsManagement extends Component
                 // Update existing news
                 $news = News::findOrFail($this->editingNewsId);
                 $this->newsService->update($news, $data, $this->newsImage);
-                
+
                 $this->dispatch('toast', message: 'Berita berhasil diperbarui', type: 'success');
             } else {
                 // Create new news
                 $this->newsService->store($data, $this->newsImage);
-                
+
                 $this->dispatch('toast', message: 'Berita berhasil dibuat', type: 'success');
             }
 
             $this->resetNewsForm();
             $this->showNewsForm = false;
-            
+
         } catch (\Exception $e) {
-            $this->dispatch('toast', message: 'Gagal menyimpan berita: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal menyimpan berita: '.$e->getMessage(), type: 'error');
         }
     }
 
@@ -287,11 +291,11 @@ class BannerNewsManagement extends Component
         try {
             $news = News::findOrFail($id);
             $this->newsService->delete($news);
-            
+
             $this->dispatch('toast', message: 'Berita berhasil dihapus', type: 'success');
-            
+
         } catch (\Exception $e) {
-            $this->dispatch('toast', message: 'Gagal menghapus berita: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal menghapus berita: '.$e->getMessage(), type: 'error');
         }
     }
 
@@ -300,13 +304,13 @@ class BannerNewsManagement extends Component
         try {
             $news = News::findOrFail($id);
             $this->newsService->toggleStatus($news);
-            
+
             $freshNews = $news->fresh();
             $statusText = $freshNews->is_active ? 'diaktifkan' : 'dinonaktifkan';
             $this->dispatch('toast', message: "Berita berhasil {$statusText}", type: 'success');
-            
+
         } catch (\Exception $e) {
-            $this->dispatch('toast', message: 'Gagal mengubah status berita: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal mengubah status berita: '.$e->getMessage(), type: 'error');
         }
     }
 
@@ -346,7 +350,7 @@ class BannerNewsManagement extends Component
             'banners' => $banners,
             'news' => $news,
         ])
-        ->layout('layouts.app')
-        ->title('Kelola Banner & Berita');
+            ->layout('layouts.app')
+            ->title('Kelola Banner & Berita');
     }
 }

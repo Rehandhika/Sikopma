@@ -2,15 +2,15 @@
 
 namespace App\Exceptions;
 
-use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
-use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Auth\AuthenticationException;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -131,6 +131,7 @@ class Handler extends ExceptionHandler
         if ($e instanceof ValidationException) {
             $status = 422;
             $message = 'Validation failed';
+
             return response()->json([
                 'success' => false,
                 'message' => $message,
@@ -173,7 +174,7 @@ class Handler extends ExceptionHandler
 
         // Flash old input and errors to session
         $request->flash();
-        
+
         // Redirect back with errors
         return redirect()
             ->back()

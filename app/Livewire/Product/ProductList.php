@@ -2,12 +2,11 @@
 
 namespace App\Livewire\Product;
 
-use Livewire\Component;
-use Livewire\WithPagination;
-use Livewire\Attributes\Title;
 use App\Models\Product;
 use App\Services\ProductService;
-use Illuminate\Support\Facades\Storage;
+use Livewire\Attributes\Title;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 #[Title('Manajemen Produk')]
 class ProductList extends Component
@@ -15,20 +14,32 @@ class ProductList extends Component
     use WithPagination;
 
     public $search = '';
+
     public $statusFilter = 'all';
+
     public $categoryFilter = 'all';
+
     public $stockFilter = 'all';
-    
+
     // Form properties
     public $showModal = false;
+
     public $editingId = null;
+
     public $name = '';
+
     public $sku = '';
+
     public $price = 0;
+
     public $stock = 0;
+
     public $min_stock = 5;
+
     public $category = '';
+
     public $description = '';
+
     public $status = 'active';
 
     protected $rules = [
@@ -98,7 +109,7 @@ class ProductList extends Component
     public function save()
     {
         if ($this->editingId) {
-            $this->rules['sku'] = 'nullable|string|max:50|unique:products,sku,' . $this->editingId;
+            $this->rules['sku'] = 'nullable|string|max:50|unique:products,sku,'.$this->editingId;
         }
 
         $validated = $this->validate();
@@ -130,13 +141,13 @@ class ProductList extends Component
     /**
      * Delete product
      *
-     * @param int $id
+     * @param  int  $id
      * @return void
      */
     public function delete($id)
     {
         $productService = app(ProductService::class);
-        
+
         try {
             $productService->delete($id);
             $this->dispatch('toast', message: 'Produk berhasil dihapus', type: 'success');
@@ -148,17 +159,17 @@ class ProductList extends Component
     /**
      * Toggle product status
      *
-     * @param int $id
+     * @param  int  $id
      * @return void
      */
     public function toggleStatus($id)
     {
         $product = Product::findOrFail($id);
         $newStatus = $product->status === 'active' ? 'inactive' : 'active';
-        
+
         $productService = app(ProductService::class);
         $productService->update($id, ['status' => $newStatus]);
-        
+
         $this->dispatch('toast', message: 'Status produk berhasil diubah', type: 'success');
     }
 
@@ -166,7 +177,7 @@ class ProductList extends Component
     {
         $this->reset([
             'editingId', 'name', 'sku', 'price', 'stock',
-            'min_stock', 'category', 'description', 'status'
+            'min_stock', 'category', 'description', 'status',
         ]);
 
         // Set sensible defaults for create form
@@ -198,19 +209,19 @@ class ProductList extends Component
             ->with(['activeVariants' => function ($query) {
                 $query->select('id', 'product_id', 'variant_name', 'stock', 'min_stock');
             }])
-            ->when($this->search, function($q) {
-                $q->where(function($query) {
-                    $query->where('name', 'like', '%' . $this->search . '%')
-                          ->orWhere('sku', 'like', '%' . $this->search . '%')
-                          ->orWhere('category', 'like', '%' . $this->search . '%');
+            ->when($this->search, function ($q) {
+                $q->where(function ($query) {
+                    $query->where('name', 'like', '%'.$this->search.'%')
+                        ->orWhere('sku', 'like', '%'.$this->search.'%')
+                        ->orWhere('category', 'like', '%'.$this->search.'%');
                 });
             })
-            ->when($this->statusFilter !== 'all', fn($q) => $q->where('status', $this->statusFilter))
-            ->when($this->categoryFilter !== 'all', fn($q) => $q->where('category', $this->categoryFilter))
-            ->when($this->stockFilter === 'low', fn($q) => $q->lowStock())
-            ->when($this->stockFilter === 'out', fn($q) => $q->outOfStock())
-            ->when($this->stockFilter === 'available', fn($q) => $q->inStock())
-            ->when($this->stockFilter === 'low_variant', fn($q) => $q->withLowStockVariants())
+            ->when($this->statusFilter !== 'all', fn ($q) => $q->where('status', $this->statusFilter))
+            ->when($this->categoryFilter !== 'all', fn ($q) => $q->where('category', $this->categoryFilter))
+            ->when($this->stockFilter === 'low', fn ($q) => $q->lowStock())
+            ->when($this->stockFilter === 'out', fn ($q) => $q->outOfStock())
+            ->when($this->stockFilter === 'available', fn ($q) => $q->inStock())
+            ->when($this->stockFilter === 'low_variant', fn ($q) => $q->withLowStockVariants())
             ->latest()
             ->paginate(20);
 

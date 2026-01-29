@@ -2,18 +2,20 @@
 
 namespace App\Livewire\Penalty;
 
-use Livewire\Component;
-use Livewire\WithPagination;
 use App\Models\Penalty;
 use App\Services\PenaltyService;
 use Illuminate\Support\Facades\Log;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class MyPenalties extends Component
 {
     use WithPagination;
 
     public $selectedPenalty;
+
     public $appealReason = '';
+
     public $showAppealModal = false;
 
     protected PenaltyService $penaltyService;
@@ -35,15 +37,17 @@ class MyPenalties extends Component
         $this->selectedPenalty = Penalty::with(['penaltyType', 'reference'])
             ->where('user_id', auth()->id())
             ->findOrFail($penaltyId);
-        
+
         // Check if penalty can be appealed
-        if (!in_array($this->selectedPenalty->status, ['active', 'appealed'])) {
+        if (! in_array($this->selectedPenalty->status, ['active', 'appealed'])) {
             $this->dispatch('toast', message: 'Penalti ini tidak dapat dibanding', type: 'error');
+
             return;
         }
 
         if ($this->selectedPenalty->status === 'appealed') {
             $this->dispatch('toast', message: 'Banding untuk penalti ini sedang dalam proses review', type: 'info');
+
             return;
         }
 
@@ -66,7 +70,7 @@ class MyPenalties extends Component
 
             $this->dispatch('toast', message: 'Banding berhasil diajukan dan akan ditinjau oleh admin', type: 'success');
             $this->reset(['showAppealModal', 'appealReason', 'selectedPenalty']);
-            
+
             // Refresh the page data
             $this->resetPage();
         } catch (\Exception $e) {
@@ -74,7 +78,7 @@ class MyPenalties extends Component
                 'penalty_id' => $this->selectedPenalty->id,
                 'error' => $e->getMessage(),
             ]);
-            $this->dispatch('toast', message: 'Gagal mengajukan banding: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal mengajukan banding: '.$e->getMessage(), type: 'error');
         }
     }
 

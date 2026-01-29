@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -27,7 +26,7 @@ class ScheduleConfigurationSeeder extends Seeder
                 'type' => 'integer',
                 'description' => 'Minimum number of assignments per user per week',
             ],
-            
+
             // Multi-user slot settings
             [
                 'key' => 'max_users_per_slot',
@@ -65,7 +64,7 @@ class ScheduleConfigurationSeeder extends Seeder
                 'type' => 'integer',
                 'description' => 'Number of users that triggers overstaffed warning',
             ],
-            
+
             // Coverage settings
             [
                 'key' => 'min_coverage_rate',
@@ -73,7 +72,7 @@ class ScheduleConfigurationSeeder extends Seeder
                 'type' => 'integer',
                 'description' => 'Minimum percentage of slots that must have at least 1 user',
             ],
-            
+
             // Shift constraints
             [
                 'key' => 'max_consecutive_shifts',
@@ -81,7 +80,7 @@ class ScheduleConfigurationSeeder extends Seeder
                 'type' => 'integer',
                 'description' => 'Maximum number of consecutive shifts allowed',
             ],
-            
+
             // Scoring weights for auto-assignment algorithm
             [
                 'key' => 'availability_match_score',
@@ -119,7 +118,7 @@ class ScheduleConfigurationSeeder extends Seeder
                 'type' => 'integer',
                 'description' => 'Score bonus for filling empty slots',
             ],
-            
+
             // Performance settings
             [
                 'key' => 'enable_caching',

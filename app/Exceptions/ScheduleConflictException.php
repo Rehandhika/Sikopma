@@ -2,8 +2,6 @@
 
 namespace App\Exceptions;
 
-use Exception;
-
 class ScheduleConflictException extends BusinessException
 {
     public function __construct(string $message = 'Schedule conflict detected')

@@ -2,31 +2,41 @@
 
 namespace App\Livewire\Settings;
 
-use Livewire\Component;
 use App\Models\Setting;
-use App\Services\DateTimeSettingsService;
 use App\Services\ActivityLogService;
+use App\Services\DateTimeSettingsService;
 use Illuminate\Support\Facades\Cache;
+use Livewire\Component;
 
 class SystemSettings extends Component
 {
     // DateTime Settings
     public $timezone;
+
     public $date_format;
+
     public $time_format;
+
     public $datetime_format;
+
     public $use_24_hour;
+
     public $first_day_of_week;
+
     public $locale;
 
     // Custom DateTime
     public $use_custom_datetime = false;
+
     public $custom_date;
+
     public $custom_time;
 
     // Maintenance
     public $maintenance_mode;
+
     public $maintenance_message;
+
     public $maintenance_estimated_end;
 
     protected DateTimeSettingsService $dateTimeService;
@@ -38,7 +48,7 @@ class SystemSettings extends Component
 
     public function mount()
     {
-        if (!auth()->user()->hasAnyRole(['Super Admin', 'Ketua', 'Wakil Ketua'])) {
+        if (! auth()->user()->hasAnyRole(['Super Admin', 'Ketua', 'Wakil Ketua'])) {
             abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
 
@@ -69,19 +79,19 @@ class SystemSettings extends Component
      */
     public function toggleMaintenance(): void
     {
-        $newState = !$this->maintenance_mode;
+        $newState = ! $this->maintenance_mode;
         $this->maintenance_mode = $newState;
-        
+
         // Save to settings
         Setting::set('maintenance_mode', $newState ? '1' : '0');
-        
+
         if ($newState) {
             // Activating maintenance
             Setting::set('maintenance_message', $this->maintenance_message ?? '');
             Setting::set('maintenance_estimated_end', $this->maintenance_estimated_end ?? '');
             Setting::set('maintenance_started_at', now()->toDateTimeString());
             Setting::set('maintenance_started_by', (string) auth()->id());
-            
+
             // Log activation
             \Log::info('Maintenance mode activated', [
                 'user_id' => auth()->id(),
@@ -94,7 +104,7 @@ class SystemSettings extends Component
             $startedAt = Setting::get('maintenance_started_at');
             Setting::set('maintenance_started_at', '');
             Setting::set('maintenance_started_by', '');
-            
+
             // Log deactivation
             \Log::info('Maintenance mode deactivated', [
                 'user_id' => auth()->id(),
@@ -102,27 +112,27 @@ class SystemSettings extends Component
                 'was_started_at' => $startedAt,
             ]);
         }
-        
+
         // Clear cache immediately
         Cache::forget('maintenance_mode');
-        
+
         // Log activity
         ActivityLogService::logMaintenanceModeChanged($newState);
-        
+
         $message = $newState ? 'Mode maintenance diaktifkan' : 'Mode maintenance dinonaktifkan';
         $this->dispatch('alert', type: $newState ? 'warning' : 'success', message: $message);
     }
 
     public function updatedUseCustomDatetime($value)
     {
-        if (!$value) {
+        if (! $value) {
             $this->custom_date = null;
             $this->custom_time = '00:00';
         } else {
-            if (!$this->custom_date) {
+            if (! $this->custom_date) {
                 $this->custom_date = $this->dateTimeService->realNow()->format('Y-m-d');
             }
-            if (!$this->custom_time || $this->custom_time === '00:00') {
+            if (! $this->custom_time || $this->custom_time === '00:00') {
                 $this->custom_time = $this->dateTimeService->realNow()->format('H:i');
             }
         }
@@ -133,10 +143,10 @@ class SystemSettings extends Component
         $this->use_custom_datetime = false;
         $this->custom_date = null;
         $this->custom_time = '00:00';
-        
+
         $this->dateTimeService->disableCustomDateTime();
         Cache::flush();
-        
+
         $this->dispatch('toast', message: 'Waktu dikembalikan ke waktu nyata', type: 'success');
     }
 

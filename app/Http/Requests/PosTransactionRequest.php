@@ -46,8 +46,6 @@ class PosTransactionRequest extends FormRequest
 
     /**
      * Get custom error messages
-     *
-     * @return array
      */
     public function messages(): array
     {
@@ -67,8 +65,6 @@ class PosTransactionRequest extends FormRequest
 
     /**
      * Get custom attribute names
-     *
-     * @return array
      */
     public function attributes(): array
     {

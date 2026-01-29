@@ -80,7 +80,7 @@ class FileTypeConfig
      */
     public function hasVariants(): bool
     {
-        return !empty($this->variants);
+        return ! empty($this->variants);
     }
 
     /**

@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
+use App\Exceptions\BusinessException;
 use App\Models\Notification;
 use App\Models\User;
-use App\Exceptions\BusinessException;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class NotificationService
 {
@@ -38,7 +38,7 @@ class NotificationService
                 'notification_id' => $notification->id,
                 'user_id' => $user->id,
                 'type' => $type,
-                'title' => $title
+                'title' => $title,
             ]);
 
             return $notification;
@@ -48,7 +48,7 @@ class NotificationService
                 'user_id' => $user->id,
                 'title' => $title,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
             throw new BusinessException('Gagal mengirim notifikasi', 'NOTIFICATION_SEND_FAILED');
         }
@@ -68,7 +68,7 @@ class NotificationService
         try {
             $notifications = [];
             $now = now();
-            
+
             foreach ($userIds as $userId) {
                 $notifications[] = [
                     'user_id' => $userId,
@@ -81,7 +81,7 @@ class NotificationService
                     'updated_at' => $now,
                 ];
             }
-            
+
             DB::transaction(function () use ($notifications) {
                 Notification::insert($notifications);
             });
@@ -89,7 +89,7 @@ class NotificationService
             Log::info('Bulk notifications sent', [
                 'count' => count($notifications),
                 'type' => $type,
-                'title' => $title
+                'title' => $title,
             ]);
 
         } catch (\Exception $e) {
@@ -97,7 +97,7 @@ class NotificationService
                 'user_ids' => $userIds,
                 'title' => $title,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
             throw new BusinessException('Gagal mengirim notifikasi bulk', 'BULK_NOTIFICATION_SEND_FAILED');
         }
@@ -120,13 +120,13 @@ class NotificationService
 
             Log::info('Notification marked as read', [
                 'notification_id' => $notification->id,
-                'user_id' => $notification->user_id
+                'user_id' => $notification->user_id,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Failed to mark notification as read', [
                 'notification_id' => $notification->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -146,13 +146,13 @@ class NotificationService
 
             Log::info('All notifications marked as read', [
                 'user_id' => $user->id,
-                'count' => $updated
+                'count' => $updated,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Failed to mark all notifications as read', [
                 'user_id' => $user->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -169,8 +169,9 @@ class NotificationService
         } catch (\Exception $e) {
             Log::error('Failed to get unread count', [
                 'user_id' => $user->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return 0;
         }
     }
@@ -183,23 +184,23 @@ class NotificationService
         $messages = [
             'check_in' => [
                 'title' => 'Check-in Berhasil',
-                'message' => 'Anda telah berhasil check-in pada ' . now()->format('H:i'),
-                'type' => 'success'
+                'message' => 'Anda telah berhasil check-in pada '.now()->format('H:i'),
+                'type' => 'success',
             ],
             'late' => [
                 'title' => 'Check-in Terlambat',
                 'message' => 'Anda check-in terlambat. Penalti telah diterapkan.',
-                'type' => 'warning'
+                'type' => 'warning',
             ],
             'absent' => [
                 'title' => 'Absen Otomatis',
                 'message' => 'Anda tidak check-in pada jadwal yang ditentukan.',
-                'type' => 'error'
+                'type' => 'error',
             ],
         ];
 
         $notificationData = $messages[$type] ?? $messages['check_in'];
-        
+
         return self::send(
             $user,
             $notificationData['type'],
@@ -218,27 +219,27 @@ class NotificationService
             'request_created' => [
                 'title' => 'Permintaan Tukar Shift Dibuat',
                 'message' => 'Permintaan tukar shift Anda telah dibuat dan menunggu persetujuan.',
-                'type' => 'info'
+                'type' => 'info',
             ],
             'request_received' => [
                 'title' => 'Permintaan Tukar Shift Masuk',
                 'message' => 'Ada permintaan tukar shift yang menunggu persetujuan Anda.',
-                'type' => 'info'
+                'type' => 'info',
             ],
             'request_approved' => [
                 'title' => 'Permintaan Tukar Shift Disetujui',
                 'message' => 'Permintaan tukar shift telah disetujui.',
-                'type' => 'success'
+                'type' => 'success',
             ],
             'request_rejected' => [
                 'title' => 'Permintaan Tukar Shift Ditolak',
                 'message' => 'Permintaan tukar shift telah ditolak.',
-                'type' => 'error'
+                'type' => 'error',
             ],
         ];
 
         $notificationData = $messages[$type] ?? $messages['request_created'];
-        
+
         return self::send(
             $user,
             $notificationData['type'],
@@ -257,22 +258,22 @@ class NotificationService
             'request_created' => [
                 'title' => 'Pengajuan Cuti Dibuat',
                 'message' => 'Pengajuan cuti Anda telah dibuat dan menunggu persetujuan.',
-                'type' => 'info'
+                'type' => 'info',
             ],
             'request_approved' => [
                 'title' => 'Pengajuan Cuti Disetujui',
                 'message' => 'Pengajuan cuti Anda telah disetujui.',
-                'type' => 'success'
+                'type' => 'success',
             ],
             'request_rejected' => [
                 'title' => 'Pengajuan Cuti Ditolak',
                 'message' => 'Pengajuan cuti Anda telah ditolak.',
-                'type' => 'error'
+                'type' => 'error',
             ],
         ];
 
         $notificationData = $messages[$type] ?? $messages['request_created'];
-        
+
         return self::send(
             $user,
             $notificationData['type'],
@@ -289,14 +290,14 @@ class NotificationService
     {
         try {
             $cutoffDate = Carbon::now()->subDays($daysOld);
-            
+
             $deletedCount = Notification::where('created_at', '<', $cutoffDate)
                 ->whereNotNull('read_at') // Only delete read notifications
                 ->delete();
 
             Log::info('Old notifications cleaned up', [
                 'deleted_count' => $deletedCount,
-                'cutoff_date' => $cutoffDate->toDateString()
+                'cutoff_date' => $cutoffDate->toDateString(),
             ]);
 
             return $deletedCount;
@@ -304,8 +305,9 @@ class NotificationService
         } catch (\Exception $e) {
             Log::error('Failed to cleanup old notifications', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
+
             return 0;
         }
     }

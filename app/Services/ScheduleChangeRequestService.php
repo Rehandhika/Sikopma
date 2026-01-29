@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\{ScheduleChangeRequest, ScheduleAssignment, User};
+use App\Models\ScheduleAssignment;
+use App\Models\ScheduleChangeRequest;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -12,14 +14,12 @@ class ScheduleChangeRequestService
 {
     /**
      * Submit a schedule change request
-     * 
-     * @param int $userId
-     * @param int $assignmentId
-     * @param string $changeType 'reschedule' or 'cancel'
-     * @param string $reason Required for all requests
-     * @param Carbon|null $requestedDate Required for reschedule
-     * @param int|null $requestedSession Required for reschedule
-     * @return ScheduleChangeRequest
+     *
+     * @param  string  $changeType  'reschedule' or 'cancel'
+     * @param  string  $reason  Required for all requests
+     * @param  Carbon|null  $requestedDate  Required for reschedule
+     * @param  int|null  $requestedSession  Required for reschedule
+     *
      * @throws ValidationException
      */
     public function submitRequest(
@@ -33,7 +33,7 @@ class ScheduleChangeRequestService
         // Validate reason is provided (Requirement 8.1)
         if (empty(trim($reason))) {
             throw ValidationException::withMessages([
-                'reason' => 'Alasan wajib diisi untuk semua pengajuan perubahan jadwal.'
+                'reason' => 'Alasan wajib diisi untuk semua pengajuan perubahan jadwal.',
             ]);
         }
 
@@ -42,23 +42,23 @@ class ScheduleChangeRequestService
             ->where('user_id', $userId)
             ->first();
 
-        if (!$assignment) {
+        if (! $assignment) {
             throw ValidationException::withMessages([
-                'assignment_id' => 'Jadwal tidak ditemukan atau bukan milik Anda.'
+                'assignment_id' => 'Jadwal tidak ditemukan atau bukan milik Anda.',
             ]);
         }
 
         // Validate change type
-        if (!in_array($changeType, ['reschedule', 'cancel'])) {
+        if (! in_array($changeType, ['reschedule', 'cancel'])) {
             throw ValidationException::withMessages([
-                'change_type' => 'Tipe perubahan tidak valid.'
+                'change_type' => 'Tipe perubahan tidak valid.',
             ]);
         }
 
         // Validate 24-hour notice for cancellations (Requirements 8.2, 8.3)
         if ($changeType === 'cancel') {
             $requiresAdminApproval = $this->requiresAdminApproval($assignment);
-            
+
             if ($requiresAdminApproval) {
                 // Log that this cancellation is within 24 hours and requires admin approval
                 Log::info('Schedule cancellation within 24 hours - requires admin approval', [
@@ -72,15 +72,15 @@ class ScheduleChangeRequestService
 
         // Validate reschedule parameters
         if ($changeType === 'reschedule') {
-            if (!$requestedDate || !$requestedSession) {
+            if (! $requestedDate || ! $requestedSession) {
                 throw ValidationException::withMessages([
-                    'requested_date' => 'Tanggal dan sesi tujuan wajib diisi untuk reschedule.'
+                    'requested_date' => 'Tanggal dan sesi tujuan wajib diisi untuk reschedule.',
                 ]);
             }
 
-            if (!in_array($requestedSession, [1, 2, 3])) {
+            if (! in_array($requestedSession, [1, 2, 3])) {
                 throw ValidationException::withMessages([
-                    'requested_session' => 'Sesi tidak valid.'
+                    'requested_session' => 'Sesi tidak valid.',
                 ]);
             }
 
@@ -92,7 +92,7 @@ class ScheduleChangeRequestService
 
             if ($conflict) {
                 throw ValidationException::withMessages([
-                    'requested_date' => 'Anda sudah memiliki jadwal pada waktu tersebut.'
+                    'requested_date' => 'Anda sudah memiliki jadwal pada waktu tersebut.',
                 ]);
             }
         }
@@ -105,7 +105,7 @@ class ScheduleChangeRequestService
 
         if ($existingRequest) {
             throw ValidationException::withMessages([
-                'assignment_id' => 'Sudah ada pengajuan pending untuk jadwal ini.'
+                'assignment_id' => 'Sudah ada pengajuan pending untuk jadwal ini.',
             ]);
         }
 
@@ -132,26 +132,20 @@ class ScheduleChangeRequestService
     /**
      * Check if a schedule change requires admin approval
      * (Cancellations within 24 hours require admin approval)
-     * 
-     * @param ScheduleAssignment $assignment
-     * @return bool
      */
     public function requiresAdminApproval(ScheduleAssignment $assignment): bool
     {
         // Calculate deadline: 24 hours before the assignment start time
-        $assignmentDateTime = Carbon::parse($assignment->date->toDateString() . ' ' . $assignment->time_start);
+        $assignmentDateTime = Carbon::parse($assignment->date->toDateString().' '.$assignment->time_start);
         $deadline = $assignmentDateTime->copy()->subHours(24);
-        
+
         // If current time is past the deadline, admin approval is required
         return now()->gt($deadline);
     }
 
     /**
      * Cancel a pending request
-     * 
-     * @param ScheduleChangeRequest $request
-     * @param int $userId
-     * @return bool
+     *
      * @throws ValidationException
      */
     public function cancelRequest(ScheduleChangeRequest $request, int $userId): bool
@@ -159,14 +153,14 @@ class ScheduleChangeRequestService
         // Validate ownership
         if ($request->user_id !== $userId) {
             throw ValidationException::withMessages([
-                'request' => 'Anda tidak memiliki akses untuk membatalkan pengajuan ini.'
+                'request' => 'Anda tidak memiliki akses untuk membatalkan pengajuan ini.',
             ]);
         }
 
         // Validate status
         if ($request->status !== 'pending') {
             throw ValidationException::withMessages([
-                'request' => 'Hanya pengajuan pending yang dapat dibatalkan.'
+                'request' => 'Hanya pengajuan pending yang dapat dibatalkan.',
             ]);
         }
 
@@ -183,11 +177,7 @@ class ScheduleChangeRequestService
     /**
      * Approve a schedule change request
      * (Requirement 8.4: Update assignment status on approval)
-     * 
-     * @param ScheduleChangeRequest $request
-     * @param int $reviewerId
-     * @param string|null $notes
-     * @return bool
+     *
      * @throws ValidationException
      */
     public function approveRequest(
@@ -198,7 +188,7 @@ class ScheduleChangeRequestService
         // Validate status
         if ($request->status !== 'pending') {
             throw ValidationException::withMessages([
-                'request' => 'Hanya pengajuan pending yang dapat disetujui.'
+                'request' => 'Hanya pengajuan pending yang dapat disetujui.',
             ]);
         }
 
@@ -219,7 +209,7 @@ class ScheduleChangeRequestService
             if ($request->change_type === 'cancel') {
                 // Cancel: Delete the assignment
                 $assignment->delete();
-                
+
                 Log::info('Schedule assignment cancelled via approved request', [
                     'request_id' => $request->id,
                     'assignment_id' => $assignment->id,
@@ -266,11 +256,7 @@ class ScheduleChangeRequestService
 
     /**
      * Reject a schedule change request
-     * 
-     * @param ScheduleChangeRequest $request
-     * @param int $reviewerId
-     * @param string $notes
-     * @return bool
+     *
      * @throws ValidationException
      */
     public function rejectRequest(
@@ -281,14 +267,14 @@ class ScheduleChangeRequestService
         // Validate status
         if ($request->status !== 'pending') {
             throw ValidationException::withMessages([
-                'request' => 'Hanya pengajuan pending yang dapat ditolak.'
+                'request' => 'Hanya pengajuan pending yang dapat ditolak.',
             ]);
         }
 
         // Validate notes are provided
         if (empty(trim($notes))) {
             throw ValidationException::withMessages([
-                'notes' => 'Alasan penolakan wajib diisi.'
+                'notes' => 'Alasan penolakan wajib diisi.',
             ]);
         }
 
@@ -309,10 +295,8 @@ class ScheduleChangeRequestService
 
     /**
      * Get session time
-     * 
-     * @param int $session
-     * @param string $type 'start' or 'end'
-     * @return string
+     *
+     * @param  string  $type  'start' or 'end'
      */
     private function getSessionTime(int $session, string $type): string
     {
@@ -325,4 +309,3 @@ class ScheduleChangeRequestService
         return $times[$session][$type] ?? '00:00:00';
     }
 }
-

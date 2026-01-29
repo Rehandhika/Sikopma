@@ -2,7 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\{Schedule, ScheduleAssignment, User, Notification};
+use App\Models\Notification;
+use App\Models\Schedule;
+use App\Models\ScheduleAssignment;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -19,22 +22,22 @@ class ScheduleService
         $weekStart = Carbon::parse($data['week_start_date']);
         $weekEnd = Carbon::parse($data['week_end_date']);
 
-        if (!$weekStart->isMonday()) {
+        if (! $weekStart->isMonday()) {
             throw ValidationException::withMessages([
-                'week_start_date' => 'Tanggal mulai harus hari Senin.'
+                'week_start_date' => 'Tanggal mulai harus hari Senin.',
             ]);
         }
 
-        if (!$weekStart->copy()->addDays(3)->isSameDay($weekEnd)) {
+        if (! $weekStart->copy()->addDays(3)->isSameDay($weekEnd)) {
             throw ValidationException::withMessages([
-                'week_end_date' => 'Periode jadwal harus 4 hari (Senin-Kamis).'
+                'week_end_date' => 'Periode jadwal harus 4 hari (Senin-Kamis).',
             ]);
         }
 
         // Check for duplicate schedule
         if (Schedule::where('week_start_date', $weekStart->toDateString())->exists()) {
             throw ValidationException::withMessages([
-                'week_start_date' => 'Jadwal untuk minggu ini sudah ada.'
+                'week_start_date' => 'Jadwal untuk minggu ini sudah ada.',
             ]);
         }
 
@@ -66,15 +69,15 @@ class ScheduleService
     public function addAssignment(Schedule $schedule, array $data): ScheduleAssignment
     {
         // Validate schedule is editable
-        if (!$schedule->canEdit()) {
+        if (! $schedule->canEdit()) {
             throw new \Exception('Jadwal tidak dapat diubah karena sudah dipublikasikan.');
         }
 
         // Validate user exists and is active
         $user = User::find($data['user_id']);
-        if (!$user || $user->status !== 'active') {
+        if (! $user || $user->status !== 'active') {
             throw ValidationException::withMessages([
-                'user_id' => 'User tidak valid atau tidak aktif.'
+                'user_id' => 'User tidak valid atau tidak aktif.',
             ]);
         }
 
@@ -82,7 +85,7 @@ class ScheduleService
         $conflict = $this->checkConflict($data['user_id'], $data['date'], $data['session']);
         if ($conflict) {
             throw ValidationException::withMessages([
-                'user_id' => 'User sudah memiliki assignment pada waktu yang sama.'
+                'user_id' => 'User sudah memiliki assignment pada waktu yang sama.',
             ]);
         }
 
@@ -127,7 +130,7 @@ class ScheduleService
         $schedule = $assignment->schedule;
 
         // Validate schedule is editable
-        if (!$schedule->canEdit()) {
+        if (! $schedule->canEdit()) {
             throw new \Exception('Jadwal tidak dapat diubah karena sudah dipublikasikan.');
         }
 
@@ -158,10 +161,10 @@ class ScheduleService
     public function publishSchedule(Schedule $schedule): bool
     {
         // Validate can publish
-        if (!$schedule->canPublish()) {
+        if (! $schedule->canPublish()) {
             $conflicts = $schedule->detectConflicts();
-            
-            if (!empty($conflicts['critical'])) {
+
+            if (! empty($conflicts['critical'])) {
                 throw new \Exception('Jadwal tidak dapat dipublikasikan karena masih ada konflik kritis.');
             }
 
@@ -211,7 +214,7 @@ class ScheduleService
      */
     public function copyFromPreviousWeek(Schedule $sourceSchedule, Schedule $targetSchedule): void
     {
-        if (!$targetSchedule->canEdit()) {
+        if (! $targetSchedule->canEdit()) {
             throw new \Exception('Jadwal target tidak dapat diubah.');
         }
 
@@ -226,11 +229,12 @@ class ScheduleService
 
                 // Validate user still active
                 $user = User::find($sourceAssignment->user_id);
-                if (!$user || $user->status !== 'active') {
+                if (! $user || $user->status !== 'active') {
                     Log::warning('Skipping assignment - user inactive', [
                         'user_id' => $sourceAssignment->user_id,
                         'date' => $newDate->toDateString(),
                     ]);
+
                     continue;
                 }
 
@@ -241,6 +245,7 @@ class ScheduleService
                         'date' => $newDate->toDateString(),
                         'session' => $sourceAssignment->session,
                     ]);
+
                     continue;
                 }
 
@@ -307,8 +312,8 @@ class ScheduleService
 
         foreach ($groupedByUser as $userId => $userAssignments) {
             $user = $userAssignments->first()->user;
-            
-            if (!$user) {
+
+            if (! $user) {
                 continue;
             }
 

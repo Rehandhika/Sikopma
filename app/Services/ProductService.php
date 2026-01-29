@@ -4,17 +4,13 @@ namespace App\Services;
 
 use App\Models\Product;
 use App\Models\StockAdjustment;
-use App\Services\ActivityLogService;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class ProductService
 {
     /**
      * Create new product
-     *
-     * @param array $data
-     * @return Product
      */
     public function create(array $data): Product
     {
@@ -42,10 +38,6 @@ class ProductService
 
     /**
      * Update product
-     *
-     * @param int $id
-     * @param array $data
-     * @return Product
      */
     public function update(int $id, array $data): Product
     {
@@ -63,22 +55,19 @@ class ProductService
 
     /**
      * Delete product (soft delete)
-     *
-     * @param int $id
-     * @return bool
      */
     public function delete(int $id): bool
     {
         $product = Product::findOrFail($id);
         $productName = $product->name;
-        
+
         // Check if product has been sold
         if ($product->saleItems()->exists()) {
             throw new \Exception('Tidak dapat menghapus produk yang sudah pernah dijual. Nonaktifkan saja.');
         }
 
         log_audit('delete', $product);
-        
+
         // Log activity
         ActivityLogService::logProductDeleted($productName);
 
@@ -89,22 +78,18 @@ class ProductService
      * Adjust stock
      * Updated to support variant products - blocks direct adjustment for variant products
      *
-     * @param int $productId
-     * @param string $type (in/out)
-     * @param int $quantity
-     * @param string $reason
-     * @param int|null $variantId Optional variant ID for variant-level adjustment
-     * @return Product
+     * @param  string  $type  (in/out)
+     * @param  int|null  $variantId  Optional variant ID for variant-level adjustment
      */
     public function adjustStock(int $productId, string $type, int $quantity, string $reason, ?int $variantId = null): Product
     {
         return DB::transaction(function () use ($productId, $type, $quantity, $reason, $variantId) {
             $product = Product::findOrFail($productId);
-            
+
             // If product has variants and no variant specified, block the adjustment
-            if ($product->has_variants && !$variantId) {
+            if ($product->has_variants && ! $variantId) {
                 throw new \Exception(
-                    'Produk dengan varian tidak dapat disesuaikan stoknya secara langsung. ' .
+                    'Produk dengan varian tidak dapat disesuaikan stoknya secara langsung. '.
                     'Sesuaikan stok pada level varian.'
                 );
             }
@@ -116,7 +101,7 @@ class ProductService
 
                 // Validate stock for 'out' type
                 if ($type === 'out' && $variant->stock < $quantity) {
-                    throw new \Exception('Stok varian tidak mencukupi. Stok tersedia: ' . $variant->stock);
+                    throw new \Exception('Stok varian tidak mencukupi. Stok tersedia: '.$variant->stock);
                 }
 
                 // Update variant stock
@@ -154,7 +139,7 @@ class ProductService
 
             // Validate stock for 'out' type
             if ($type === 'out' && $product->stock < $quantity) {
-                throw new \Exception('Stok tidak mencukupi. Stok tersedia: ' . $product->stock);
+                throw new \Exception('Stok tidak mencukupi. Stok tersedia: '.$product->stock);
             }
 
             // Update stock
@@ -190,8 +175,6 @@ class ProductService
 
     /**
      * Get low stock products
-     *
-     * @return Collection
      */
     public function getLowStock(): Collection
     {
@@ -204,8 +187,6 @@ class ProductService
 
     /**
      * Get out of stock products
-     *
-     * @return Collection
      */
     public function getOutOfStock(): Collection
     {
@@ -216,8 +197,6 @@ class ProductService
 
     /**
      * Get stock value statistics
-     *
-     * @return array
      */
     public function getStockStats(): array
     {
@@ -238,10 +217,6 @@ class ProductService
 
     /**
      * Generate SKU automatically
-     *
-     * @param string $name
-     * @param string|null $category
-     * @return string
      */
     public function generateSKU(string $name, ?string $category = null): string
     {
@@ -255,16 +230,12 @@ class ProductService
 
     /**
      * Check if product can be sold
-     *
-     * @param int $productId
-     * @param int $quantity
-     * @return bool
      */
     public function canSell(int $productId, int $quantity): bool
     {
         $product = Product::find($productId);
 
-        if (!$product) {
+        if (! $product) {
             return false;
         }
 
@@ -274,16 +245,14 @@ class ProductService
     /**
      * Bulk update stock from purchase
      *
-     * @param array $items [['product_id' => 1, 'quantity' => 10], ...]
-     * @param string $reference
-     * @return void
+     * @param  array  $items  [['product_id' => 1, 'quantity' => 10], ...]
      */
     public function bulkIncreaseStock(array $items, string $reference): void
     {
         DB::transaction(function () use ($items, $reference) {
             foreach ($items as $item) {
                 $product = Product::find($item['product_id']);
-                
+
                 if ($product) {
                     $product->increment('stock', $item['quantity']);
 
@@ -304,16 +273,14 @@ class ProductService
     /**
      * Bulk decrease stock from sale
      *
-     * @param array $items [['product_id' => 1, 'quantity' => 2], ...]
-     * @param string $reference
-     * @return void
+     * @param  array  $items  [['product_id' => 1, 'quantity' => 2], ...]
      */
     public function bulkDecreaseStock(array $items, string $reference): void
     {
         DB::transaction(function () use ($items, $reference) {
             foreach ($items as $item) {
                 $product = Product::find($item['product_id']);
-                
+
                 if ($product) {
                     if ($product->stock < $item['quantity']) {
                         throw new \Exception("Stok {$product->name} tidak mencukupi");

@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class ScheduleChangeRequest extends Model
 {
@@ -86,7 +86,7 @@ class ScheduleChangeRequest extends Model
 
     public function getChangeTypeLabel(): string
     {
-        return match($this->change_type) {
+        return match ($this->change_type) {
             'reschedule' => 'Pindah Jadwal',
             'cancel' => 'Batalkan Jadwal',
             default => $this->change_type,
@@ -95,7 +95,7 @@ class ScheduleChangeRequest extends Model
 
     public function getStatusLabel(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'pending' => 'Menunggu',
             'approved' => 'Disetujui',
             'rejected' => 'Ditolak',
@@ -107,7 +107,8 @@ class ScheduleChangeRequest extends Model
     public function getSessionLabel(?int $session = null): string
     {
         $s = $session ?? $this->requested_session;
-        return match($s) {
+
+        return match ($s) {
             1 => 'Sesi 1 (07:30-10:00)',
             2 => 'Sesi 2 (10:20-12:50)',
             3 => 'Sesi 3 (13:30-16:00)',

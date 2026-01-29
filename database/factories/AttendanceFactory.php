@@ -3,8 +3,8 @@
 namespace Database\Factories;
 
 use App\Models\Attendance;
-use App\Models\User;
 use App\Models\ScheduleAssignment;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

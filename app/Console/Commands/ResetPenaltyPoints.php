@@ -2,15 +2,16 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\Penalty;
 use App\Models\PenaltyHistory;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Console\Command;
 
 class ResetPenaltyPoints extends Command
 {
     protected $signature = 'penalty:reset-points';
+
     protected $description = 'Reset penalty points based on reset period';
 
     public function handle()
@@ -19,9 +20,9 @@ class ResetPenaltyPoints extends Command
         $resetDate = Carbon::now()->subMonths($resetMonths);
 
         // Get users with active penalties
-        $usersWithPenalties = User::whereHas('penalties', function($query) use ($resetDate) {
+        $usersWithPenalties = User::whereHas('penalties', function ($query) use ($resetDate) {
             $query->where('status', 'active')
-                  ->where('date', '<=', $resetDate);
+                ->where('date', '<=', $resetDate);
         })->get();
 
         foreach ($usersWithPenalties as $user) {
@@ -46,7 +47,7 @@ class ResetPenaltyPoints extends Command
                 ]);
 
                 // Archive penalties
-                $activePenalties->each(function($penalty) {
+                $activePenalties->each(function ($penalty) {
                     $penalty->update(['status' => 'expired']);
                 });
 

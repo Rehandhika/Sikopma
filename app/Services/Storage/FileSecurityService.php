@@ -4,14 +4,14 @@ namespace App\Services\Storage;
 
 use App\Services\Storage\Exceptions\FileValidationException;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 
 /**
  * FileSecurityService - Menangani keamanan file storage.
- * 
+ *
  * Bertanggung jawab untuk:
  * - Validasi MIME content (actual content vs declared MIME)
  * - Generate signed URLs untuk private files
@@ -60,13 +60,13 @@ class FileSecurityService implements FileSecurityServiceInterface
     public function validateMimeContent(UploadedFile $file, string $declaredMime): bool
     {
         $filePath = $file->getRealPath();
-        
-        if (!$filePath || !file_exists($filePath)) {
+
+        if (! $filePath || ! file_exists($filePath)) {
             return false;
         }
 
         $actualMime = $this->detectMimeFromContent($filePath);
-        
+
         if ($actualMime === null) {
             // Cannot detect, use PHP's finfo as fallback
             $finfo = new \finfo(FILEINFO_MIME_TYPE);
@@ -79,7 +79,7 @@ class FileSecurityService implements FileSecurityServiceInterface
 
         $isValid = $declaredMime === $actualMime;
 
-        if (!$isValid) {
+        if (! $isValid) {
             $this->logSecurityEvent('mime_mismatch', [
                 'declared_mime' => $declaredMime,
                 'actual_mime' => $actualMime,
@@ -95,12 +95,12 @@ class FileSecurityService implements FileSecurityServiceInterface
      */
     public function validateMimeContentFromPath(string $filePath, string $declaredMime): bool
     {
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             return false;
         }
 
         $actualMime = $this->detectMimeFromContent($filePath);
-        
+
         if ($actualMime === null) {
             $finfo = new \finfo(FILEINFO_MIME_TYPE);
             $actualMime = $finfo->file($filePath);
@@ -112,14 +112,13 @@ class FileSecurityService implements FileSecurityServiceInterface
         return $declaredMime === $actualMime;
     }
 
-
     /**
      * {@inheritdoc}
      */
     public function generateSignedUrl(string $path, string $disk = 'local', ?int $expirationMinutes = null): string
     {
         $expirationMinutes = $expirationMinutes ?? config('filestorage.security.signed_url_expiration', 60);
-        
+
         // Log access attempt
         $this->logFileAccess($path, 'signed_url_generated');
 
@@ -141,10 +140,10 @@ class FileSecurityService implements FileSecurityServiceInterface
     {
         // This is handled by Laravel's signed middleware
         // This method is for additional custom validation if needed
-        
+
         $isValid = URL::hasValidSignature(request());
-        
-        if (!$isValid) {
+
+        if (! $isValid) {
             $this->logSecurityEvent('invalid_signed_url', [
                 'path' => $path,
                 'disk' => $disk,
@@ -179,26 +178,26 @@ class FileSecurityService implements FileSecurityServiceInterface
     {
         // Remove path traversal sequences
         $path = str_replace(['../', '..\\', '..'], '', $path);
-        
+
         // Remove null bytes
         $path = str_replace("\0", '', $path);
-        
+
         // Normalize slashes
         $path = str_replace('\\', '/', $path);
-        
+
         // Remove leading slash
         $path = ltrim($path, '/');
-        
+
         // Remove double slashes
         $path = preg_replace('#/+#', '/', $path);
-        
+
         // Check for remaining traversal attempts
         if (str_contains($path, '..')) {
             $this->logSecurityEvent('path_traversal_attempt', [
                 'original_path' => $path,
                 'ip' => request()->ip(),
             ]);
-            
+
             throw new FileValidationException(
                 __('filestorage.security.path_traversal_detected')
             );
@@ -214,16 +213,16 @@ class FileSecurityService implements FileSecurityServiceInterface
     {
         // Remove path traversal characters
         $filename = str_replace(['../', '..\\', '../', '..\\'], '', $filename);
-        
+
         // Remove null bytes
         $filename = str_replace("\0", '', $filename);
-        
+
         // Remove dangerous characters
         $filename = preg_replace('/[\/\\\\:*?"<>|]/', '', $filename);
-        
+
         // Remove leading/trailing dots and spaces
         $filename = trim($filename, '. ');
-        
+
         // If filename is empty after sanitization, generate a random one
         if (empty($filename)) {
             $filename = bin2hex(random_bytes(16));
@@ -238,8 +237,8 @@ class FileSecurityService implements FileSecurityServiceInterface
     public function isPrivateFile(string $path, string $type): bool
     {
         $config = config("filestorage.types.{$type}");
-        
-        if (!$config) {
+
+        if (! $config) {
             return false;
         }
 
@@ -253,7 +252,6 @@ class FileSecurityService implements FileSecurityServiceInterface
     {
         return $this->isPrivateFile($path, $type);
     }
-
 
     /**
      * Detect MIME type from file content using magic bytes.
@@ -307,7 +305,7 @@ class FileSecurityService implements FileSecurityServiceInterface
             if ($handle === false) {
                 return false;
             }
-            
+
             fseek($handle, $signature['secondary_offset']);
             $secondaryBytes = fread($handle, count($signature['secondary_bytes']));
             fclose($handle);
@@ -339,7 +337,7 @@ class FileSecurityService implements FileSecurityServiceInterface
         }
 
         $mime = strtolower(trim($mime));
-        
+
         // Handle common variations
         $normalizations = [
             'image/jpg' => 'image/jpeg',

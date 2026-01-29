@@ -35,7 +35,7 @@ class FileValidationException extends FileStorageException
     {
         $maxMB = round($maxSize / (1024 * 1024), 2);
         $actualMB = round($actualSize / (1024 * 1024), 2);
-        
+
         return new static(
             message: __('filestorage.validation.file_too_large', ['max' => $maxMB]),
             validationErrors: ['size' => __('filestorage.validation.file_too_large', ['max' => $maxMB])],
@@ -49,7 +49,7 @@ class FileValidationException extends FileStorageException
     public static function invalidType(string $mime, array $allowedMimes): static
     {
         $allowed = implode(', ', $allowedMimes);
-        
+
         return new static(
             message: __('filestorage.validation.invalid_type', ['types' => $allowed]),
             validationErrors: ['type' => __('filestorage.validation.invalid_type', ['types' => $allowed])],
@@ -85,10 +85,10 @@ class FileValidationException extends FileStorageException
      */
     public function getUserMessage(): string
     {
-        if (!empty($this->validationErrors)) {
+        if (! empty($this->validationErrors)) {
             return implode(' ', $this->validationErrors);
         }
-        
+
         return $this->getMessage();
     }
 }

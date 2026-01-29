@@ -2,28 +2,34 @@
 
 namespace Tests\Unit\Services;
 
-use Tests\TestCase;
+use App\Models\Schedule;
+use App\Models\ScheduleAssignment;
+use App\Models\ScheduleChangeRequest;
+use App\Models\User;
 use App\Services\ScheduleChangeRequestService;
-use App\Models\{User, Schedule, ScheduleAssignment, ScheduleChangeRequest, PenaltyType};
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
+use Tests\TestCase;
 
 class ScheduleChangeRequestServiceTest extends TestCase
 {
     use RefreshDatabase;
 
     private ScheduleChangeRequestService $service;
+
     private User $user;
+
     private Schedule $schedule;
+
     private ScheduleAssignment $assignment;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
-        $this->service = new ScheduleChangeRequestService();
-        
+
+        $this->service = new ScheduleChangeRequestService;
+
         // Create test user
         $this->user = User::factory()->create([
             'status' => 'active',
@@ -279,7 +285,7 @@ class ScheduleChangeRequestServiceTest extends TestCase
     public function it_approves_cancel_request_and_deletes_assignment()
     {
         $admin = User::factory()->create();
-        
+
         $request = $this->service->submitRequest(
             userId: $this->user->id,
             assignmentId: $this->assignment->id,
@@ -295,7 +301,7 @@ class ScheduleChangeRequestServiceTest extends TestCase
         $this->assertEquals($admin->id, $request->fresh()->admin_responded_by);
         $this->assertNotNull($request->fresh()->admin_responded_at);
         $this->assertNotNull($request->fresh()->completed_at);
-        
+
         // Assignment should be deleted
         $this->assertNull(ScheduleAssignment::find($this->assignment->id));
     }
@@ -305,7 +311,7 @@ class ScheduleChangeRequestServiceTest extends TestCase
     {
         $admin = User::factory()->create();
         $targetDate = now()->addDays(5);
-        
+
         $request = $this->service->submitRequest(
             userId: $this->user->id,
             assignmentId: $this->assignment->id,
@@ -319,7 +325,7 @@ class ScheduleChangeRequestServiceTest extends TestCase
 
         $this->assertTrue($result);
         $this->assertEquals('approved', $request->fresh()->status);
-        
+
         // Assignment should be updated
         $updatedAssignment = ScheduleAssignment::find($this->assignment->id);
         $this->assertNotNull($updatedAssignment);
@@ -335,7 +341,7 @@ class ScheduleChangeRequestServiceTest extends TestCase
     public function it_rejects_request_with_notes()
     {
         $admin = User::factory()->create();
-        
+
         $request = $this->service->submitRequest(
             userId: $this->user->id,
             assignmentId: $this->assignment->id,
@@ -350,7 +356,7 @@ class ScheduleChangeRequestServiceTest extends TestCase
         $this->assertEquals('Not a valid reason', $request->fresh()->admin_response);
         $this->assertEquals($admin->id, $request->fresh()->admin_responded_by);
         $this->assertNotNull($request->fresh()->admin_responded_at);
-        
+
         // Assignment should remain unchanged
         $this->assertNotNull(ScheduleAssignment::find($this->assignment->id));
     }
@@ -359,7 +365,7 @@ class ScheduleChangeRequestServiceTest extends TestCase
     public function it_requires_notes_when_rejecting()
     {
         $admin = User::factory()->create();
-        
+
         $request = $this->service->submitRequest(
             userId: $this->user->id,
             assignmentId: $this->assignment->id,
@@ -373,4 +379,3 @@ class ScheduleChangeRequestServiceTest extends TestCase
         $this->service->rejectRequest($request, $admin->id, ''); // Empty notes
     }
 }
-

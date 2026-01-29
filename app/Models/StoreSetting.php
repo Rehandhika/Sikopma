@@ -49,16 +49,18 @@ class StoreSetting extends Model
 
     // Constants for next_open_mode
     const MODE_DEFAULT = 'default';
+
     const MODE_CUSTOM = 'custom';
 
     // Check if currently in academic holiday
     public function isInAcademicHoliday(): bool
     {
-        if (!$this->academic_holiday_start || !$this->academic_holiday_end) {
+        if (! $this->academic_holiday_start || ! $this->academic_holiday_end) {
             return false;
         }
 
         $today = now()->startOfDay();
+
         return $today->between($this->academic_holiday_start, $this->academic_holiday_end);
     }
 

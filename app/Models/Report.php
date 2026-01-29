@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Report extends Model
 {
@@ -127,7 +127,7 @@ class Report extends Model
     /**
      * Mark report as completed
      */
-    public function markAsCompleted(string $filePath = null): void
+    public function markAsCompleted(?string $filePath = null): void
     {
         $this->update([
             'status' => 'completed',

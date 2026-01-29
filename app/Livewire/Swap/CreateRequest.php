@@ -2,26 +2,35 @@
 
 namespace App\Livewire\Swap;
 
-use Livewire\Component;
-use Livewire\WithPagination;
-use App\Models\{SwapRequest, ScheduleAssignment, User};
+use App\Models\ScheduleAssignment;
+use App\Models\SwapRequest;
+use App\Models\User;
 use App\Services\ActivityLogService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class CreateRequest extends Component
 {
     use WithPagination;
 
     public $myAssignments = [];
+
     public $selectedAssignment = null;
+
     public $targetDate;
+
     public $targetSession;
+
     public $availableTargets = [];
+
     public $selectedTarget = null;
+
     public $reason;
+
     public $showConfirmation = false;
+
     public $searchTarget = '';
 
     protected $rules = [
@@ -61,7 +70,7 @@ class CreateRequest extends Component
         $this->targetSession = null;
         $this->availableTargets = [];
         $this->selectedTarget = null;
-        
+
         if ($this->targetDate) {
             $this->loadAvailableTargets();
         }
@@ -71,7 +80,7 @@ class CreateRequest extends Component
     {
         $this->availableTargets = [];
         $this->selectedTarget = null;
-        
+
         if ($this->targetDate && $this->targetSession) {
             $this->loadAvailableTargets();
         }
@@ -79,7 +88,7 @@ class CreateRequest extends Component
 
     public function loadAvailableTargets()
     {
-        if (!$this->targetDate || !$this->targetSession) {
+        if (! $this->targetDate || ! $this->targetSession) {
             return;
         }
 
@@ -124,7 +133,7 @@ class CreateRequest extends Component
 
         if ($existingRequest) {
             throw new \Illuminate\Validation\ValidationException([
-                'selectedAssignment' => 'Anda sudah memiliki permintaan tukar shift untuk jadwal ini.'
+                'selectedAssignment' => 'Anda sudah memiliki permintaan tukar shift untuk jadwal ini.',
             ]);
         }
 
@@ -142,7 +151,7 @@ class CreateRequest extends Component
 
             if ($existingTargetRequest) {
                 throw new \Illuminate\Validation\ValidationException([
-                    'selectedTarget' => 'Target pengguna sudah memiliki permintaan tukar shift untuk jadwal ini.'
+                    'selectedTarget' => 'Target pengguna sudah memiliki permintaan tukar shift untuk jadwal ini.',
                 ]);
             }
         }
@@ -153,10 +162,10 @@ class CreateRequest extends Component
             $deadline = $requesterAssignment->date->copy()
                 ->setTimeFromTimeString($requesterAssignment->time_start)
                 ->subHours(24);
-            
+
             if (now()->greaterThan($deadline)) {
                 throw new \Illuminate\Validation\ValidationException([
-                    'selectedAssignment' => 'Permintaan tukar shift harus diajukan minimal 24 jam sebelum shift dimulai.'
+                    'selectedAssignment' => 'Permintaan tukar shift harus diajukan minimal 24 jam sebelum shift dimulai.',
                 ]);
             }
         }
@@ -175,7 +184,7 @@ class CreateRequest extends Component
                 ->where('user_id', $this->selectedTarget)
                 ->first();
 
-            if (!$targetAssignment) {
+            if (! $targetAssignment) {
                 throw new \Exception('Target assignment tidak ditemukan.');
             }
 
@@ -191,7 +200,7 @@ class CreateRequest extends Component
             // Create notification for target user
             $this->createNotification($this->selectedTarget, 'swap_request', [
                 'title' => 'Permintaan Tukar Shift',
-                'message' => auth()->user()->name . ' ingin menukar shift dengan Anda.',
+                'message' => auth()->user()->name.' ingin menukar shift dengan Anda.',
                 'swap_request_id' => $swapRequest->id,
             ]);
 
@@ -210,7 +219,7 @@ class CreateRequest extends Component
 
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->dispatch('toast', message: 'Gagal membuat permintaan: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal membuat permintaan: '.$e->getMessage(), type: 'error');
         }
     }
 
@@ -230,7 +239,7 @@ class CreateRequest extends Component
             'selectedTarget',
             'reason',
             'showConfirmation',
-            'searchTarget'
+            'searchTarget',
         ]);
     }
 
@@ -241,7 +250,7 @@ class CreateRequest extends Component
             'availableTargets' => $this->availableTargets,
             'sessionOptions' => [
                 1 => 'Sesi 1 (Pagi)',
-                2 => 'Sesi 2 (Siang)', 
+                2 => 'Sesi 2 (Siang)',
                 3 => 'Sesi 3 (Sore)',
             ],
         ])->layout('layouts.app')->title('Buat Permintaan Tukar Shift');

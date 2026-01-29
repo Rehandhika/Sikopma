@@ -9,12 +9,12 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 /**
  * Job untuk mengirim email kredensial awal
- * 
+ *
  * Best practice:
  * - Menggunakan queue untuk async processing
  * - Retry mechanism dengan backoff
@@ -46,6 +46,7 @@ class SendInitialCredentialsJob implements ShouldQueue
     public bool $deleteWhenMissingModels = true;
 
     protected User $user;
+
     protected string $plainPassword;
 
     /**
@@ -55,7 +56,7 @@ class SendInitialCredentialsJob implements ShouldQueue
     {
         $this->user = $user;
         $this->plainPassword = $plainPassword;
-        
+
         // Set queue name
         $this->onQueue('emails');
     }
@@ -66,10 +67,11 @@ class SendInitialCredentialsJob implements ShouldQueue
     public function handle(): void
     {
         // Validasi user masih ada dan punya email
-        if (!$this->user->email) {
+        if (! $this->user->email) {
             Log::warning('Cannot send credentials: User has no email', [
                 'user_id' => $this->user->id,
             ]);
+
             return;
         }
 
@@ -125,7 +127,7 @@ class SendInitialCredentialsJob implements ShouldQueue
         return [
             'email',
             'credentials',
-            'user:' . $this->user->id,
+            'user:'.$this->user->id,
         ];
     }
 }

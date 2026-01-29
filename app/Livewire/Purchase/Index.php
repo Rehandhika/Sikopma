@@ -2,30 +2,31 @@
 
 namespace App\Livewire\Purchase;
 
-use Livewire\Component;
-use Livewire\WithPagination;
 use App\Models\Purchase;
 use App\Services\ActivityLogService;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
     use WithPagination;
 
     public $statusFilter = '';
+
     public $search = '';
 
     public function approvePurchase($id)
     {
         $purchase = Purchase::find($id);
-        
+
         if ($purchase && $purchase->payment_status === 'unpaid') {
             $purchase->update([
                 'payment_status' => 'paid',
             ]);
-            
+
             // Log activity
             ActivityLogService::logPurchaseApproved($purchase->invoice_number);
-            
+
             $this->dispatch('toast', message: 'Purchase order disetujui', type: 'success');
         }
     }
@@ -33,9 +34,9 @@ class Index extends Component
     public function render()
     {
         $purchases = Purchase::query()
-            ->when($this->search, fn($q) => $q->where('invoice_number', 'like', '%' . $this->search . '%')
-                ->orWhere('supplier_name', 'like', '%' . $this->search . '%'))
-            ->when($this->statusFilter, fn($q) => $q->where('payment_status', $this->statusFilter))
+            ->when($this->search, fn ($q) => $q->where('invoice_number', 'like', '%'.$this->search.'%')
+                ->orWhere('supplier_name', 'like', '%'.$this->search.'%'))
+            ->when($this->statusFilter, fn ($q) => $q->where('payment_status', $this->statusFilter))
             ->with(['user', 'items'])
             ->orderBy('created_at', 'desc')
             ->paginate(15);

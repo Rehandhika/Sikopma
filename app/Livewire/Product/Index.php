@@ -2,14 +2,14 @@
 
 namespace App\Livewire\Product;
 
-use Livewire\Component;
-use Livewire\WithPagination;
 use App\Models\Product;
 use App\Services\ActivityLogService;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 /**
  * Product Index Component
- * 
+ *
  * Displays and manages product list with filtering and search
  */
 class Index extends Component
@@ -17,7 +17,9 @@ class Index extends Component
     use WithPagination;
 
     public $search = '';
+
     public $categoryFilter = '';
+
     public $stockFilter = '';
 
     /**
@@ -33,20 +35,20 @@ class Index extends Component
     /**
      * Delete a product
      *
-     * @param int $id
+     * @param  int  $id
      * @return void
      */
     public function deleteProduct($id)
     {
         $product = Product::find($id);
-        
+
         if ($product) {
             $productName = $product->name;
             $product->delete();
-            
+
             // Log activity
             ActivityLogService::logProductDeleted($productName);
-            
+
             $this->dispatch('toast', message: 'Produk berhasil dihapus', type: 'success');
         }
     }
@@ -59,11 +61,11 @@ class Index extends Component
     public function render()
     {
         $products = Product::query()
-            ->when($this->search, fn($q) => $q->where('name', 'like', '%' . $this->search . '%')
-                ->orWhere('sku', 'like', '%' . $this->search . '%'))
-            ->when($this->categoryFilter, fn($q) => $q->where('category', $this->categoryFilter))
-            ->when($this->stockFilter === 'low', fn($q) => $q->whereColumn('stock', '<=', 'min_stock'))
-            ->when($this->stockFilter === 'out', fn($q) => $q->where('stock', 0))
+            ->when($this->search, fn ($q) => $q->where('name', 'like', '%'.$this->search.'%')
+                ->orWhere('sku', 'like', '%'.$this->search.'%'))
+            ->when($this->categoryFilter, fn ($q) => $q->where('category', $this->categoryFilter))
+            ->when($this->stockFilter === 'low', fn ($q) => $q->whereColumn('stock', '<=', 'min_stock'))
+            ->when($this->stockFilter === 'out', fn ($q) => $q->where('stock', 0))
             ->orderBy('name')
             ->paginate(20);
 

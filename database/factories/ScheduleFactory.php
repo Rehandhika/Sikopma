@@ -14,7 +14,7 @@ class ScheduleFactory extends Factory
     public function definition(): array
     {
         $weekStart = Carbon::now()->startOfWeek();
-        
+
         return [
             'week_start_date' => $weekStart,
             'week_end_date' => $weekStart->copy()->addDays(3),
@@ -46,6 +46,7 @@ class ScheduleFactory extends Factory
     public function forDate(Carbon $date): static
     {
         $weekStart = $date->copy()->startOfWeek();
+
         return $this->state(fn (array $attributes) => [
             'week_start_date' => $weekStart,
             'week_end_date' => $weekStart->copy()->addDays(3),

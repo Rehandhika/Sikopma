@@ -2,12 +2,16 @@
 
 namespace App\Livewire\Dashboard;
 
-use Livewire\Component;
-use Livewire\Attributes\Title;
+use App\Models\Attendance;
+use App\Models\LeaveRequest;
+use App\Models\Notification;
+use App\Models\Penalty;
+use App\Models\ScheduleAssignment;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
-use App\Models\{ScheduleAssignment, Penalty, Notification, Attendance, User, Sale, Product, LeaveRequest, SwapRequest};
-use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Title;
+use Livewire\Component;
 
 #[Title('Dashboard')]
 class Index extends Component
@@ -48,8 +52,10 @@ class Index extends Component
     public function isAdmin(): bool
     {
         $user = auth()->user();
-        if (!$user) return false;
-        
+        if (! $user) {
+            return false;
+        }
+
         return method_exists($user, 'hasAnyRole')
             ? $user->hasAnyRole(['Super Admin', 'Ketua', 'Wakil Ketua', 'BPH'])
             : false;
@@ -59,7 +65,7 @@ class Index extends Component
     public function userStats(): array
     {
         $user = auth()->user();
-        if (!$user) {
+        if (! $user) {
             return $this->defaultUserStats();
         }
 
@@ -95,10 +101,10 @@ class Index extends Component
 
         // Notification count
         try {
-            $notifCount = DB::selectOne("
+            $notifCount = DB::selectOne('
                 SELECT COUNT(*) as count FROM notifications 
                 WHERE user_id = ? AND read_at IS NULL
-            ", [$userId]);
+            ', [$userId]);
         } catch (\Exception $e) {
             $notifCount = (object) ['count' => 0];
         }
@@ -143,15 +149,15 @@ class Index extends Component
 
         return [
             'monthlyAttendance' => [
-                'present' => (int)($attendanceStats->present ?? 0),
-                'late' => (int)($attendanceStats->late ?? 0),
-                'total' => (int)($attendanceStats->total ?? 0),
+                'present' => (int) ($attendanceStats->present ?? 0),
+                'late' => (int) ($attendanceStats->late ?? 0),
+                'total' => (int) ($attendanceStats->total ?? 0),
             ],
             'penalties' => [
-                'points' => (int)($penaltyStats->points ?? 0),
-                'count' => (int)($penaltyStats->count ?? 0),
+                'points' => (int) ($penaltyStats->points ?? 0),
+                'count' => (int) ($penaltyStats->count ?? 0),
             ],
-            'notificationCount' => (int)($notifCount->count ?? 0),
+            'notificationCount' => (int) ($notifCount->count ?? 0),
             'todaySchedule' => $todaySchedule,
             'upcomingSchedules' => $upcomingSchedules,
             'notifications' => $notifications,
@@ -176,17 +182,17 @@ class Index extends Component
         }
 
         return [
-            'present' => (int)($stats->present ?? 0),
-            'late' => (int)($stats->late ?? 0),
-            'absent' => (int)($stats->absent ?? 0),
-            'excused' => (int)($stats->excused ?? 0),
+            'present' => (int) ($stats->present ?? 0),
+            'late' => (int) ($stats->late ?? 0),
+            'absent' => (int) ($stats->absent ?? 0),
+            'excused' => (int) ($stats->excused ?? 0),
         ];
     }
 
     #[Computed]
     public function pendingLeaveRequests(): \Illuminate\Support\Collection
     {
-        if (!$this->isAdmin) {
+        if (! $this->isAdmin) {
             return collect();
         }
 
@@ -205,7 +211,7 @@ class Index extends Component
     #[Computed]
     public function usersApproachingThreshold(): \Illuminate\Support\Collection
     {
-        if (!$this->isAdmin) {
+        if (! $this->isAdmin) {
             return collect();
         }
 
@@ -231,7 +237,7 @@ class Index extends Component
                     'id' => $user->id,
                     'name' => $user->name,
                     'nim' => $user->nim,
-                    'total_points' => (int)$user->total_points,
+                    'total_points' => (int) $user->total_points,
                 ];
             });
         } catch (\Exception $e) {
@@ -242,7 +248,7 @@ class Index extends Component
     #[Computed]
     public function adminStats(): array
     {
-        if (!$this->isAdmin) {
+        if (! $this->isAdmin) {
             return $this->defaultAdminStats();
         }
 
@@ -278,15 +284,15 @@ class Index extends Component
 
         return [
             'todayAttendance' => [
-                'present' => (int)($stats->today_present ?? 0),
-                'total' => (int)($stats->today_scheduled ?? 0),
+                'present' => (int) ($stats->today_present ?? 0),
+                'total' => (int) ($stats->today_scheduled ?? 0),
             ],
-            'todaySales' => (float)($stats->today_sales ?? 0),
-            'todayTransactions' => (int)($stats->today_transactions ?? 0),
-            'activeMembers' => (int)($stats->active_members ?? 0),
-            'lowStockProducts' => (int)($stats->low_stock ?? 0),
-            'pendingLeaves' => (int)($stats->pending_leaves ?? 0),
-            'pendingSwaps' => (int)($stats->pending_swaps ?? 0),
+            'todaySales' => (float) ($stats->today_sales ?? 0),
+            'todayTransactions' => (int) ($stats->today_transactions ?? 0),
+            'activeMembers' => (int) ($stats->active_members ?? 0),
+            'lowStockProducts' => (int) ($stats->low_stock ?? 0),
+            'pendingLeaves' => (int) ($stats->pending_leaves ?? 0),
+            'pendingSwaps' => (int) ($stats->pending_swaps ?? 0),
         ];
     }
 

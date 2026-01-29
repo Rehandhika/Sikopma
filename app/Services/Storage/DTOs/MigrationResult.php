@@ -78,7 +78,7 @@ class MigrationResult
      */
     public function hasErrors(): bool
     {
-        return !empty($this->errors);
+        return ! empty($this->errors);
     }
 
     /**
@@ -89,7 +89,7 @@ class MigrationResult
         if ($this->filesScanned === 0) {
             return 100.0;
         }
-        
+
         return round(($this->filesMigrated / $this->filesScanned) * 100, 2);
     }
 
@@ -99,9 +99,9 @@ class MigrationResult
     public function getSummary(): string
     {
         $action = $this->dryRun ? 'would be migrated' : 'migrated';
-        
+
         return sprintf(
-            "Scanned %d files, %d %s, %d skipped, %d variants generated, %d DB records updated",
+            'Scanned %d files, %d %s, %d skipped, %d variants generated, %d DB records updated',
             $this->filesScanned,
             $this->filesMigrated,
             $action,

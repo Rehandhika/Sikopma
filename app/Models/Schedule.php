@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Carbon\Carbon;
 
 class Schedule extends Model
 {
@@ -71,6 +71,7 @@ class Schedule extends Model
     public function scopeCurrentWeek($query)
     {
         $monday = Carbon::now()->startOfWeek();
+
         return $query->where('week_start_date', $monday->toDateString());
     }
 
@@ -98,19 +99,19 @@ class Schedule extends Model
         $assignments = $this->assignments()
             ->with('user:id,name,photo')
             ->get()
-            ->groupBy(function($assignment) {
-                return $assignment->date->format('Y-m-d') . '_' . $assignment->session;
+            ->groupBy(function ($assignment) {
+                return $assignment->date->format('Y-m-d').'_'.$assignment->session;
             });
 
         $grid = [];
         $startDate = Carbon::parse($this->week_start_date);
-        
+
         for ($day = 0; $day < 4; $day++) {
             $date = $startDate->copy()->addDays($day);
             $dateStr = $date->format('Y-m-d');
-            
+
             for ($session = 1; $session <= 3; $session++) {
-                $key = $dateStr . '_' . $session;
+                $key = $dateStr.'_'.$session;
                 // Return collection of assignments instead of single assignment
                 $grid[$dateStr][$session] = $assignments->get($key, collect());
             }
@@ -130,17 +131,17 @@ class Schedule extends Model
             ->select('date', 'session')
             ->distinct()
             ->count();
-        
+
         $this->filled_slots = $filledSlots;
-        $this->coverage_rate = $this->total_slots > 0 
-            ? ($this->filled_slots / $this->total_slots) * 100 
+        $this->coverage_rate = $this->total_slots > 0
+            ? ($this->filled_slots / $this->total_slots) * 100
             : 0;
-        
+
         $this->save();
-        
+
         // Invalidate cache after updating coverage
         $this->invalidateCache();
-        
+
         return $this->coverage_rate;
     }
 
@@ -152,8 +153,8 @@ class Schedule extends Model
         \Illuminate\Support\Facades\Cache::forget("schedule_grid_{$this->id}");
         \Illuminate\Support\Facades\Cache::forget("schedule_conflicts_{$this->id}");
         \Illuminate\Support\Facades\Cache::forget("schedule_statistics_{$this->id}");
-        
-        \Illuminate\Support\Facades\Log::debug("Schedule cache invalidated", [
+
+        \Illuminate\Support\Facades\Log::debug('Schedule cache invalidated', [
             'schedule_id' => $this->id,
         ]);
     }
@@ -163,7 +164,7 @@ class Schedule extends Model
      */
     public function canPublish(): bool
     {
-        if (!$this->isDraft()) {
+        if (! $this->isDraft()) {
             return false;
         }
 
@@ -174,7 +175,7 @@ class Schedule extends Model
 
         // Check for conflicts
         $conflicts = $this->detectConflicts();
-        if (!empty($conflicts['critical'])) {
+        if (! empty($conflicts['critical'])) {
             return false;
         }
 
@@ -209,7 +210,7 @@ class Schedule extends Model
 
         // Check for inactive users
         $inactiveUsers = $this->assignments()
-            ->whereHas('user', function($query) {
+            ->whereHas('user', function ($query) {
                 $query->where('status', '!=', 'active');
             })
             ->count();
@@ -250,8 +251,8 @@ class Schedule extends Model
     public function getStatistics(): array
     {
         $assignments = $this->assignments()->with('user')->get();
-        
-        $userCounts = $assignments->groupBy('user_id')->map(function($group) {
+
+        $userCounts = $assignments->groupBy('user_id')->map(function ($group) {
             return [
                 'user' => $group->first()->user,
                 'count' => $group->count(),
@@ -276,21 +277,21 @@ class Schedule extends Model
     public function getSlotStatistics(): array
     {
         $assignments = $this->assignments()->with('user')->get();
-        
+
         // Group by slot (date + session)
-        $slotGroups = $assignments->groupBy(function($assignment) {
-            return $assignment->date->format('Y-m-d') . '_' . $assignment->session;
+        $slotGroups = $assignments->groupBy(function ($assignment) {
+            return $assignment->date->format('Y-m-d').'_'.$assignment->session;
         });
 
         $slotStats = [];
         $userCounts = [];
-        
+
         foreach ($slotGroups as $slotKey => $slotAssignments) {
             $userCount = $slotAssignments->count();
             $userCounts[] = $userCount;
-            
+
             [$date, $session] = explode('_', $slotKey);
-            
+
             $slotStats[] = [
                 'date' => $date,
                 'session' => (int) $session,
@@ -303,10 +304,10 @@ class Schedule extends Model
         $totalSlots = $this->total_slots;
         $filledSlots = count($slotGroups);
         $emptySlots = $totalSlots - $filledSlots;
-        
+
         $avgUsersPerSlot = $filledSlots > 0 ? array_sum($userCounts) / $filledSlots : 0;
-        $maxUsersInSlot = !empty($userCounts) ? max($userCounts) : 0;
-        $minUsersInSlot = !empty($userCounts) ? min($userCounts) : 0;
+        $maxUsersInSlot = ! empty($userCounts) ? max($userCounts) : 0;
+        $minUsersInSlot = ! empty($userCounts) ? min($userCounts) : 0;
 
         // Count slots by user count
         $slotsByUserCount = [];

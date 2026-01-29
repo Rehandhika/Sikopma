@@ -6,11 +6,11 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Migration untuk support variant-level stock adjustments
- * 
+ *
  * Task 1.2: Update stock_adjustments table untuk support variant_id
  * - Tambah kolom variant_id dengan foreign key
  * - Tambah index untuk variant adjustments
- * 
+ *
  * Requirements: 6.1 - THE Stock_Adjustment SHALL support variant-level adjustments
  */
 return new class extends Migration
@@ -25,14 +25,14 @@ return new class extends Migration
                 ->after('product_id')
                 ->constrained('product_variants')
                 ->nullOnDelete();
-            
+
             // Index untuk query adjustment history per variant
             // Digunakan saat: getVariantAdjustmentHistory, variant stock reports
             $table->index('variant_id', 'idx_stock_adj_variant');
-            
+
             // Composite index untuk query adjustment by product and variant
             $table->index(
-                ['product_id', 'variant_id'], 
+                ['product_id', 'variant_id'],
                 'idx_stock_adj_product_variant'
             );
         });

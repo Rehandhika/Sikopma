@@ -10,7 +10,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasRoles, SoftDeletes;
+    use HasFactory, HasRoles, Notifiable, SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -126,7 +126,7 @@ class User extends Authenticatable
      */
     public function canLogin(): bool
     {
-        return $this->isActive() && !$this->trashed();
+        return $this->isActive() && ! $this->trashed();
     }
 
     /**
@@ -151,9 +151,9 @@ class User extends Authenticatable
     public function getDashboardRoute(): string
     {
         $role = $this->getPrimaryRole();
-        
+
         // Dashboard routes based on Wirus Angkatan 66 roles
-        return match($role) {
+        return match ($role) {
             'Super Admin' => 'dashboard',
             'Ketua' => 'dashboard',
             'Wakil Ketua' => 'dashboard',

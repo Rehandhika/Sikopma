@@ -2,18 +2,17 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
 use App\Models\Banner;
 use App\Services\BannerService;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Tests\TestCase;
 
 class BannerTest extends TestCase
 {
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Create storage disk for testing
         Storage::fake('public');
     }
@@ -21,8 +20,8 @@ class BannerTest extends TestCase
     /** @test */
     public function banner_model_exists_and_has_correct_fillable_fields()
     {
-        $banner = new Banner();
-        
+        $banner = new Banner;
+
         $expectedFillable = [
             'title',
             'image_path',
@@ -30,15 +29,15 @@ class BannerTest extends TestCase
             'is_active',
             'created_by',
         ];
-        
+
         $this->assertEquals($expectedFillable, $banner->getFillable());
     }
 
     /** @test */
     public function banner_model_has_correct_casts()
     {
-        $banner = new Banner();
-        
+        $banner = new Banner;
+
         $expectedCasts = [
             'id' => 'int',
             'priority' => 'integer',
@@ -47,7 +46,7 @@ class BannerTest extends TestCase
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
-        
+
         $this->assertEquals($expectedCasts, $banner->getCasts());
     }
 
@@ -56,7 +55,7 @@ class BannerTest extends TestCase
     {
         // Get service from container (with dependency injection)
         $service = app(BannerService::class);
-        
+
         $this->assertTrue(method_exists($service, 'store'));
         $this->assertTrue(method_exists($service, 'update'));
         $this->assertTrue(method_exists($service, 'delete'));
@@ -70,7 +69,7 @@ class BannerTest extends TestCase
     {
         // Get service from container (with dependency injection)
         $service = app(BannerService::class);
-        
+
         // Test that getImageUrl method exists and handles null path
         $this->assertTrue(method_exists($service, 'getImageUrl'));
         $this->assertNull($service->getImageUrl(null));
@@ -82,7 +81,7 @@ class BannerTest extends TestCase
     {
         // Get service from container (with dependency injection)
         $service = app(BannerService::class);
-        
+
         // Test that getActiveBanners returns a collection
         $this->assertTrue(method_exists($service, 'getActiveBanners'));
     }
@@ -90,9 +89,9 @@ class BannerTest extends TestCase
     /** @test */
     public function image_url_accessor_returns_correct_format()
     {
-        $banner = new Banner();
+        $banner = new Banner;
         $banner->image_path = 'banners/test-image.jpg';
-        
+
         $expectedUrl = asset('storage/banners/test-image.jpg');
         $this->assertEquals($expectedUrl, $banner->image_url);
     }
@@ -100,9 +99,9 @@ class BannerTest extends TestCase
     /** @test */
     public function image_url_accessor_returns_placeholder_when_no_path()
     {
-        $banner = new Banner();
+        $banner = new Banner;
         $banner->image_path = null;
-        
+
         $expectedUrl = asset('images/placeholder-banner.jpg');
         $this->assertEquals($expectedUrl, $banner->image_url);
     }
@@ -110,9 +109,9 @@ class BannerTest extends TestCase
     /** @test */
     public function thumbnail_url_accessor_returns_correct_format()
     {
-        $banner = new Banner();
+        $banner = new Banner;
         $banner->image_path = 'banners/test-image_1920.jpg';
-        
+
         $expectedUrl = asset('storage/banners/test-image_1920_480.jpg');
         $this->assertEquals($expectedUrl, $banner->thumbnail_url);
     }
@@ -120,9 +119,9 @@ class BannerTest extends TestCase
     /** @test */
     public function thumbnail_url_accessor_returns_placeholder_when_no_path()
     {
-        $banner = new Banner();
+        $banner = new Banner;
         $banner->image_path = null;
-        
+
         $expectedUrl = asset('images/placeholder-banner-thumb.jpg');
         $this->assertEquals($expectedUrl, $banner->thumbnail_url);
     }

@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
 class SystemSetting extends Model
@@ -30,6 +30,7 @@ class SystemSetting extends Model
     {
         return Cache::remember("system_setting.{$key}", 3600, function () use ($key, $default) {
             $setting = static::where('key', $key)->first();
+
             return $setting ? static::castValue($setting->value, $setting->type) : $default;
         });
     }
@@ -43,7 +44,7 @@ class SystemSetting extends Model
             ['key' => $key],
             ['value' => $value, 'type' => $type]
         );
-        
+
         Cache::forget("system_setting.{$key}");
     }
 
@@ -52,7 +53,7 @@ class SystemSetting extends Model
      */
     protected static function castValue($value, string $type)
     {
-        return match($type) {
+        return match ($type) {
             'boolean' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
             'integer' => (int) $value,
             'float' => (float) $value,

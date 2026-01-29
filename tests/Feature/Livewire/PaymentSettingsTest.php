@@ -16,7 +16,7 @@ use Tests\TestCase;
 
 /**
  * Feature tests for PaymentSettings Livewire Component
- * 
+ *
  * Validates: Requirements 1.2, 1.3, 1.4, 2.1, 2.5, 3.1, 3.3, 7.1, 7.2
  */
 class PaymentSettingsTest extends TestCase
@@ -24,12 +24,13 @@ class PaymentSettingsTest extends TestCase
     use RefreshDatabase;
 
     protected User $adminUser;
+
     protected User $regularUser;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Create roles
         Role::create(['name' => 'Super Admin']);
         Role::create(['name' => 'Ketua']);

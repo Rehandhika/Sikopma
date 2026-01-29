@@ -2,13 +2,13 @@
 
 namespace App\Services;
 
-use App\Models\ScheduleAssignment;
-use App\Models\LeaveAffectedSchedule;
 use App\Models\AssignmentEditHistory;
+use App\Models\LeaveAffectedSchedule;
+use App\Models\ScheduleAssignment;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Exception;
 
 class ScheduleAssignmentService
 {
@@ -26,10 +26,6 @@ class ScheduleAssignmentService
     /**
      * Update assignment status
      *
-     * @param ScheduleAssignment $assignment
-     * @param string $status
-     * @param string|null $reason
-     * @return bool
      * @throws Exception
      */
     public function updateStatus(
@@ -38,8 +34,8 @@ class ScheduleAssignmentService
         ?string $reason = null
     ): bool {
         // Validate status
-        if (!in_array($status, self::VALID_STATUSES)) {
-            throw new Exception("Invalid status: {$status}. Valid statuses are: " . implode(', ', self::VALID_STATUSES));
+        if (! in_array($status, self::VALID_STATUSES)) {
+            throw new Exception("Invalid status: {$status}. Valid statuses are: ".implode(', ', self::VALID_STATUSES));
         }
 
         // Store previous status for history
@@ -48,7 +44,7 @@ class ScheduleAssignmentService
         // Update assignment status
         $assignment->update([
             'status' => $status,
-            'notes' => $reason ? ($assignment->notes ? $assignment->notes . "\n" . $reason : $reason) : $assignment->notes,
+            'notes' => $reason ? ($assignment->notes ? $assignment->notes."\n".$reason : $reason) : $assignment->notes,
         ]);
 
         // Log the status change in edit history
@@ -68,8 +64,6 @@ class ScheduleAssignmentService
      * Bulk update assignments to 'excused' status
      * Used when leave request is approved
      *
-     * @param Collection $assignments
-     * @param int $leaveRequestId
      * @return int Number of assignments updated
      */
     public function markAsExcused(
@@ -94,6 +88,7 @@ class ScheduleAssignmentService
             }
 
             DB::commit();
+
             return $count;
         } catch (Exception $e) {
             DB::rollBack();
@@ -105,7 +100,6 @@ class ScheduleAssignmentService
      * Revert excused assignments back to scheduled
      * Used when leave request is cancelled
      *
-     * @param int $leaveRequestId
      * @return int Number of assignments reverted
      */
     public function revertExcused(int $leaveRequestId): int
@@ -132,6 +126,7 @@ class ScheduleAssignmentService
             LeaveAffectedSchedule::where('leave_request_id', $leaveRequestId)->delete();
 
             DB::commit();
+
             return $count;
         } catch (Exception $e) {
             DB::rollBack();
@@ -141,11 +136,6 @@ class ScheduleAssignmentService
 
     /**
      * Get assignments for a user within a date range
-     *
-     * @param int $userId
-     * @param Carbon $startDate
-     * @param Carbon $endDate
-     * @return Collection
      */
     public function getAssignmentsForPeriod(
         int $userId,
@@ -159,4 +149,3 @@ class ScheduleAssignmentService
             ->get();
     }
 }
-

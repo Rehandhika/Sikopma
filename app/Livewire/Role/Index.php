@@ -2,26 +2,30 @@
 
 namespace App\Livewire\Role;
 
-use Livewire\Component;
-use Livewire\Attributes\Title;
-use Livewire\Attributes\Computed;
 use App\Services\ActivityLogService;
-use Spatie\Permission\Models\Role;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Title;
+use Livewire\Component;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 #[Title('Manajemen Role & Permission')]
 class Index extends Component
 {
     // Modal state
     public bool $showModal = false;
+
     public bool $editMode = false;
+
     public ?int $roleId = null;
-    
+
     // Form fields
     public string $name = '';
+
     public string $description = '';
+
     public array $selectedPermissions = [];
-    
+
     // Search & filter
     public string $search = '';
 
@@ -30,8 +34,8 @@ class Index extends Component
 
     protected function rules(): array
     {
-        $uniqueRule = $this->editMode 
-            ? 'unique:roles,name,' . $this->roleId 
+        $uniqueRule = $this->editMode
+            ? 'unique:roles,name,'.$this->roleId
             : 'unique:roles,name';
 
         return [
@@ -58,7 +62,7 @@ class Index extends Component
         return Role::query()
             ->withCount('users')
             ->with('permissions:id,name')
-            ->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%"))
+            ->when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%"))
             ->orderByRaw("FIELD(name, 'super-admin', 'ketua', 'wakil-ketua', 'bph', 'anggota') DESC")
             ->orderBy('name')
             ->get();
@@ -70,7 +74,7 @@ class Index extends Component
         return Permission::query()
             ->orderBy('name')
             ->get()
-            ->groupBy(fn($p) => explode('.', $p->name)[0] ?? 'other');
+            ->groupBy(fn ($p) => explode('.', $p->name)[0] ?? 'other');
     }
 
     public function create(): void
@@ -83,12 +87,12 @@ class Index extends Component
     public function edit(int $id): void
     {
         $role = Role::with('permissions:id,name')->findOrFail($id);
-        
+
         $this->roleId = $role->id;
         $this->name = $role->name;
         $this->description = $role->description ?? '';
         $this->selectedPermissions = $role->permissions->pluck('name')->toArray();
-        
+
         $this->editMode = true;
         $this->showModal = true;
     }
@@ -102,7 +106,7 @@ class Index extends Component
                 $role = Role::findOrFail($this->roleId);
                 $role->update(['name' => $this->name]);
                 $message = 'Role berhasil diperbarui';
-                
+
                 // Log activity
                 ActivityLogService::logRoleUpdated($this->name);
             } else {
@@ -111,7 +115,7 @@ class Index extends Component
                     'guard_name' => 'web',
                 ]);
                 $message = 'Role berhasil ditambahkan';
-                
+
                 // Log activity
                 ActivityLogService::logRoleCreated($this->name);
             }
@@ -121,7 +125,7 @@ class Index extends Component
             $this->dispatch('toast', message: $message, type: 'success');
             $this->closeModal();
         } catch (\Exception $e) {
-            $this->dispatch('toast', message: 'Terjadi kesalahan: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Terjadi kesalahan: '.$e->getMessage(), type: 'error');
         }
     }
 
@@ -129,25 +133,27 @@ class Index extends Component
     {
         try {
             $role = Role::findOrFail($id);
-            
+
             if (in_array($role->name, $this->systemRoles)) {
                 $this->dispatch('toast', message: 'Role sistem tidak dapat dihapus', type: 'error');
+
                 return;
             }
 
             if ($role->users()->count() > 0) {
                 $this->dispatch('toast', message: "Role masih digunakan oleh {$role->users()->count()} user", type: 'error');
+
                 return;
             }
 
             $role->delete();
-            
+
             // Log activity
             ActivityLogService::logRoleDeleted($role->name);
-            
+
             $this->dispatch('toast', message: 'Role berhasil dihapus', type: 'success');
         } catch (\Exception $e) {
-            $this->dispatch('toast', message: 'Terjadi kesalahan: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Terjadi kesalahan: '.$e->getMessage(), type: 'error');
         }
     }
 

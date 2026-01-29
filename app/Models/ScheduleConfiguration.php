@@ -35,7 +35,7 @@ class ScheduleConfiguration extends Model
     // Type casting methods
     public function getTypedValue()
     {
-        return match($this->type) {
+        return match ($this->type) {
             'integer' => $this->castToInteger(),
             'float' => $this->castToFloat(),
             'boolean' => $this->castToBoolean(),
@@ -61,6 +61,7 @@ class ScheduleConfiguration extends Model
         }
 
         $value = strtolower($this->value);
+
         return in_array($value, ['true', '1', 'yes', 'on'], true);
     }
 
@@ -71,6 +72,7 @@ class ScheduleConfiguration extends Model
         }
 
         $decoded = json_decode($this->value, true);
+
         return is_array($decoded) ? $decoded : [];
     }
 
@@ -78,8 +80,8 @@ class ScheduleConfiguration extends Model
     public static function getValue(string $key, $default = null)
     {
         $config = self::where('key', $key)->first();
-        
-        if (!$config) {
+
+        if (! $config) {
             return $default;
         }
 
@@ -89,7 +91,7 @@ class ScheduleConfiguration extends Model
     public static function setValue(string $key, $value, string $type = 'string', ?string $description = null): self
     {
         // Convert value to string for storage
-        $stringValue = match($type) {
+        $stringValue = match ($type) {
             'boolean' => $value ? 'true' : 'false',
             'json' => is_string($value) ? $value : json_encode($value),
             default => (string) $value,

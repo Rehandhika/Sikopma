@@ -87,7 +87,7 @@ class ScheduleAssignment extends Model
     public function scopeUpcoming($query)
     {
         return $query->where('date', '>=', now()->toDateString())
-                     ->where('status', 'scheduled');
+            ->where('status', 'scheduled');
     }
 
     public function scopeForSlot($query, string $date, int $session)
@@ -125,6 +125,7 @@ class ScheduleAssignment extends Model
             '2' => '10:20 - 12:50',
             '3' => '13:30 - 16:00',
         ];
+
         return $labels[$this->session] ?? '';
     }
 
@@ -136,6 +137,7 @@ class ScheduleAssignment extends Model
             'wednesday' => 'Rabu',
             'thursday' => 'Kamis',
         ];
+
         return $labels[$this->day] ?? '';
     }
 
@@ -144,7 +146,7 @@ class ScheduleAssignment extends Model
      */
     public function isAvailableForSwap(): bool
     {
-        return $this->canSwap() && !$this->swapped_to_user_id;
+        return $this->canSwap() && ! $this->swapped_to_user_id;
     }
 
     /**
@@ -170,11 +172,11 @@ class ScheduleAssignment extends Model
 
         // Check availability mismatch
         $availability = Availability::where('user_id', $this->user_id)
-            ->whereHas('details', function($query) {
+            ->whereHas('details', function ($query) {
                 $dayName = strtolower($this->date->englishDayOfWeek);
                 $query->where('day', $dayName)
-                      ->where('session', $this->session)
-                      ->where('is_available', false);
+                    ->where('session', $this->session)
+                    ->where('is_available', false);
             })
             ->exists();
 
@@ -191,15 +193,15 @@ class ScheduleAssignment extends Model
     public function checkUserAvailability(): bool
     {
         $dayName = strtolower($this->date->englishDayOfWeek);
-        
-        return AvailabilityDetail::whereHas('availability', function($query) {
+
+        return AvailabilityDetail::whereHas('availability', function ($query) {
             $query->where('user_id', $this->user_id)
-                  ->where('status', 'submitted');
+                ->where('status', 'submitted');
         })
-        ->where('day', $dayName)
-        ->where('session', $this->session)
-        ->where('is_available', true)
-        ->exists();
+            ->where('day', $dayName)
+            ->where('session', $this->session)
+            ->where('is_available', true)
+            ->exists();
     }
 
     /**
@@ -207,13 +209,13 @@ class ScheduleAssignment extends Model
      */
     public function getFormattedSlotAttribute(): string
     {
-        return $this->date->locale('id')->isoFormat('dddd, D MMMM Y') . ' - Sesi ' . $this->session;
+        return $this->date->locale('id')->isoFormat('dddd, D MMMM Y').' - Sesi '.$this->session;
     }
 
     /**
      * Multi-user slot helper methods
      */
-    
+
     /**
      * Get other users in the same slot (slotmates)
      */
@@ -259,7 +261,7 @@ class ScheduleAssignment extends Model
      */
     public function hasBeenEdited(): bool
     {
-        return !is_null($this->edited_by) && !is_null($this->edited_at);
+        return ! is_null($this->edited_by) && ! is_null($this->edited_at);
     }
 
     /**

@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Services\ThumbnailService;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Attendance extends Model
 {
@@ -38,7 +38,7 @@ class Attendance extends Model
      */
     public function getCheckInPhotoUrlAttribute(): ?string
     {
-        if (!$this->check_in_photo) {
+        if (! $this->check_in_photo) {
             return null;
         }
 
@@ -51,7 +51,7 @@ class Attendance extends Model
      */
     public function getCheckInPhotoThumbnailAttribute(): ?string
     {
-        if (!$this->check_in_photo) {
+        if (! $this->check_in_photo) {
             return null;
         }
 

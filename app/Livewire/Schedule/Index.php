@@ -2,13 +2,19 @@
 
 namespace App\Livewire\Schedule;
 
+use App\Models\Availability;
+use App\Models\Schedule;
+use App\Models\User;
+use App\Services\ActivityLogService;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Livewire\Attributes\{Title, Layout, Computed, On};
-use App\Models\{Schedule, User, Availability};
-use App\Services\ActivityLogService;
-use Illuminate\Support\Facades\{DB, Cache};
-use Carbon\Carbon;
 
 #[Title('Manajemen Jadwal')]
 #[Layout('layouts.app')]
@@ -18,7 +24,9 @@ class Index extends Component
 
     // Member availability modal
     public bool $showMemberModal = false;
+
     public ?array $selectedMemberAvailability = null;
+
     public ?string $selectedMemberName = null;
 
     /**
@@ -30,7 +38,7 @@ class Index extends Component
         // Clear computed property cache
         unset($this->membersWithAvailability);
         unset($this->availabilityStats);
-        
+
         // Clear the cache for members availability
         $weekStart = now()->startOfWeek(Carbon::MONDAY);
         Cache::forget("members_availability_{$weekStart->format('Y-m-d')}");
@@ -52,7 +60,7 @@ class Index extends Component
     public function membersWithAvailability(): array
     {
         $weekStart = $this->currentWeekStart;
-        
+
         return Cache::remember(
             "members_availability_{$weekStart->format('Y-m-d')}",
             60, // 1 minute cache
@@ -74,6 +82,7 @@ class Index extends Component
 
                 return $members->map(function ($member) use ($availabilities) {
                     $availability = $availabilities->get($member->id);
+
                     return [
                         'id' => $member->id,
                         'name' => $member->name,
@@ -93,7 +102,7 @@ class Index extends Component
         $members = $this->membersWithAvailability;
         $total = count($members);
         $submitted = collect($members)->where('has_submitted', true)->count();
-        
+
         return [
             'total' => $total,
             'submitted' => $submitted,
@@ -105,7 +114,7 @@ class Index extends Component
     public function viewMemberAvailability(int $userId): void
     {
         $weekStart = $this->currentWeekStart;
-        
+
         $user = User::find($userId);
         $availability = Availability::query()
             ->where('user_id', $userId)
@@ -114,18 +123,19 @@ class Index extends Component
             ->with('details')
             ->first();
 
-        if (!$availability) {
+        if (! $availability) {
             $this->dispatch('toast', message: 'Anggota belum mengisi ketersediaan.', type: 'warning');
+
             return;
         }
 
         $this->selectedMemberName = $user->name;
         $this->selectedMemberAvailability = [];
-        
+
         foreach ($availability->details as $detail) {
             $this->selectedMemberAvailability[$detail->day][$detail->session] = $detail->is_available;
         }
-        
+
         $this->showMemberModal = true;
     }
 
@@ -140,25 +150,26 @@ class Index extends Component
     {
         try {
             $schedule = Schedule::findOrFail($scheduleId);
-            
+
             if ($schedule->status === 'published') {
                 $this->dispatch('toast', message: 'Jadwal sudah dipublish.', type: 'warning');
+
                 return;
             }
-            
+
             $schedule->update(['status' => 'published']);
-            
+
             // Log activity
             $weekDate = Carbon::parse($schedule->week_start_date)->locale('id')->isoFormat('D MMMM YYYY');
             ActivityLogService::logSchedulePublished($weekDate);
-            
+
             // Dispatch global event for other components
             $this->dispatch('schedule-updated');
-            
+
             $this->dispatch('toast', message: 'Jadwal berhasil dipublish!', type: 'success');
-            
+
         } catch (\Exception $e) {
-            $this->dispatch('toast', message: 'Gagal publish jadwal: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal publish jadwal: '.$e->getMessage(), type: 'error');
         }
     }
 
@@ -166,29 +177,29 @@ class Index extends Component
     {
         try {
             DB::beginTransaction();
-            
+
             $schedule = Schedule::findOrFail($scheduleId);
             $weekDate = Carbon::parse($schedule->week_start_date)->locale('id')->isoFormat('D MMMM YYYY');
-            
+
             // Delete assignments first
             $schedule->assignments()->delete();
-            
+
             // Delete schedule
             $schedule->delete();
-            
+
             // Log activity
             ActivityLogService::logScheduleDeleted('Jadwal', $weekDate);
-            
+
             DB::commit();
-            
+
             // Dispatch global event for other components
             $this->dispatch('schedule-updated');
-            
+
             $this->dispatch('toast', message: 'Jadwal berhasil dihapus!', type: 'success');
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->dispatch('toast', message: 'Gagal menghapus jadwal: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal menghapus jadwal: '.$e->getMessage(), type: 'error');
         }
     }
 

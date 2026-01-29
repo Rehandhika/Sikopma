@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class AuditLog extends Model
 {
@@ -41,7 +41,7 @@ class AuditLog extends Model
      */
     public function auditable()
     {
-        if (!$this->model || !class_exists($this->model)) {
+        if (! $this->model || ! class_exists($this->model)) {
             return null;
         }
 

@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
 use App\Services\Storage\CacheManager;
 use App\Services\Storage\CacheManagerInterface;
 use App\Services\Storage\FileCleanupService;
@@ -21,10 +20,11 @@ use App\Services\Storage\StorageOrganizer;
 use App\Services\Storage\StorageOrganizerInterface;
 use App\Services\Storage\ThumbnailGenerator;
 use App\Services\Storage\ThumbnailGeneratorInterface;
+use Illuminate\Support\ServiceProvider;
 
 /**
  * Service Provider untuk File Storage System
- * 
+ *
  * Mendaftarkan semua services yang terkait dengan file storage:
  * - StorageOrganizer: Mengatur struktur direktori penyimpanan
  * - CacheManager: Mengelola cache URL file
@@ -55,7 +55,7 @@ class FileStorageServiceProvider extends ServiceProvider
     {
         // StorageOrganizer - Mengatur struktur path file
         $this->app->singleton(StorageOrganizerInterface::class, function ($app) {
-            return new StorageOrganizer();
+            return new StorageOrganizer;
         });
 
         // CacheManager - Mengelola cache URL
@@ -67,7 +67,7 @@ class FileStorageServiceProvider extends ServiceProvider
 
         // ImageProcessingService - Memproses gambar
         $this->app->singleton(ImageProcessingServiceInterface::class, function ($app) {
-            return new ImageProcessingService();
+            return new ImageProcessingService;
         });
 
         // ThumbnailGenerator - Membuat thumbnail
@@ -79,7 +79,7 @@ class FileStorageServiceProvider extends ServiceProvider
 
         // FileSecurityService - Keamanan file
         $this->app->singleton(FileSecurityServiceInterface::class, function ($app) {
-            return new FileSecurityService();
+            return new FileSecurityService;
         });
     }
 
@@ -114,7 +114,7 @@ class FileStorageServiceProvider extends ServiceProvider
 
         // StorageMonitor - Monitoring storage
         $this->app->singleton(StorageMonitorInterface::class, function ($app) {
-            return new StorageMonitor();
+            return new StorageMonitor;
         });
 
         // MigrationTool - Migrasi file existing
@@ -134,12 +134,12 @@ class FileStorageServiceProvider extends ServiceProvider
     {
         // Publish configuration file
         $this->publishes([
-            __DIR__ . '/../../config/filestorage.php' => config_path('filestorage.php'),
+            __DIR__.'/../../config/filestorage.php' => config_path('filestorage.php'),
         ], 'filestorage-config');
 
         // Merge configuration
         $this->mergeConfigFrom(
-            __DIR__ . '/../../config/filestorage.php',
+            __DIR__.'/../../config/filestorage.php',
             'filestorage'
         );
     }

@@ -2,12 +2,15 @@
 
 namespace App\Livewire\Schedule;
 
-use Livewire\Component;
-use Livewire\Attributes\{Title, Layout};
-use App\Models\{Schedule, ScheduleAssignment, User};
+use App\Models\Schedule;
+use App\Models\ScheduleAssignment;
+use App\Models\User;
+use App\Services\ActivityLogService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use App\Services\ActivityLogService;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Component;
 
 #[Title('Buat Jadwal Baru')]
 #[Layout('layouts.app')]
@@ -15,35 +18,47 @@ class CreateSchedule extends Component
 {
     // Schedule data
     public $weekStartDate;
+
     public $weekEndDate;
+
     public $notes = '';
-    
+
     // Multi-user assignments: [date][session] = [user1, user2, ...]
     public $assignments = [];
-    
+
     // UI state
     public $selectedDate = null;
+
     public $selectedSession = null;
+
     public $showUserSelector = false;
+
     public $availableUsers = [];
-    
+
     // Statistics
     public $totalAssignments = 0;
+
     public $coverageRate = 0;
+
     public $assignmentsPerUser = [];
+
     public $emptySlots = 0;
-    
+
     // Conflicts
     public $conflicts = [];
-    
+
     // Loading states
     public $isSaving = false;
-    
+
     // Undo/Redo functionality
     public $history = [];
+
     public $historyIndex = -1;
+
     public $maxHistorySteps = 20;
+
     public $canUndo = false;
+
     public $canRedo = false;
 
     protected function rules()
@@ -61,7 +76,7 @@ class CreateSchedule extends Component
         $nextMonday = Carbon::now()->next(Carbon::MONDAY);
         $this->weekStartDate = $nextMonday->format('Y-m-d');
         $this->weekEndDate = $nextMonday->copy()->addDays(3)->format('Y-m-d');
-        
+
         $this->initializeGrid();
         $this->recalculateStatistics();
         $this->detectConflicts();
@@ -101,7 +116,7 @@ class CreateSchedule extends Component
             if (isset($this->assignments[$date])) {
                 // This date exists in new grid, preserve assignments
                 foreach ($sessions as $session => $users) {
-                    if (isset($this->assignments[$date][$session]) && !empty($users)) {
+                    if (isset($this->assignments[$date][$session]) && ! empty($users)) {
                         $this->assignments[$date][$session] = $users;
                     }
                 }
@@ -150,15 +165,15 @@ class CreateSchedule extends Component
     {
         // Clear existing assignments first to prevent stale data
         $this->assignments = [];
-        
+
         $startDate = Carbon::parse($this->weekStartDate);
-        
+
         for ($day = 0; $day < 4; $day++) {
             $date = $startDate->copy()->addDays($day);
             $dateStr = $date->format('Y-m-d');
-            
+
             $this->assignments[$dateStr] = [];
-            
+
             for ($session = 1; $session <= 3; $session++) {
                 $this->assignments[$dateStr][$session] = []; // Empty array for multi-user
             }
@@ -181,16 +196,17 @@ class CreateSchedule extends Component
     {
         $startDate = Carbon::parse($this->weekStartDate);
         $expectedFirstDate = $startDate->format('Y-m-d');
-        
+
         // Check if grid has the expected first date
         $gridDates = array_keys($this->assignments);
-        
-        if (empty($gridDates) || !in_array($expectedFirstDate, $gridDates)) {
+
+        if (empty($gridDates) || ! in_array($expectedFirstDate, $gridDates)) {
             // Grid is out of sync, reinitialize
             $this->initializeGrid();
+
             return true;
         }
-        
+
         return false;
     }
 
@@ -201,10 +217,10 @@ class CreateSchedule extends Component
     public function getSlotAssignments(string $date, int $session): array
     {
         // Ensure grid is in sync before returning data
-        if (!$this->isValidSlot($date, $session)) {
+        if (! $this->isValidSlot($date, $session)) {
             return [];
         }
-        
+
         return $this->assignments[$date][$session] ?? [];
     }
 
@@ -216,20 +232,21 @@ class CreateSchedule extends Component
     {
         // Ensure grid is in sync with current weekStartDate
         $wasResynced = $this->ensureGridSync();
-        
+
         // Validate the slot exists in current grid
-        if (!$this->isValidSlot($date, $session)) {
+        if (! $this->isValidSlot($date, $session)) {
             // The date doesn't belong to current week period
             $this->dispatch('toast', message: 'Tanggal tidak sesuai dengan periode jadwal. Grid telah disegarkan.', type: 'warning');
-            
+
             // Reset selection state
             $this->selectedDate = null;
             $this->selectedSession = null;
             $this->showUserSelector = false;
             $this->availableUsers = [];
+
             return;
         }
-        
+
         $this->selectedDate = $date;
         $this->selectedSession = $session;
         $this->showUserSelector = true;
@@ -243,24 +260,25 @@ class CreateSchedule extends Component
     private function loadAvailableUsers(string $date, int $session): void
     {
         // Validate slot exists
-        if (!$this->isValidSlot($date, $session)) {
+        if (! $this->isValidSlot($date, $session)) {
             $this->availableUsers = [];
+
             return;
         }
-        
+
         $dayName = strtolower(Carbon::parse($date)->englishDayOfWeek);
-        
+
         $this->availableUsers = User::where('status', 'active')
-            ->with(['availabilities.details' => function($query) use ($dayName, $session) {
+            ->with(['availabilities.details' => function ($query) use ($dayName, $session) {
                 $query->where('day', $dayName)
-                      ->where('session', $session);
+                    ->where('session', $session);
             }])
             ->get()
-            ->map(function($user) use ($date, $session, $dayName) {
+            ->map(function ($user) use ($date, $session, $dayName) {
                 // Check if user already in this slot (with null safety)
                 $currentSlot = $this->assignments[$date][$session] ?? [];
                 $hasConflict = collect($currentSlot)->contains('user_id', $user->id);
-                
+
                 // Count current assignments
                 $currentAssignments = 0;
                 foreach ($this->assignments as $dateAssignments) {
@@ -268,11 +286,11 @@ class CreateSchedule extends Component
                         $currentAssignments += collect($sessionAssignments)->where('user_id', $user->id)->count();
                     }
                 }
-                
+
                 // Check availability
                 $isAvailable = false;
                 $isNotAvailable = false;
-                
+
                 foreach ($user->availabilities as $availability) {
                     foreach ($availability->details as $detail) {
                         if ($detail->day === $dayName && $detail->session == $session) {
@@ -284,7 +302,7 @@ class CreateSchedule extends Component
                         }
                     }
                 }
-                
+
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
@@ -313,8 +331,9 @@ class CreateSchedule extends Component
     public function assignUser(int $userId): void
     {
         // Validate selection exists
-        if (!$this->selectedDate || !$this->selectedSession) {
+        if (! $this->selectedDate || ! $this->selectedSession) {
             $this->dispatch('toast', message: 'Pilih slot terlebih dahulu.', type: 'error');
+
             return;
         }
 
@@ -322,20 +341,22 @@ class CreateSchedule extends Component
         $this->ensureGridSync();
 
         // Check if date and session exist in assignments
-        if (!$this->isValidSlot($this->selectedDate, $this->selectedSession)) {
+        if (! $this->isValidSlot($this->selectedDate, $this->selectedSession)) {
             // Try to recover by closing modal and showing helpful message
             $this->showUserSelector = false;
             $this->selectedDate = null;
             $this->selectedSession = null;
             $this->availableUsers = [];
-            
+
             $this->dispatch('toast', message: 'Slot tidak valid. Grid telah disegarkan, silakan pilih slot kembali.', type: 'error');
+
             return;
         }
 
         $user = User::find($userId);
-        if (!$user || $user->status !== 'active') {
+        if (! $user || $user->status !== 'active') {
             $this->dispatch('toast', message: 'User tidak valid atau tidak aktif.', type: 'error');
+
             return;
         }
 
@@ -343,12 +364,13 @@ class CreateSchedule extends Component
         $currentSlot = $this->assignments[$this->selectedDate][$this->selectedSession];
         if (collect($currentSlot)->contains('user_id', $user->id)) {
             $this->dispatch('toast', message: 'User sudah ada di slot ini.', type: 'error');
+
             return;
         }
 
         // Check availability warning
         $availabilityWarning = $this->checkAvailabilityMismatch($userId, $this->selectedDate, $this->selectedSession);
-        
+
         // Add user to slot
         $this->assignments[$this->selectedDate][$this->selectedSession][] = [
             'user_id' => $user->id,
@@ -374,31 +396,33 @@ class CreateSchedule extends Component
     {
         // Ensure grid is synchronized
         $this->ensureGridSync();
-        
+
         // Validate slot exists
-        if (!$this->isValidSlot($date, $session)) {
+        if (! $this->isValidSlot($date, $session)) {
             $this->dispatch('toast', message: 'Slot tidak valid. Grid telah disegarkan.', type: 'error');
+
             return;
         }
-        
+
         $slot = $this->assignments[$date][$session] ?? [];
-        
+
         // Check if user exists in slot before removing
         $userExists = collect($slot)->contains('user_id', $userId);
-        if (!$userExists) {
+        if (! $userExists) {
             $this->dispatch('toast', message: 'User tidak ditemukan di slot ini.', type: 'warning');
+
             return;
         }
-        
+
         $this->assignments[$date][$session] = collect($slot)
-            ->reject(fn($assignment) => $assignment['user_id'] == $userId)
+            ->reject(fn ($assignment) => $assignment['user_id'] == $userId)
             ->values()
             ->toArray();
 
         $this->recalculateStatistics();
         $this->detectConflicts();
         $this->saveToHistory();
-        
+
         $this->dispatch('toast', message: 'User berhasil dihapus.', type: 'success');
     }
 
@@ -408,16 +432,18 @@ class CreateSchedule extends Component
     private function checkAvailabilityMismatch(int $userId, string $date, int $session): bool
     {
         $dayName = strtolower(Carbon::parse($date)->englishDayOfWeek);
-        
-        $user = User::with(['availabilities.details' => function($query) use ($dayName, $session) {
+
+        $user = User::with(['availabilities.details' => function ($query) use ($dayName, $session) {
             $query->where('day', $dayName)->where('session', $session);
         }])->find($userId);
 
-        if (!$user) return false;
+        if (! $user) {
+            return false;
+        }
 
         foreach ($user->availabilities as $availability) {
             foreach ($availability->details as $detail) {
-                if ($detail->day === $dayName && $detail->session == $session && !$detail->is_available) {
+                if ($detail->day === $dayName && $detail->session == $session && ! $detail->is_available) {
                     return true;
                 }
             }
@@ -439,8 +465,8 @@ class CreateSchedule extends Component
                 foreach ($users as $assignment) {
                     if ($assignment['has_availability_warning'] ?? false) {
                         $this->conflicts['warning'][] = [
-                            'message' => "User {$assignment['user_name']} tidak tersedia pada " . 
-                                         Carbon::parse($date)->format('d M') . " Sesi {$session}",
+                            'message' => "User {$assignment['user_name']} tidak tersedia pada ".
+                                         Carbon::parse($date)->format('d M')." Sesi {$session}",
                         ];
                     }
                 }
@@ -485,7 +511,7 @@ class CreateSchedule extends Component
                     $this->totalAssignments += count($users);
                     foreach ($users as $assignment) {
                         $userId = $assignment['user_id'];
-                        if (!isset($userCounts[$userId])) {
+                        if (! isset($userCounts[$userId])) {
                             $userCounts[$userId] = [
                                 'user_name' => $assignment['user_name'],
                                 'count' => 0,
@@ -507,26 +533,28 @@ class CreateSchedule extends Component
     private function saveToHistory(): void
     {
         $snapshot = json_decode(json_encode($this->assignments), true);
-        
+
         if ($this->historyIndex < count($this->history) - 1) {
             $this->history = array_slice($this->history, 0, $this->historyIndex + 1);
         }
-        
+
         $this->history[] = $snapshot;
-        
+
         if (count($this->history) > $this->maxHistorySteps) {
             array_shift($this->history);
         } else {
             $this->historyIndex++;
         }
-        
+
         $this->updateUndoRedoState();
     }
 
     public function undo(): void
     {
-        if (!$this->canUndo) return;
-        
+        if (! $this->canUndo) {
+            return;
+        }
+
         $this->historyIndex--;
         $this->restoreFromHistory();
         $this->dispatch('toast', message: 'Undo berhasil.', type: 'success');
@@ -534,8 +562,10 @@ class CreateSchedule extends Component
 
     public function redo(): void
     {
-        if (!$this->canRedo) return;
-        
+        if (! $this->canRedo) {
+            return;
+        }
+
         $this->historyIndex++;
         $this->restoreFromHistory();
         $this->dispatch('toast', message: 'Redo berhasil.', type: 'success');
@@ -563,17 +593,18 @@ class CreateSchedule extends Component
     public function saveDraft()
     {
         $this->validate();
-        
+
         if ($this->totalAssignments === 0) {
             $this->dispatch('toast', message: 'Tidak ada assignment untuk disimpan.', type: 'warning');
+
             return;
         }
-        
+
         $this->isSaving = true;
-        
+
         try {
             DB::beginTransaction();
-            
+
             $schedule = Schedule::create([
                 'week_start_date' => $this->weekStartDate,
                 'week_end_date' => $this->weekEndDate,
@@ -581,23 +612,24 @@ class CreateSchedule extends Component
                 'status' => 'draft',
                 'total_slots' => 12,
             ]);
-            
+
             $this->saveAssignments($schedule);
-            
+
             DB::commit();
-            
+
             // Log activity
             ActivityLogService::logScheduleCreated('Draft', Carbon::parse($this->weekStartDate)->format('d M Y'));
-            
+
             // Dispatch global event for other components to listen
             $this->dispatch('schedule-updated');
-            
+
             $this->dispatch('toast', message: 'Jadwal berhasil disimpan sebagai draft!', type: 'success');
+
             return $this->redirect(route('admin.schedule.index'), navigate: true);
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->dispatch('toast', message: 'Gagal menyimpan: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal menyimpan: '.$e->getMessage(), type: 'error');
         } finally {
             $this->isSaving = false;
         }
@@ -609,22 +641,24 @@ class CreateSchedule extends Component
     public function publish()
     {
         $this->validate();
-        
+
         if ($this->totalAssignments === 0) {
             $this->dispatch('toast', message: 'Tidak ada assignment untuk dipublish.', type: 'error');
+
             return;
         }
-        
-        if (!empty($this->conflicts['critical'])) {
+
+        if (! empty($this->conflicts['critical'])) {
             $this->dispatch('toast', message: 'Tidak dapat publish dengan critical conflicts.', type: 'error');
+
             return;
         }
-        
+
         $this->isSaving = true;
-        
+
         try {
             DB::beginTransaction();
-            
+
             $schedule = Schedule::create([
                 'week_start_date' => $this->weekStartDate,
                 'week_end_date' => $this->weekEndDate,
@@ -634,23 +668,24 @@ class CreateSchedule extends Component
                 'published_at' => now(),
                 'published_by' => auth()->id(),
             ]);
-            
+
             $this->saveAssignments($schedule);
-            
+
             DB::commit();
-            
+
             // Log activity
             ActivityLogService::logScheduleCreated('Published', Carbon::parse($this->weekStartDate)->format('d M Y'));
-            
+
             // Dispatch global event for other components to listen
             $this->dispatch('schedule-updated');
-            
+
             $this->dispatch('toast', message: 'Jadwal berhasil dipublish!', type: 'success');
+
             return $this->redirect(route('admin.schedule.index'), navigate: true);
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->dispatch('toast', message: 'Gagal publish: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', message: 'Gagal publish: '.$e->getMessage(), type: 'error');
         } finally {
             $this->isSaving = false;
         }
@@ -695,6 +730,7 @@ class CreateSchedule extends Component
             2 => '10:20 - 12:50',
             3 => '13:30 - 16:00',
         ];
+
         return $times[$session] ?? '';
     }
 
