@@ -20,7 +20,7 @@ class Index extends Component
 
         if ($notification) {
             $notification->update(['read_at' => now()]);
-            $this->dispatch('alert', type: 'success', message: 'Notifikasi ditandai sudah dibaca');
+            $this->dispatch('toast', message: 'Notifikasi ditandai sudah dibaca', type: 'success');
         }
     }
 
@@ -30,7 +30,7 @@ class Index extends Component
             ->whereNull('read_at')
             ->update(['read_at' => now()]);
 
-        $this->dispatch('alert', type: 'success', message: 'Semua notifikasi ditandai sudah dibaca');
+        $this->dispatch('toast', message: 'Semua notifikasi ditandai sudah dibaca', type: 'success');
     }
 
     public function delete($id)
@@ -41,14 +41,14 @@ class Index extends Component
 
         if ($notification) {
             $notification->delete();
-            $this->dispatch('alert', type: 'success', message: 'Notifikasi dihapus');
+            $this->dispatch('toast', message: 'Notifikasi dihapus', type: 'success');
         }
     }
 
     public function deleteAll()
     {
         Notification::where('user_id', auth()->id())->delete();
-        $this->dispatch('alert', type: 'success', message: 'Semua notifikasi dihapus');
+        $this->dispatch('toast', message: 'Semua notifikasi dihapus', type: 'success');
     }
 
     public function render()

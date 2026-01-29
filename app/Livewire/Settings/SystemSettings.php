@@ -137,7 +137,7 @@ class SystemSettings extends Component
         $this->dateTimeService->disableCustomDateTime();
         Cache::flush();
         
-        $this->dispatch('alert', type: 'success', message: 'Waktu dikembalikan ke waktu nyata');
+        $this->dispatch('toast', message: 'Waktu dikembalikan ke waktu nyata', type: 'success');
     }
 
     public function save()
@@ -182,14 +182,14 @@ class SystemSettings extends Component
         // Log activity
         ActivityLogService::logSettingsUpdated('Sistem');
 
-        $this->dispatch('alert', type: 'success', message: 'Pengaturan berhasil disimpan');
+        $this->dispatch('toast', message: 'Pengaturan berhasil disimpan', type: 'success');
     }
 
     public function clearCache()
     {
         Cache::flush();
         $this->dateTimeService->clearAllCache();
-        $this->dispatch('alert', type: 'success', message: 'Cache berhasil dibersihkan');
+        $this->dispatch('toast', message: 'Cache berhasil dibersihkan', type: 'success');
     }
 
     public function getTimezoneOptionsProperty(): array

@@ -94,7 +94,7 @@ class CreateProduct extends Component
     public function addVariant()
     {
         if (empty($this->selectedVariantOptions)) {
-            $this->dispatch('alert', type: 'error', message: 'Pilih tipe varian terlebih dahulu.');
+            $this->dispatch('toast', message: 'Pilih tipe varian terlebih dahulu.', type: 'error');
             return;
         }
 
@@ -162,12 +162,12 @@ class CreateProduct extends Component
         // Validate variants
         if ($this->has_variants) {
             if (empty($this->variants)) {
-                $this->dispatch('alert', type: 'error', message: 'Produk dengan varian harus memiliki minimal 1 varian.');
+                $this->dispatch('toast', message: 'Produk dengan varian harus memiliki minimal 1 varian.', type: 'error');
                 return;
             }
 
             if (empty($this->selectedVariantOptions)) {
-                $this->dispatch('alert', type: 'error', message: 'Pilih minimal satu tipe varian.');
+                $this->dispatch('toast', message: 'Pilih minimal satu tipe varian.', type: 'error');
                 return;
             }
 
@@ -181,11 +181,11 @@ class CreateProduct extends Component
                     ->implode('|');
                 
                 if (empty($values)) {
-                    $this->dispatch('alert', type: 'error', message: 'Varian #' . ($index + 1) . ' belum diisi.');
+                    $this->dispatch('toast', message: 'Varian #' . ($index + 1) . ' belum diisi.', type: 'error');
                     return;
                 }
                 if (isset($combinations[$values])) {
-                    $this->dispatch('alert', type: 'error', message: 'Ada kombinasi varian yang duplikat.');
+                    $this->dispatch('toast', message: 'Ada kombinasi varian yang duplikat.', type: 'error');
                     return;
                 }
                 $combinations[$values] = true;
@@ -193,7 +193,7 @@ class CreateProduct extends Component
         }
 
         if ($this->has_variants && $this->status === 'active' && empty($this->variants)) {
-            $this->dispatch('alert', type: 'error', message: 'Tidak dapat mengaktifkan produk tanpa varian.');
+            $this->dispatch('toast', message: 'Tidak dapat mengaktifkan produk tanpa varian.', type: 'error');
             return;
         }
 
@@ -203,7 +203,7 @@ class CreateProduct extends Component
                 $imageService = app(ProductImageService::class);
                 $imagePath = $imageService->upload($this->image);
             } catch (\Exception $e) {
-                $this->dispatch('alert', type: 'error', message: 'Gagal upload gambar: ' . $e->getMessage());
+                $this->dispatch('toast', message: 'Gagal upload gambar: ' . $e->getMessage(), type: 'error');
                 return;
             }
         }
@@ -243,7 +243,7 @@ class CreateProduct extends Component
         // Log activity
         ActivityLogService::logProductCreated($this->name);
 
-        session()->flash('message', 'Produk berhasil ditambahkan.');
+        $this->dispatch('toast', message: 'Produk berhasil ditambahkan.', type: 'success');
         return redirect()->route('admin.products.index');
     }
 

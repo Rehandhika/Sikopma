@@ -1,8 +1,12 @@
 @props([
     'name' => 'modal',
     'title' => '',
+    'subtitle' => null,
     'maxWidth' => 'lg',
     'closeable' => true,
+    'closeOnEscape' => true,
+    'closeOnClickOutside' => true,
+    'persistent' => false,
 ])
 
 @php
@@ -12,17 +16,28 @@ $maxWidths = [
     'lg' => 'max-w-lg',
     'xl' => 'max-w-xl',
     '2xl' => 'max-w-2xl',
+    '3xl' => 'max-w-3xl',
+    '4xl' => 'max-w-4xl',
+    'full' => 'max-w-full',
 ];
 @endphp
 
 <div
-    x-data="{ show: false }"
-    x-on:open-modal-{{ $name }}.window="show = true"
-    x-on:close-modal-{{ $name }}.window="show = false"
-    @if($closeable) x-on:keydown.escape.window="show = false" @endif
+    x-data="{ show: false, processing: false }"
+    x-on:open-modal-{{ $name }}.window="show = true; processing = false"
+    x-on:close-modal-{{ $name }}.window="show = false; processing = false"
+    @if($closeable && $closeOnEscape) x-on:keydown.escape.window="if (!processing || !{{ $persistent ? 'true' : 'false' }}) { show = false }" @endif
     x-show="show"
+    x-cloak
     class="fixed inset-0 z-50 overflow-y-auto"
     style="display: none;"
+    x-init="$watch('show', value => {
+        if (value) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+    })"
 >
     <!-- Backdrop -->
     <div 
@@ -33,8 +48,8 @@ $maxWidths = [
         x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
-        class="fixed inset-0 bg-gray-500 bg-opacity-75"
-        @if($closeable) @click="show = false" @endif
+        class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-80"
+        @if($closeable && $closeOnClickOutside) @click="if (!processing || !{{ $persistent ? 'true' : 'false' }}) { show = false }" @endif
     ></div>
 
     <!-- Modal -->
@@ -47,17 +62,24 @@ $maxWidths = [
             x-transition:leave="transition ease-in duration-200"
             x-transition:leave-start="opacity-100 transform translate-y-0 sm:scale-100"
             x-transition:leave-end="opacity-0 transform translate-y-4 sm:translate-y-0 sm:scale-95"
-            {{ $attributes->merge(['class' => 'inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle w-full ' . $maxWidths[$maxWidth]]) }}
+            {{ $attributes->merge(['class' => 'inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle w-full ' . $maxWidths[$maxWidth]]) }}
         >
             <!-- Header -->
             @if($title)
-            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-900">{{ $title }}</h3>
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $title }}</h3>
+                    @if($subtitle)
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ $subtitle }}</p>
+                    @endif
+                </div>
                 @if($closeable)
                 <button 
-                    @click="show = false"
+                    @click="if (!processing || !{{ $persistent ? 'true' : 'false' }}) { show = false }"
                     type="button"
-                    class="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-lg p-1"
+                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-lg p-1"
+                    :disabled="processing && {{ $persistent ? 'true' : 'false' }}"
+                    :class="{ 'opacity-50 cursor-not-allowed': processing && {{ $persistent ? 'true' : 'false' }} }"
                 >
                     <x-ui.icon name="x" class="w-5 h-5" />
                 </button>
@@ -66,13 +88,13 @@ $maxWidths = [
             @endif
 
             <!-- Body -->
-            <div class="px-6 py-4">
+            <div class="px-6 py-4 dark:text-gray-200">
                 {{ $slot }}
             </div>
 
             <!-- Footer -->
             @isset($footer)
-            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-end space-x-3">
+            <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600 flex items-center justify-end space-x-3">
                 {{ $footer }}
             </div>
             @endisset

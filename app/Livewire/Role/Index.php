@@ -118,10 +118,10 @@ class Index extends Component
 
             $role->syncPermissions($this->selectedPermissions);
 
-            $this->dispatch('alert', type: 'success', message: $message);
+            $this->dispatch('toast', message: $message, type: 'success');
             $this->closeModal();
         } catch (\Exception $e) {
-            $this->dispatch('alert', type: 'error', message: 'Terjadi kesalahan: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Terjadi kesalahan: ' . $e->getMessage(), type: 'error');
         }
     }
 
@@ -131,12 +131,12 @@ class Index extends Component
             $role = Role::findOrFail($id);
             
             if (in_array($role->name, $this->systemRoles)) {
-                $this->dispatch('alert', type: 'error', message: 'Role sistem tidak dapat dihapus');
+                $this->dispatch('toast', message: 'Role sistem tidak dapat dihapus', type: 'error');
                 return;
             }
 
             if ($role->users()->count() > 0) {
-                $this->dispatch('alert', type: 'error', message: "Role masih digunakan oleh {$role->users()->count()} user");
+                $this->dispatch('toast', message: "Role masih digunakan oleh {$role->users()->count()} user", type: 'error');
                 return;
             }
 
@@ -145,9 +145,9 @@ class Index extends Component
             // Log activity
             ActivityLogService::logRoleDeleted($role->name);
             
-            $this->dispatch('alert', type: 'success', message: 'Role berhasil dihapus');
+            $this->dispatch('toast', message: 'Role berhasil dihapus', type: 'success');
         } catch (\Exception $e) {
-            $this->dispatch('alert', type: 'error', message: 'Terjadi kesalahan: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Terjadi kesalahan: ' . $e->getMessage(), type: 'error');
         }
     }
 

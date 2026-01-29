@@ -57,13 +57,13 @@ class PendingApprovals extends Component
             DB::commit();
             
             $message = $this->reviewAction === 'approved' ? 'Pengajuan disetujui' : 'Pengajuan ditolak';
-            session()->flash('success', $message);
+            $this->dispatch('toast', message: $message, type: 'success');
             
             $this->reviewModal = false;
             $this->reset(['reviewId', 'reviewAction', 'review_notes']);
         } catch (\Exception $e) {
             DB::rollBack();
-            session()->flash('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Terjadi kesalahan: ' . $e->getMessage(), type: 'error');
         }
     }
 

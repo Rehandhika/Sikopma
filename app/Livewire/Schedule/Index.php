@@ -115,7 +115,7 @@ class Index extends Component
             ->first();
 
         if (!$availability) {
-            $this->dispatch('alert', type: 'warning', message: 'Anggota belum mengisi ketersediaan.');
+            $this->dispatch('toast', message: 'Anggota belum mengisi ketersediaan.', type: 'warning');
             return;
         }
 
@@ -142,7 +142,7 @@ class Index extends Component
             $schedule = Schedule::findOrFail($scheduleId);
             
             if ($schedule->status === 'published') {
-                $this->dispatch('alert', type: 'warning', message: 'Jadwal sudah dipublish.');
+                $this->dispatch('toast', message: 'Jadwal sudah dipublish.', type: 'warning');
                 return;
             }
             
@@ -155,10 +155,10 @@ class Index extends Component
             // Dispatch global event for other components
             $this->dispatch('schedule-updated');
             
-            $this->dispatch('alert', type: 'success', message: 'Jadwal berhasil dipublish!');
+            $this->dispatch('toast', message: 'Jadwal berhasil dipublish!', type: 'success');
             
         } catch (\Exception $e) {
-            $this->dispatch('alert', type: 'error', message: 'Gagal publish jadwal: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal publish jadwal: ' . $e->getMessage(), type: 'error');
         }
     }
 
@@ -184,11 +184,11 @@ class Index extends Component
             // Dispatch global event for other components
             $this->dispatch('schedule-updated');
             
-            $this->dispatch('alert', type: 'success', message: 'Jadwal berhasil dihapus!');
+            $this->dispatch('toast', message: 'Jadwal berhasil dihapus!', type: 'success');
             
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->dispatch('alert', type: 'error', message: 'Gagal menghapus jadwal: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal menghapus jadwal: ' . $e->getMessage(), type: 'error');
         }
     }
 

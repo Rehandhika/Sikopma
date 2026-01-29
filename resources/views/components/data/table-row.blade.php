@@ -1,13 +1,7 @@
 @props([
-    'striped' => true,
-    'hoverable' => true,
+    'compact' => false,
 ])
 
-<tr {{ $attributes->merge([
-    'class' => implode(' ', array_filter([
-        $striped ? 'odd:bg-white even:bg-gray-50' : '',
-        $hoverable ? 'hover:bg-gray-100 transition-colors' : '',
-    ]))
-]) }}>
+<tr {{ $attributes->merge(['class' => '']) }}>
     {{ $slot }}
 </tr>

@@ -107,14 +107,14 @@ class ProductList extends Component
         try {
             if ($this->editingId) {
                 $productService->update($this->editingId, $validated);
-                $this->dispatch('alert', type: 'success', message: 'Produk berhasil diperbarui');
+                $this->dispatch('toast', message: 'Produk berhasil diperbarui', type: 'success');
             } else {
                 // Generate SKU if not provided
                 if (empty($validated['sku'])) {
                     $validated['sku'] = $productService->generateSKU($validated['name'], $validated['category'] ?? null);
                 }
                 $productService->create($validated);
-                $this->dispatch('alert', type: 'success', message: 'Produk berhasil ditambahkan');
+                $this->dispatch('toast', message: 'Produk berhasil ditambahkan', type: 'success');
             }
             $this->resetForm();
 
@@ -123,7 +123,7 @@ class ProductList extends Component
                 return $this->redirectRoute('admin.products.list', navigate: true);
             }
         } catch (\Exception $e) {
-            $this->dispatch('alert', type: 'error', message: $e->getMessage());
+            $this->dispatch('toast', message: $e->getMessage(), type: 'error');
         }
     }
 
@@ -139,9 +139,9 @@ class ProductList extends Component
         
         try {
             $productService->delete($id);
-            $this->dispatch('alert', type: 'success', message: 'Produk berhasil dihapus');
+            $this->dispatch('toast', message: 'Produk berhasil dihapus', type: 'success');
         } catch (\Exception $e) {
-            $this->dispatch('alert', type: 'error', message: $e->getMessage());
+            $this->dispatch('toast', message: $e->getMessage(), type: 'error');
         }
     }
 
@@ -159,7 +159,7 @@ class ProductList extends Component
         $productService = app(ProductService::class);
         $productService->update($id, ['status' => $newStatus]);
         
-        $this->dispatch('alert', type: 'success', message: 'Status produk berhasil diubah');
+        $this->dispatch('toast', message: 'Status produk berhasil diubah', type: 'success');
     }
 
     private function resetForm()

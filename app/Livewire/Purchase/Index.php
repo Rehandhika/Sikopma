@@ -26,7 +26,7 @@ class Index extends Component
             // Log activity
             ActivityLogService::logPurchaseApproved($purchase->invoice_number);
             
-            $this->dispatch('alert', type: 'success', message: 'Purchase order disetujui');
+            $this->dispatch('toast', message: 'Purchase order disetujui', type: 'success');
         }
     }
 

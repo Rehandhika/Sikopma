@@ -193,10 +193,10 @@ class Index extends Component
                 ActivityLogService::logUserCreated($this->name);
             }
 
-            $this->dispatch('alert', type: 'success', message: $message);
+            $this->dispatch('toast', message: $message, type: 'success');
             $this->closeModal();
         } catch (\Exception $e) {
-            $this->dispatch('alert', type: 'error', message: 'Terjadi kesalahan: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Terjadi kesalahan: ' . $e->getMessage(), type: 'error');
         }
     }
 
@@ -206,12 +206,12 @@ class Index extends Component
             $user = User::findOrFail($id);
             
             if ($user->hasRole('super-admin')) {
-                $this->dispatch('alert', type: 'error', message: 'Super Admin tidak dapat dihapus');
+                $this->dispatch('toast', message: 'Super Admin tidak dapat dihapus', type: 'error');
                 return;
             }
 
             if ($user->id === auth()->id()) {
-                $this->dispatch('alert', type: 'error', message: 'Anda tidak dapat menghapus akun sendiri');
+                $this->dispatch('toast', message: 'Anda tidak dapat menghapus akun sendiri', type: 'error');
                 return;
             }
 
@@ -220,9 +220,9 @@ class Index extends Component
             // Log activity
             ActivityLogService::logUserDeleted($user->name);
             
-            $this->dispatch('alert', type: 'success', message: 'Anggota berhasil dihapus');
+            $this->dispatch('toast', message: 'Anggota berhasil dihapus', type: 'success');
         } catch (\Exception $e) {
-            $this->dispatch('alert', type: 'error', message: 'Terjadi kesalahan: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Terjadi kesalahan: ' . $e->getMessage(), type: 'error');
         }
     }
 
@@ -232,7 +232,7 @@ class Index extends Component
             $user = User::findOrFail($id);
             
             if ($user->hasRole('super-admin')) {
-                $this->dispatch('alert', type: 'error', message: 'Status Super Admin tidak dapat diubah');
+                $this->dispatch('toast', message: 'Status Super Admin tidak dapat diubah', type: 'error');
                 return;
             }
 
@@ -243,9 +243,9 @@ class Index extends Component
             // Log activity
             ActivityLogService::logUserStatusChanged($user->name, $user->status);
 
-            $this->dispatch('alert', type: 'success', message: 'Status berhasil diubah');
+            $this->dispatch('toast', message: 'Status berhasil diubah', type: 'success');
         } catch (\Exception $e) {
-            $this->dispatch('alert', type: 'error', message: 'Terjadi kesalahan: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Terjadi kesalahan: ' . $e->getMessage(), type: 'error');
         }
     }
 

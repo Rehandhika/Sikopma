@@ -102,7 +102,7 @@ class LeaveManager extends Component
         ]);
 
         $this->closeForm();
-        $this->dispatch('alert', type: 'success', message: 'Pengajuan berhasil dikirim');
+        $this->dispatch('toast', message: 'Pengajuan berhasil dikirim', type: 'success');
     }
 
     public function viewRequest(int $id): void
@@ -123,7 +123,7 @@ class LeaveManager extends Component
             ->update(['status' => 'cancelled']);
         
         $this->viewingId = null;
-        $this->dispatch('alert', type: 'success', message: 'Pengajuan dibatalkan');
+        $this->dispatch('toast', message: 'Pengajuan dibatalkan', type: 'success');
     }
 
     public function openReview(int $id, string $action): void
@@ -153,7 +153,7 @@ class LeaveManager extends Component
         $msg = $this->reviewAction === 'approved' ? 'Pengajuan disetujui' : 'Pengajuan ditolak';
         $this->closeReview();
         $this->viewingId = null;
-        $this->dispatch('alert', type: 'success', message: $msg);
+        $this->dispatch('toast', message: $msg, type: 'success');
     }
 
     public function render()

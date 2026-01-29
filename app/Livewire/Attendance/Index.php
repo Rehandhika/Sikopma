@@ -99,7 +99,7 @@ class Index extends Component
     public function checkIn()
     {
         if (!$this->canCheckIn) {
-            $this->dispatch('alert', type: 'error', message: 'Tidak dapat check-in saat ini');
+            $this->dispatch('toast', message: 'Tidak dapat check-in saat ini', type: 'error');
             return;
         }
 
@@ -109,7 +109,7 @@ class Index extends Component
             ->first();
 
         if ($existingAttendance) {
-            $this->dispatch('alert', type: 'error', message: 'Anda sudah check-in untuk jadwal ini');
+            $this->dispatch('toast', message: 'Anda sudah check-in untuk jadwal ini', type: 'error');
             return;
         }
 
@@ -127,14 +127,14 @@ class Index extends Component
             'status' => $status,
         ]);
 
-        $this->dispatch('alert', type: 'success', message: 'Check-in berhasil!');
+        $this->dispatch('toast', message: 'Check-in berhasil!', type: 'success');
         $this->loadData();
     }
 
     public function checkOut()
     {
         if (!$this->canCheckOut) {
-            $this->dispatch('alert', type: 'error', message: 'Tidak dapat check-out saat ini');
+            $this->dispatch('toast', message: 'Tidak dapat check-out saat ini', type: 'error');
             return;
         }
 
@@ -147,7 +147,7 @@ class Index extends Component
             $this->currentSchedule->update(['status' => 'completed']);
         }
 
-        $this->dispatch('alert', type: 'success', message: 'Check-out berhasil!');
+        $this->dispatch('toast', message: 'Check-out berhasil!', type: 'success');
         $this->loadData();
     }
 

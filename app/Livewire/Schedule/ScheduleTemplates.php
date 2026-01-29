@@ -138,13 +138,13 @@ class ScheduleTemplates extends Component
 
             DB::commit();
 
-            $this->dispatch('alert', type: 'success', message: $message);
+            $this->dispatch('toast', message: $message, type: 'success');
             $this->closeModal();
             $this->loadTemplates();
 
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->dispatch('alert', type: 'error', message: 'Gagal menyimpan template: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal menyimpan template: ' . $e->getMessage(), type: 'error');
         }
     }
 
@@ -158,7 +158,7 @@ class ScheduleTemplates extends Component
                 $hasAssignments = \App\Models\ScheduleAssignment::where('schedule_id', $template->id)->exists();
                 
                 if ($hasAssignments) {
-                    $this->dispatch('alert', type: 'error', message: 'Template tidak dapat dihapus karena sudah digunakan dalam penugasan.');
+                    $this->dispatch('toast', message: 'Template tidak dapat dihapus karena sudah digunakan dalam penugasan.', type: 'error');
                     return;
                 }
 
@@ -168,11 +168,11 @@ class ScheduleTemplates extends Component
                 // Log activity
                 ActivityLogService::log("Menghapus template jadwal '{$templateName}'");
                 
-                $this->dispatch('alert', type: 'success', message: 'Template berhasil dihapus!');
+                $this->dispatch('toast', message: 'Template berhasil dihapus!', type: 'success');
                 $this->loadTemplates();
 
             } catch (\Exception $e) {
-                $this->dispatch('alert', type: 'error', message: 'Gagal menghapus template: ' . $e->getMessage());
+                $this->dispatch('toast', message: 'Gagal menghapus template: ' . $e->getMessage(), type: 'error');
             }
         }
     }
@@ -184,7 +184,7 @@ class ScheduleTemplates extends Component
         if ($template) {
             $template->update(['is_active' => !$template->is_active]);
             $status = $template->is_active ? 'diaktifkan' : 'dinonaktifkan';
-            $this->dispatch('alert', type: 'success', message: "Template berhasil $status!");
+            $this->dispatch('toast', message: "Template berhasil $status!", type: 'success');
             $this->loadTemplates();
         }
     }

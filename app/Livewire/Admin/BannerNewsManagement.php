@@ -137,7 +137,7 @@ class BannerNewsManagement extends Component
                     'priority' => $this->bannerPriority,
                 ], $this->bannerImage);
                 
-                $this->dispatch('alert', type: 'success', message: 'Banner berhasil diperbarui');
+                $this->dispatch('toast', message: 'Banner berhasil diperbarui', type: 'success');
             } else {
                 // Create new banner
                 $this->bannerService->store([
@@ -145,14 +145,14 @@ class BannerNewsManagement extends Component
                     'priority' => $this->bannerPriority,
                 ], $this->bannerImage);
                 
-                $this->dispatch('alert', type: 'success', message: 'Banner berhasil dibuat');
+                $this->dispatch('toast', message: 'Banner berhasil dibuat', type: 'success');
             }
 
             $this->resetBannerForm();
             $this->showBannerForm = false;
             
         } catch (\Exception $e) {
-            $this->dispatch('alert', type: 'error', message: 'Gagal menyimpan banner: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal menyimpan banner: ' . $e->getMessage(), type: 'error');
         }
     }
 
@@ -162,10 +162,10 @@ class BannerNewsManagement extends Component
             $banner = Banner::findOrFail($id);
             $this->bannerService->delete($banner);
             
-            $this->dispatch('alert', type: 'success', message: 'Banner berhasil dihapus');
+            $this->dispatch('toast', message: 'Banner berhasil dihapus', type: 'success');
             
         } catch (\Exception $e) {
-            $this->dispatch('alert', type: 'error', message: 'Gagal menghapus banner: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal menghapus banner: ' . $e->getMessage(), type: 'error');
         }
     }
 
@@ -177,10 +177,10 @@ class BannerNewsManagement extends Component
             
             $freshBanner = $banner->fresh();
             $statusText = $freshBanner->is_active ? 'diaktifkan' : 'dinonaktifkan';
-            $this->dispatch('alert', type: 'success', message: "Banner berhasil {$statusText}");
+            $this->dispatch('toast', message: "Banner berhasil {$statusText}", type: 'success');
             
         } catch (\Exception $e) {
-            $this->dispatch('alert', type: 'error', message: 'Gagal mengubah status banner: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal mengubah status banner: ' . $e->getMessage(), type: 'error');
         }
     }
 
@@ -266,19 +266,19 @@ class BannerNewsManagement extends Component
                 $news = News::findOrFail($this->editingNewsId);
                 $this->newsService->update($news, $data, $this->newsImage);
                 
-                $this->dispatch('alert', type: 'success', message: 'Berita berhasil diperbarui');
+                $this->dispatch('toast', message: 'Berita berhasil diperbarui', type: 'success');
             } else {
                 // Create new news
                 $this->newsService->store($data, $this->newsImage);
                 
-                $this->dispatch('alert', type: 'success', message: 'Berita berhasil dibuat');
+                $this->dispatch('toast', message: 'Berita berhasil dibuat', type: 'success');
             }
 
             $this->resetNewsForm();
             $this->showNewsForm = false;
             
         } catch (\Exception $e) {
-            $this->dispatch('alert', type: 'error', message: 'Gagal menyimpan berita: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal menyimpan berita: ' . $e->getMessage(), type: 'error');
         }
     }
 
@@ -288,10 +288,10 @@ class BannerNewsManagement extends Component
             $news = News::findOrFail($id);
             $this->newsService->delete($news);
             
-            $this->dispatch('alert', type: 'success', message: 'Berita berhasil dihapus');
+            $this->dispatch('toast', message: 'Berita berhasil dihapus', type: 'success');
             
         } catch (\Exception $e) {
-            $this->dispatch('alert', type: 'error', message: 'Gagal menghapus berita: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal menghapus berita: ' . $e->getMessage(), type: 'error');
         }
     }
 
@@ -303,10 +303,10 @@ class BannerNewsManagement extends Component
             
             $freshNews = $news->fresh();
             $statusText = $freshNews->is_active ? 'diaktifkan' : 'dinonaktifkan';
-            $this->dispatch('alert', type: 'success', message: "Berita berhasil {$statusText}");
+            $this->dispatch('toast', message: "Berita berhasil {$statusText}", type: 'success');
             
         } catch (\Exception $e) {
-            $this->dispatch('alert', type: 'error', message: 'Gagal mengubah status berita: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal mengubah status berita: ' . $e->getMessage(), type: 'error');
         }
     }
 

@@ -183,7 +183,7 @@ class PreviewSchedule extends Component
     public function editAssignment(string $date, int $session): void
     {
         if (!$this->isEditable) {
-            $this->dispatch('alert', type: 'warning', message: 'Preview ini tidak dapat diedit.');
+            $this->dispatch('toast', message: 'Preview ini tidak dapat diedit.', type: 'warning');
             return;
         }
         

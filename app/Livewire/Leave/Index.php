@@ -18,7 +18,7 @@ class Index extends Component
         
         if ($leave && $leave->user_id === auth()->id() && $leave->status === 'pending') {
             $leave->update(['status' => 'cancelled']);
-            $this->dispatch('alert', type: 'success', message: 'Permintaan cuti dibatalkan');
+            $this->dispatch('toast', message: 'Permintaan cuti dibatalkan', type: 'success');
         }
     }
 

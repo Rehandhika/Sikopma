@@ -193,7 +193,7 @@ class CheckInOut extends Component
                 "Check-in berhasil pada {$now->format('H:i')} untuk jadwal {$this->currentSchedule->day_label} {$this->currentSchedule->session_label}"
             );
 
-            session()->flash('success', 'Check-in berhasil! Waktu: ' . $now->format('H:i'));
+            $this->dispatch('toast', message: 'Check-in berhasil! Waktu: ' . $now->format('H:i'), type: 'success');
             
             // Reset form
             $this->reset(['checkInPhoto', 'checkInPhotoPreview', 'showPhotoPreview']);
@@ -205,7 +205,7 @@ class CheckInOut extends Component
             // Re-throw validation exceptions to show field errors
             throw $e;
         } catch (\Exception $e) {
-            session()->flash('error', $e->getMessage());
+            $this->dispatch('toast', message: $e->getMessage(), type: 'error');
             Log::error('Check-in error: ' . $e->getMessage(), [
                 'user_id' => auth()->id(),
                 'schedule_id' => $this->currentSchedule?->id,
@@ -280,13 +280,13 @@ class CheckInOut extends Component
                 "Check-out berhasil pada {$now->format('H:i')}. Total jam kerja: " . number_format($workingHours, 2) . " jam"
             );
 
-            session()->flash('success', 'Check-out berhasil! Total jam kerja: ' . number_format($workingHours, 2) . ' jam');
+            $this->dispatch('toast', message: 'Check-out berhasil! Total jam kerja: ' . number_format($workingHours, 2) . ' jam', type: 'success');
             
             // Reload schedule data
             $this->loadCurrentSchedule();
 
         } catch (\Exception $e) {
-            session()->flash('error', $e->getMessage());
+            $this->dispatch('toast', message: $e->getMessage(), type: 'error');
             Log::error('Check-out error: ' . $e->getMessage(), [
                 'user_id' => auth()->id(),
                 'attendance_id' => $this->currentAttendance?->id,

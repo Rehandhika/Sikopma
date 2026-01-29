@@ -132,7 +132,7 @@ class ScheduleChangeManager extends Component
 
         $this->closeForm();
         $this->clearCache();
-        $this->dispatch('alert', type: 'success', message: 'Pengajuan berhasil dikirim');
+        $this->dispatch('toast', message: 'Pengajuan berhasil dikirim', type: 'success');
     }
 
     // === VIEW & ACTIONS ===
@@ -155,7 +155,7 @@ class ScheduleChangeManager extends Component
         
         $this->viewingId = null;
         $this->clearCache();
-        $this->dispatch('alert', type: 'success', message: 'Pengajuan dibatalkan');
+        $this->dispatch('toast', message: 'Pengajuan dibatalkan', type: 'success');
     }
 
     // === ADMIN REVIEW ===
@@ -218,11 +218,11 @@ class ScheduleChangeManager extends Component
             $this->clearCache();
             
             $msg = $this->reviewAction === 'approved' ? 'Pengajuan disetujui dan diproses' : 'Pengajuan ditolak';
-            $this->dispatch('alert', type: 'success', message: $msg);
+            $this->dispatch('toast', message: $msg, type: 'success');
             
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->dispatch('alert', type: 'error', message: 'Gagal memproses: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal memproses: ' . $e->getMessage(), type: 'error');
         }
     }
 

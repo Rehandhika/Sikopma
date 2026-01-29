@@ -38,12 +38,12 @@ class MyPenalties extends Component
         
         // Check if penalty can be appealed
         if (!in_array($this->selectedPenalty->status, ['active', 'appealed'])) {
-            $this->dispatch('alert', type: 'error', message: 'Penalti ini tidak dapat dibanding');
+            $this->dispatch('toast', message: 'Penalti ini tidak dapat dibanding', type: 'error');
             return;
         }
 
         if ($this->selectedPenalty->status === 'appealed') {
-            $this->dispatch('alert', type: 'info', message: 'Banding untuk penalti ini sedang dalam proses review');
+            $this->dispatch('toast', message: 'Banding untuk penalti ini sedang dalam proses review', type: 'info');
             return;
         }
 
@@ -64,7 +64,7 @@ class MyPenalties extends Component
                 $this->appealReason
             );
 
-            $this->dispatch('alert', type: 'success', message: 'Banding berhasil diajukan dan akan ditinjau oleh admin');
+            $this->dispatch('toast', message: 'Banding berhasil diajukan dan akan ditinjau oleh admin', type: 'success');
             $this->reset(['showAppealModal', 'appealReason', 'selectedPenalty']);
             
             // Refresh the page data
@@ -74,7 +74,7 @@ class MyPenalties extends Component
                 'penalty_id' => $this->selectedPenalty->id,
                 'error' => $e->getMessage(),
             ]);
-            $this->dispatch('alert', type: 'error', message: 'Gagal mengajukan banding: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal mengajukan banding: ' . $e->getMessage(), type: 'error');
         }
     }
 

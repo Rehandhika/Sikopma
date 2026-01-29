@@ -110,14 +110,14 @@ class Approval extends Component
                     $leave->start_date->format('d M Y')
                 );
 
-                $this->dispatch('alert', type: 'success', message: 'Cuti disetujui dan jadwal telah diperbarui');
+                $this->dispatch('toast', message: 'Cuti disetujui dan jadwal telah diperbarui', type: 'success');
                 $this->reset(['showModal', 'approvalNotes', 'selectedLeave', 'affectedSchedules']);
             } catch (\Exception $e) {
                 Log::error('Error approving leave', [
                     'leave_id' => $id,
                     'error' => $e->getMessage(),
                 ]);
-                $this->dispatch('alert', type: 'error', message: 'Gagal menyetujui cuti: ' . $e->getMessage());
+                $this->dispatch('toast', message: 'Gagal menyetujui cuti: ' . $e->getMessage(), type: 'error');
             }
         }
     }
@@ -141,14 +141,14 @@ class Approval extends Component
                     $leave->start_date->format('d M Y')
                 );
 
-                $this->dispatch('alert', type: 'success', message: 'Cuti ditolak');
+                $this->dispatch('toast', message: 'Cuti ditolak', type: 'success');
                 $this->reset(['showModal', 'approvalNotes', 'selectedLeave', 'affectedSchedules']);
             } catch (\Exception $e) {
                 Log::error('Error rejecting leave', [
                     'leave_id' => $id,
                     'error' => $e->getMessage(),
                 ]);
-                $this->dispatch('alert', type: 'error', message: 'Gagal menolak cuti: ' . $e->getMessage());
+                $this->dispatch('toast', message: 'Gagal menolak cuti: ' . $e->getMessage(), type: 'error');
             }
         }
     }

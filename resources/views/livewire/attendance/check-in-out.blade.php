@@ -232,19 +232,7 @@
     </x-ui.card>
 
     {{-- Flash Messages --}}
-    @if (session()->has('success'))
-        <div class="mt-4">
-            <x-ui.alert variant="success" dismissible="true">
-                {{ session('success') }}
-            </x-ui.alert>
-        </div>
-    @endif
+    
 
-    @if (session()->has('error'))
-        <div class="mt-4">
-            <x-ui.alert variant="danger" dismissible="true">
-                {{ session('error') }}
-            </x-ui.alert>
-        </div>
-    @endif
+    
 </div>

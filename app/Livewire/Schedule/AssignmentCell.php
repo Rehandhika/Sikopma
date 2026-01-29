@@ -51,7 +51,7 @@ class AssignmentCell extends Component
     public function selectCell(): void
     {
         if (!$this->isEditable) {
-            $this->dispatch('alert', type: 'warning', message: 'Jadwal ini tidak dapat diedit.');
+            $this->dispatch('toast', message: 'Jadwal ini tidak dapat diedit.', type: 'warning');
             return;
         }
         
@@ -65,7 +65,7 @@ class AssignmentCell extends Component
     public function removeAssignment(): void
     {
         if (!$this->isEditable) {
-            $this->dispatch('alert', type: 'warning', message: 'Jadwal ini tidak dapat diedit.');
+            $this->dispatch('toast', message: 'Jadwal ini tidak dapat diedit.', type: 'warning');
             return;
         }
         

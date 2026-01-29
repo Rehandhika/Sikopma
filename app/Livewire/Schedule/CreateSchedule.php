@@ -220,7 +220,7 @@ class CreateSchedule extends Component
         // Validate the slot exists in current grid
         if (!$this->isValidSlot($date, $session)) {
             // The date doesn't belong to current week period
-            $this->dispatch('alert', type: 'warning', message: 'Tanggal tidak sesuai dengan periode jadwal. Grid telah disegarkan.');
+            $this->dispatch('toast', message: 'Tanggal tidak sesuai dengan periode jadwal. Grid telah disegarkan.', type: 'warning');
             
             // Reset selection state
             $this->selectedDate = null;
@@ -314,7 +314,7 @@ class CreateSchedule extends Component
     {
         // Validate selection exists
         if (!$this->selectedDate || !$this->selectedSession) {
-            $this->dispatch('alert', type: 'error', message: 'Pilih slot terlebih dahulu.');
+            $this->dispatch('toast', message: 'Pilih slot terlebih dahulu.', type: 'error');
             return;
         }
 
@@ -329,20 +329,20 @@ class CreateSchedule extends Component
             $this->selectedSession = null;
             $this->availableUsers = [];
             
-            $this->dispatch('alert', type: 'error', message: 'Slot tidak valid. Grid telah disegarkan, silakan pilih slot kembali.');
+            $this->dispatch('toast', message: 'Slot tidak valid. Grid telah disegarkan, silakan pilih slot kembali.', type: 'error');
             return;
         }
 
         $user = User::find($userId);
         if (!$user || $user->status !== 'active') {
-            $this->dispatch('alert', type: 'error', message: 'User tidak valid atau tidak aktif.');
+            $this->dispatch('toast', message: 'User tidak valid atau tidak aktif.', type: 'error');
             return;
         }
 
         // Check if user already in this slot
         $currentSlot = $this->assignments[$this->selectedDate][$this->selectedSession];
         if (collect($currentSlot)->contains('user_id', $user->id)) {
-            $this->dispatch('alert', type: 'error', message: 'User sudah ada di slot ini.');
+            $this->dispatch('toast', message: 'User sudah ada di slot ini.', type: 'error');
             return;
         }
 
@@ -363,7 +363,7 @@ class CreateSchedule extends Component
         $this->saveToHistory();
 
         $this->showUserSelector = false;
-        $this->dispatch('alert', type: 'success', message: 'User berhasil ditambahkan.');
+        $this->dispatch('toast', message: 'User berhasil ditambahkan.', type: 'success');
     }
 
     /**
@@ -377,7 +377,7 @@ class CreateSchedule extends Component
         
         // Validate slot exists
         if (!$this->isValidSlot($date, $session)) {
-            $this->dispatch('alert', type: 'error', message: 'Slot tidak valid. Grid telah disegarkan.');
+            $this->dispatch('toast', message: 'Slot tidak valid. Grid telah disegarkan.', type: 'error');
             return;
         }
         
@@ -386,7 +386,7 @@ class CreateSchedule extends Component
         // Check if user exists in slot before removing
         $userExists = collect($slot)->contains('user_id', $userId);
         if (!$userExists) {
-            $this->dispatch('alert', type: 'warning', message: 'User tidak ditemukan di slot ini.');
+            $this->dispatch('toast', message: 'User tidak ditemukan di slot ini.', type: 'warning');
             return;
         }
         
@@ -399,7 +399,7 @@ class CreateSchedule extends Component
         $this->detectConflicts();
         $this->saveToHistory();
         
-        $this->dispatch('alert', type: 'success', message: 'User berhasil dihapus.');
+        $this->dispatch('toast', message: 'User berhasil dihapus.', type: 'success');
     }
 
     /**
@@ -529,7 +529,7 @@ class CreateSchedule extends Component
         
         $this->historyIndex--;
         $this->restoreFromHistory();
-        $this->dispatch('alert', type: 'success', message: 'Undo berhasil.');
+        $this->dispatch('toast', message: 'Undo berhasil.', type: 'success');
     }
 
     public function redo(): void
@@ -538,7 +538,7 @@ class CreateSchedule extends Component
         
         $this->historyIndex++;
         $this->restoreFromHistory();
-        $this->dispatch('alert', type: 'success', message: 'Redo berhasil.');
+        $this->dispatch('toast', message: 'Redo berhasil.', type: 'success');
     }
 
     private function restoreFromHistory(): void
@@ -565,7 +565,7 @@ class CreateSchedule extends Component
         $this->validate();
         
         if ($this->totalAssignments === 0) {
-            $this->dispatch('alert', type: 'warning', message: 'Tidak ada assignment untuk disimpan.');
+            $this->dispatch('toast', message: 'Tidak ada assignment untuk disimpan.', type: 'warning');
             return;
         }
         
@@ -592,12 +592,12 @@ class CreateSchedule extends Component
             // Dispatch global event for other components to listen
             $this->dispatch('schedule-updated');
             
-            $this->dispatch('alert', type: 'success', message: 'Jadwal berhasil disimpan sebagai draft!');
+            $this->dispatch('toast', message: 'Jadwal berhasil disimpan sebagai draft!', type: 'success');
             return $this->redirect(route('admin.schedule.index'), navigate: true);
             
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->dispatch('alert', type: 'error', message: 'Gagal menyimpan: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal menyimpan: ' . $e->getMessage(), type: 'error');
         } finally {
             $this->isSaving = false;
         }
@@ -611,12 +611,12 @@ class CreateSchedule extends Component
         $this->validate();
         
         if ($this->totalAssignments === 0) {
-            $this->dispatch('alert', type: 'error', message: 'Tidak ada assignment untuk dipublish.');
+            $this->dispatch('toast', message: 'Tidak ada assignment untuk dipublish.', type: 'error');
             return;
         }
         
         if (!empty($this->conflicts['critical'])) {
-            $this->dispatch('alert', type: 'error', message: 'Tidak dapat publish dengan critical conflicts.');
+            $this->dispatch('toast', message: 'Tidak dapat publish dengan critical conflicts.', type: 'error');
             return;
         }
         
@@ -645,12 +645,12 @@ class CreateSchedule extends Component
             // Dispatch global event for other components to listen
             $this->dispatch('schedule-updated');
             
-            $this->dispatch('alert', type: 'success', message: 'Jadwal berhasil dipublish!');
+            $this->dispatch('toast', message: 'Jadwal berhasil dipublish!', type: 'success');
             return $this->redirect(route('admin.schedule.index'), navigate: true);
             
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->dispatch('alert', type: 'error', message: 'Gagal publish: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal publish: ' . $e->getMessage(), type: 'error');
         } finally {
             $this->isSaving = false;
         }

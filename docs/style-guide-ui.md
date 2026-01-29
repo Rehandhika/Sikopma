@@ -107,3 +107,21 @@ Dokumen ini menjadi referensi konsistensi UI untuk halaman publik (Katalog, Deta
 
 ### Catatan Vite React Refresh (Dev)
 - Untuk HMR React, Blade template harus menyertakan `@viteReactRefresh` sebelum `@vite(...)`.
+
+---
+
+## Admin UI Components
+
+Untuk dokumentasi lengkap komponen UI admin (Livewire + Alpine.js + Tailwind CSS), lihat:
+
+**[Style Guide - Admin UI Components](./style-guide-admin-ui.md)**
+
+Dokumentasi admin UI mencakup:
+- Toast Notification System
+- Button, Input, Select, Dropdown
+- Modal, Badge, Alert, Card
+- Table, Page Header, Filter Section
+- Empty State, Loading Spinner
+- Pola penggunaan dan best practices
+- Migrasi dari komponen lama
+

@@ -128,7 +128,7 @@ class SwapManager extends Component
 
         $this->closeForm();
         $this->clearCache();
-        $this->dispatch('alert', type: 'success', message: 'Permintaan tukar jadwal dikirim');
+        $this->dispatch('toast', message: 'Permintaan tukar jadwal dikirim', type: 'success');
     }
 
     // === VIEW & ACTIONS ===
@@ -151,7 +151,7 @@ class SwapManager extends Component
         
         $this->viewingId = null;
         $this->clearCache();
-        $this->dispatch('alert', type: 'success', message: 'Permintaan dibatalkan');
+        $this->dispatch('toast', message: 'Permintaan dibatalkan', type: 'success');
     }
 
     // Target user approve/reject
@@ -167,7 +167,7 @@ class SwapManager extends Component
         
         $this->viewingId = null;
         $this->clearCache();
-        $this->dispatch('alert', type: 'success', message: 'Permintaan disetujui, menunggu admin');
+        $this->dispatch('toast', message: 'Permintaan disetujui, menunggu admin', type: 'success');
     }
 
     public function targetReject(int $id): void
@@ -182,7 +182,7 @@ class SwapManager extends Component
         
         $this->viewingId = null;
         $this->clearCache();
-        $this->dispatch('alert', type: 'success', message: 'Permintaan ditolak');
+        $this->dispatch('toast', message: 'Permintaan ditolak', type: 'success');
     }
 
     // Admin approve/reject
@@ -235,11 +235,11 @@ class SwapManager extends Component
             $this->clearCache();
             
             $msg = $this->reviewAction === 'approved' ? 'Tukar jadwal disetujui dan diproses' : 'Permintaan ditolak';
-            $this->dispatch('alert', type: 'success', message: $msg);
+            $this->dispatch('toast', message: $msg, type: 'success');
             
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->dispatch('alert', type: 'error', message: 'Gagal memproses');
+            $this->dispatch('toast', message: 'Gagal memproses', type: 'error');
         }
     }
 

@@ -82,7 +82,7 @@ class StoreSettings extends Component
         $this->storeStatusService->manualOpenOverride(true);
         $this->refreshStatus();
         
-        $this->dispatch('alert', type: 'success', message: 'Override buka diaktifkan - koperasi dapat buka di luar jadwal jika ada pengurus');
+        $this->dispatch('toast', message: 'Override buka diaktifkan - koperasi dapat buka di luar jadwal jika ada pengurus', type: 'success');
     }
 
     public function disableOpenOverride()
@@ -90,7 +90,7 @@ class StoreSettings extends Component
         $this->storeStatusService->manualOpenOverride(false);
         $this->refreshStatus();
         
-        $this->dispatch('alert', type: 'success', message: 'Override buka dinonaktifkan - kembali ke jadwal normal');
+        $this->dispatch('toast', message: 'Override buka dinonaktifkan - kembali ke jadwal normal', type: 'success');
     }
 
     // Manual Mode methods
@@ -100,7 +100,7 @@ class StoreSettings extends Component
         $this->storeStatusService->toggleManualMode(false, $reason);
         $this->refreshStatus();
         
-        $this->dispatch('alert', type: 'info', message: 'Mode manual diaktifkan - Anda memiliki kontrol penuh terhadap status');
+        $this->dispatch('toast', message: 'Mode manual diaktifkan - Anda memiliki kontrol penuh terhadap status', type: 'info');
     }
 
     public function setManualStatus(bool $isOpen)
@@ -110,7 +110,7 @@ class StoreSettings extends Component
         $this->refreshStatus();
         
         $statusText = $isOpen ? 'BUKA' : 'TUTUP';
-        $this->dispatch('alert', type: 'success', message: "Status diubah menjadi {$statusText} (mode manual)");
+        $this->dispatch('toast', message: "Status diubah menjadi {$statusText} (mode manual, type: 'success')");
     }
 
     public function disableManualMode()
@@ -118,7 +118,7 @@ class StoreSettings extends Component
         $this->storeStatusService->backToAutoMode();
         $this->refreshStatus();
         
-        $this->dispatch('alert', type: 'success', message: 'Mode manual dinonaktifkan - kembali ke mode otomatis');
+        $this->dispatch('toast', message: 'Mode manual dinonaktifkan - kembali ke mode otomatis', type: 'success');
     }
 
     public function resetToAuto()
@@ -128,7 +128,7 @@ class StoreSettings extends Component
         $this->loadNextOpenSettings();
         $this->refreshStatus();
         
-        $this->dispatch('alert', type: 'success', message: 'Semua pengaturan manual direset - kembali ke mode otomatis');
+        $this->dispatch('toast', message: 'Semua pengaturan manual direset - kembali ke mode otomatis', type: 'success');
     }
 
     // Next Open Mode methods
@@ -137,7 +137,7 @@ class StoreSettings extends Component
         if ($this->nextOpenMode === 'custom') {
             // Validate
             if (empty($this->academicHolidayName) && empty($this->customClosedMessage)) {
-                $this->dispatch('alert', type: 'error', message: 'Harap isi nama libur atau pesan kustom');
+                $this->dispatch('toast', message: 'Harap isi nama libur atau pesan kustom', type: 'error');
                 return;
             }
 
@@ -146,7 +146,7 @@ class StoreSettings extends Component
                 $end = Carbon::parse($this->academicHolidayEnd);
                 
                 if ($end->lt($start)) {
-                    $this->dispatch('alert', type: 'error', message: 'Tanggal akhir harus setelah tanggal mulai');
+                    $this->dispatch('toast', message: 'Tanggal akhir harus setelah tanggal mulai', type: 'error');
                     return;
                 }
             }
@@ -159,10 +159,10 @@ class StoreSettings extends Component
                 $this->academicHolidayName ?: null
             );
 
-            $this->dispatch('alert', type: 'success', message: 'Mode kustom berhasil diaktifkan');
+            $this->dispatch('toast', message: 'Mode kustom berhasil diaktifkan', type: 'success');
         } else {
             $this->storeStatusService->resetToDefaultMode();
-            $this->dispatch('alert', type: 'success', message: 'Kembali ke mode default');
+            $this->dispatch('toast', message: 'Kembali ke mode default', type: 'success');
         }
 
         $this->refreshStatus();
@@ -174,7 +174,7 @@ class StoreSettings extends Component
         $this->loadNextOpenSettings();
         $this->refreshStatus();
         
-        $this->dispatch('alert', type: 'success', message: 'Mode keterangan buka direset ke default');
+        $this->dispatch('toast', message: 'Mode keterangan buka direset ke default', type: 'success');
     }
 
     // Academic Holiday CRUD methods
@@ -206,12 +206,12 @@ class StoreSettings extends Component
     public function saveHoliday()
     {
         if (empty($this->holidayForm['name'])) {
-            $this->dispatch('alert', type: 'error', message: 'Nama libur harus diisi');
+            $this->dispatch('toast', message: 'Nama libur harus diisi', type: 'error');
             return;
         }
 
         if (empty($this->holidayForm['start_date']) || empty($this->holidayForm['end_date'])) {
-            $this->dispatch('alert', type: 'error', message: 'Tanggal mulai dan akhir harus diisi');
+            $this->dispatch('toast', message: 'Tanggal mulai dan akhir harus diisi', type: 'error');
             return;
         }
 
@@ -219,7 +219,7 @@ class StoreSettings extends Component
         $end = Carbon::parse($this->holidayForm['end_date']);
 
         if ($end->lt($start)) {
-            $this->dispatch('alert', type: 'error', message: 'Tanggal akhir harus setelah tanggal mulai');
+            $this->dispatch('toast', message: 'Tanggal akhir harus setelah tanggal mulai', type: 'error');
             return;
         }
 
@@ -232,11 +232,11 @@ class StoreSettings extends Component
 
         if ($this->editingHolidayId) {
             AcademicHoliday::where('id', $this->editingHolidayId)->update($data);
-            $this->dispatch('alert', type: 'success', message: 'Libur berhasil diperbarui');
+            $this->dispatch('toast', message: 'Libur berhasil diperbarui', type: 'success');
         } else {
             $data['created_by'] = auth()->id();
             AcademicHoliday::create($data);
-            $this->dispatch('alert', type: 'success', message: 'Libur berhasil ditambahkan');
+            $this->dispatch('toast', message: 'Libur berhasil ditambahkan', type: 'success');
         }
 
         $this->showHolidayForm = false;
@@ -269,7 +269,7 @@ class StoreSettings extends Component
         $this->loadAcademicHolidays();
         $this->storeStatusService->forceUpdate();
         $this->refreshStatus();
-        $this->dispatch('alert', type: 'success', message: 'Libur berhasil dihapus');
+        $this->dispatch('toast', message: 'Libur berhasil dihapus', type: 'success');
     }
 
     public function render()

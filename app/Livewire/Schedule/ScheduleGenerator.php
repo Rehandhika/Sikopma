@@ -33,7 +33,7 @@ class ScheduleGenerator extends Component
         ]);
 
         if ($this->scheduleTemplates->isEmpty()) {
-            $this->dispatch('alert', type: 'error', message: 'Tidak ada template jadwal yang aktif. Silakan buat template terlebih dahulu.');
+            $this->dispatch('toast', message: 'Tidak ada template jadwal yang aktif. Silakan buat template terlebih dahulu.', type: 'error');
             return;
         }
 
@@ -66,13 +66,13 @@ class ScheduleGenerator extends Component
             $this->showPreview = false;
             $this->previewAssignments = [];
 
-            $this->dispatch('alert', type: 'success', message: "Berhasil generate {$this->generatedCount} jadwal!");
+            $this->dispatch('toast', message: "Berhasil generate {$this->generatedCount} jadwal!", type: 'success');
             $this->dispatch('schedule-generated');
 
         } catch (\Exception $e) {
             DB::rollBack();
             $this->generationStatus = 'error';
-            $this->dispatch('alert', type: 'error', message: 'Gagal generate jadwal: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal generate jadwal: ' . $e->getMessage(), type: 'error');
         } finally {
             $this->isGenerating = false;
         }
@@ -236,14 +236,14 @@ class ScheduleGenerator extends Component
                 $this->endDate
             ])->delete();
 
-            $this->dispatch('alert', type: 'success', message: "Berhasil menghapus {$deletedCount} jadwal.");
+            $this->dispatch('toast', message: "Berhasil menghapus {$deletedCount} jadwal.", type: 'success');
             $this->generatedCount = 0;
             $this->generationStatus = '';
             $this->showPreview = false;
             $this->previewAssignments = [];
 
         } catch (\Exception $e) {
-            $this->dispatch('alert', type: 'error', message: 'Gagal menghapus jadwal: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal menghapus jadwal: ' . $e->getMessage(), type: 'error');
         }
     }
 

@@ -166,11 +166,11 @@ class SalesReport extends Component
             // Update cache key untuk refresh computed properties
             $this->updateCacheKey();
             
-            $this->dispatch('alert', type: 'success', message: 'Transaksi berhasil dihapus');
+            $this->dispatch('toast', message: 'Transaksi berhasil dihapus', type: 'success');
             
         } catch (\Exception $e) {
             Log::error('Delete Sale Error: ' . $e->getMessage(), ['sale_id' => $this->saleToDelete]);
-            $this->dispatch('alert', type: 'error', message: 'Gagal menghapus transaksi: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal menghapus transaksi: ' . $e->getMessage(), type: 'error');
             
             $this->saleToDelete = null;
             $this->showDeleteModal = false;

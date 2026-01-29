@@ -97,7 +97,7 @@ class Edit extends Component
             // Log activity
             ActivityLogService::logProfileUpdated();
 
-            $this->dispatch('alert', type: 'success', message: 'Profil berhasil diperbarui');
+            $this->dispatch('toast', message: 'Profil berhasil diperbarui', type: 'success');
             $this->photo = null;
             $this->photoPreview = null;
         } catch (\Exception $e) {
@@ -105,7 +105,7 @@ class Edit extends Component
                 'user_id' => $this->user->id,
                 'error' => $e->getMessage(),
             ]);
-            $this->dispatch('alert', type: 'error', message: 'Terjadi kesalahan: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Terjadi kesalahan: ' . $e->getMessage(), type: 'error');
         }
     }
 
@@ -190,9 +190,9 @@ class Edit extends Component
             // Log activity
             ActivityLogService::logPasswordChanged();
 
-            $this->dispatch('alert', type: 'success', message: 'Password berhasil diubah');
+            $this->dispatch('toast', message: 'Password berhasil diubah', type: 'success');
         } catch (\Exception $e) {
-            $this->dispatch('alert', type: 'error', message: 'Terjadi kesalahan: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Terjadi kesalahan: ' . $e->getMessage(), type: 'error');
         }
     }
 
@@ -214,14 +214,14 @@ class Edit extends Component
                 // Log activity
                 ActivityLogService::logProfilePhotoDeleted();
                 
-                $this->dispatch('alert', type: 'success', message: 'Foto profil berhasil dihapus');
+                $this->dispatch('toast', message: 'Foto profil berhasil dihapus', type: 'success');
             }
         } catch (\Exception $e) {
             Log::error('Profile photo delete failed', [
                 'user_id' => $this->user->id,
                 'error' => $e->getMessage(),
             ]);
-            $this->dispatch('alert', type: 'error', message: 'Terjadi kesalahan: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Terjadi kesalahan: ' . $e->getMessage(), type: 'error');
         }
     }
 

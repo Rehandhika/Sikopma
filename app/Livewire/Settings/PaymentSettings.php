@@ -143,11 +143,11 @@ class PaymentSettings extends Component
             if ($this->editingBankId) {
                 // Update existing bank
                 $this->paymentService->updateBankAccount($this->editingBankId, $bankData);
-                $this->dispatch('alert', type: 'success', message: 'Rekening bank berhasil diperbarui');
+                $this->dispatch('toast', message: 'Rekening bank berhasil diperbarui', type: 'success');
             } else {
                 // Add new bank
                 $this->paymentService->addBankAccount($bankData);
-                $this->dispatch('alert', type: 'success', message: 'Rekening bank berhasil ditambahkan');
+                $this->dispatch('toast', message: 'Rekening bank berhasil ditambahkan', type: 'success');
             }
 
             // Refresh bank accounts list
@@ -158,7 +158,7 @@ class PaymentSettings extends Component
             ActivityLogService::logSettingsUpdated('Pembayaran - Rekening Bank');
 
         } catch (\Exception $e) {
-            $this->dispatch('alert', type: 'error', message: 'Gagal menyimpan rekening bank: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal menyimpan rekening bank: ' . $e->getMessage(), type: 'error');
         }
     }
 
@@ -170,9 +170,9 @@ class PaymentSettings extends Component
         try {
             $this->paymentService->toggleBankAccount($bankId);
             $this->bankAccounts = $this->paymentService->getBankAccounts();
-            $this->dispatch('alert', type: 'success', message: 'Status rekening bank berhasil diubah');
+            $this->dispatch('toast', message: 'Status rekening bank berhasil diubah', type: 'success');
         } catch (\Exception $e) {
-            $this->dispatch('alert', type: 'error', message: 'Gagal mengubah status: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal mengubah status: ' . $e->getMessage(), type: 'error');
         }
     }
 
@@ -184,12 +184,12 @@ class PaymentSettings extends Component
         try {
             $this->paymentService->deleteBankAccount($bankId);
             $this->bankAccounts = $this->paymentService->getBankAccounts();
-            $this->dispatch('alert', type: 'success', message: 'Rekening bank berhasil dihapus');
+            $this->dispatch('toast', message: 'Rekening bank berhasil dihapus', type: 'success');
             
             // Log activity
             ActivityLogService::logSettingsUpdated('Pembayaran - Hapus Rekening Bank');
         } catch (\Exception $e) {
-            $this->dispatch('alert', type: 'error', message: 'Gagal menghapus rekening bank: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal menghapus rekening bank: ' . $e->getMessage(), type: 'error');
         }
     }
 
@@ -222,7 +222,7 @@ class PaymentSettings extends Component
                 'qris_image' => '',
             ]);
 
-            $this->dispatch('alert', type: 'success', message: 'Gambar QRIS berhasil dihapus');
+            $this->dispatch('toast', message: 'Gambar QRIS berhasil dihapus', type: 'success');
         }
     }
 
@@ -269,21 +269,21 @@ class PaymentSettings extends Component
         // Custom validation: at least one method must be enabled
         if (!$this->validateAtLeastOneEnabled()) {
             $this->addError('general', 'Minimal satu metode pembayaran harus aktif');
-            $this->dispatch('alert', type: 'error', message: 'Minimal satu metode pembayaran harus aktif');
+            $this->dispatch('toast', message: 'Minimal satu metode pembayaran harus aktif', type: 'error');
             return;
         }
 
         // Custom validation: QRIS requires image when enabled
         if (!$this->validateQrisConfiguration()) {
             $this->addError('qrisImage', 'Gambar QRIS wajib diupload');
-            $this->dispatch('alert', type: 'error', message: 'Gambar QRIS wajib diupload jika QRIS diaktifkan');
+            $this->dispatch('toast', message: 'Gambar QRIS wajib diupload jika QRIS diaktifkan', type: 'error');
             return;
         }
 
         // Custom validation: Transfer requires at least one active bank when enabled
         if (!$this->validateTransferConfiguration()) {
             $this->addError('general', 'Minimal satu rekening bank aktif diperlukan jika Transfer diaktifkan');
-            $this->dispatch('alert', type: 'error', message: 'Tambahkan minimal satu rekening bank aktif jika Transfer diaktifkan');
+            $this->dispatch('toast', message: 'Tambahkan minimal satu rekening bank aktif jika Transfer diaktifkan', type: 'error');
             return;
         }
 
@@ -315,10 +315,10 @@ class PaymentSettings extends Component
             // Log activity
             ActivityLogService::logSettingsUpdated('Pembayaran');
 
-            $this->dispatch('alert', type: 'success', message: 'Pengaturan pembayaran berhasil disimpan');
+            $this->dispatch('toast', message: 'Pengaturan pembayaran berhasil disimpan', type: 'success');
 
         } catch (\Exception $e) {
-            $this->dispatch('alert', type: 'error', message: 'Gagal menyimpan pengaturan: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal menyimpan pengaturan: ' . $e->getMessage(), type: 'error');
         }
     }
 

@@ -72,11 +72,11 @@ class StockAdjustment extends Component
                 $this->reason
             );
             
-            $this->dispatch('alert', type: 'success', message: 'Penyesuaian stok berhasil disimpan');
+            $this->dispatch('toast', message: 'Penyesuaian stok berhasil disimpan', type: 'success');
             $this->resetForm();
             
         } catch (\Exception $e) {
-            $this->dispatch('alert', type: 'error', message: $e->getMessage());
+            $this->dispatch('toast', message: $e->getMessage(), type: 'error');
         }
     }
 

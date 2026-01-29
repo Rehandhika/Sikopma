@@ -40,7 +40,7 @@ class PendingApprovals extends Component
             ->first();
 
         if (!$request) {
-            $this->dispatch('alert', type: 'error', message: 'Permintaan tidak ditemukan atau sudah diproses.');
+            $this->dispatch('toast', message: 'Permintaan tidak ditemukan atau sudah diproses.', type: 'error');
             return;
         }
 
@@ -50,7 +50,7 @@ class PendingApprovals extends Component
             ->subHours(24);
         
         if (now()->greaterThan($deadline)) {
-            $this->dispatch('alert', type: 'error', message: 'Tidak dapat menyetujui permintaan dalam 24 jam sebelum shift.');
+            $this->dispatch('toast', message: 'Tidak dapat menyetujui permintaan dalam 24 jam sebelum shift.', type: 'error');
             return;
         }
 
@@ -67,7 +67,7 @@ class PendingApprovals extends Component
             ->first();
 
         if (!$request) {
-            $this->dispatch('alert', type: 'error', message: 'Permintaan tidak ditemukan atau sudah diproses.');
+            $this->dispatch('toast', message: 'Permintaan tidak ditemukan atau sudah diproses.', type: 'error');
             return;
         }
 
@@ -107,12 +107,12 @@ class PendingApprovals extends Component
 
             DB::commit();
 
-            $this->dispatch('alert', type: 'success', message: 'Permintaan tukar shift berhasil ' . ($this->responseType === 'approve' ? 'disetujui' : 'ditolak') . '.');
+            $this->dispatch('toast', message: 'Permintaan tukar shift berhasil ' . ($this->responseType === 'approve' ? 'disetujui' : 'ditolak') . '.', type: 'success');
             $this->reset(['showResponseModal', 'responseMessage', 'selectedRequest', 'responseType']);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->dispatch('alert', type: 'error', message: 'Gagal memproses permintaan: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal memproses permintaan: ' . $e->getMessage(), type: 'error');
         }
     }
 
@@ -128,7 +128,7 @@ class PendingApprovals extends Component
         if ($this->selectedRequest && $this->selectedRequest->target_id === auth()->id()) {
             $this->showDetailModal = true;
         } else {
-            $this->dispatch('alert', type: 'error', message: 'Permintaan tidak ditemukan.');
+            $this->dispatch('toast', message: 'Permintaan tidak ditemukan.', type: 'error');
         }
     }
 

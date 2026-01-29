@@ -204,13 +204,13 @@ class CreateRequest extends Component
                 Carbon::parse($this->targetDate)->format('d M Y')
             );
 
-            $this->dispatch('alert', type: 'success', message: 'Permintaan tukar shift berhasil dikirim.');
+            $this->dispatch('toast', message: 'Permintaan tukar shift berhasil dikirim.', type: 'success');
             $this->resetForm();
             $this->dispatch('swap-request-created');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->dispatch('alert', type: 'error', message: 'Gagal membuat permintaan: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal membuat permintaan: ' . $e->getMessage(), type: 'error');
         }
     }
 

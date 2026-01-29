@@ -37,7 +37,7 @@ class ManagePenalties extends Component
             ->findOrFail($penaltyId);
         
         if ($this->selectedPenalty->status !== 'appealed') {
-            $this->dispatch('alert', type: 'error', message: 'Penalti ini tidak dalam status banding');
+            $this->dispatch('toast', message: 'Penalti ini tidak dalam status banding', type: 'error');
             return;
         }
 
@@ -60,7 +60,7 @@ class ManagePenalties extends Component
                 auth()->id()
             );
 
-            $this->dispatch('alert', type: 'success', message: 'Banding disetujui, penalti telah dibatalkan');
+            $this->dispatch('toast', message: 'Banding disetujui, penalti telah dibatalkan', type: 'success');
             $this->reset(['showReviewModal', 'reviewNotes', 'selectedPenalty']);
             
             // Refresh the page data
@@ -70,7 +70,7 @@ class ManagePenalties extends Component
                 'penalty_id' => $this->selectedPenalty->id,
                 'error' => $e->getMessage(),
             ]);
-            $this->dispatch('alert', type: 'error', message: 'Gagal menyetujui banding: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal menyetujui banding: ' . $e->getMessage(), type: 'error');
         }
     }
 
@@ -89,7 +89,7 @@ class ManagePenalties extends Component
                 auth()->id()
             );
 
-            $this->dispatch('alert', type: 'success', message: 'Banding ditolak, penalti tetap aktif');
+            $this->dispatch('toast', message: 'Banding ditolak, penalti tetap aktif', type: 'success');
             $this->reset(['showReviewModal', 'reviewNotes', 'selectedPenalty']);
             
             // Refresh the page data
@@ -99,7 +99,7 @@ class ManagePenalties extends Component
                 'penalty_id' => $this->selectedPenalty->id,
                 'error' => $e->getMessage(),
             ]);
-            $this->dispatch('alert', type: 'error', message: 'Gagal menolak banding: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal menolak banding: ' . $e->getMessage(), type: 'error');
         }
     }
 

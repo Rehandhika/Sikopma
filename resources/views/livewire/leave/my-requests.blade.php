@@ -1,15 +1,7 @@
 <div class="space-y-6">
-    @if (session()->has('success'))
-        <x-ui.alert variant="success" dismissible>
-            {{ session('success') }}
-        </x-ui.alert>
-    @endif
     
-    @if (session()->has('error'))
-        <x-ui.alert variant="danger" dismissible>
-            {{ session('error') }}
-        </x-ui.alert>
-    @endif
+    
+    
 
     <x-layout.page-header 
         title="Riwayat Cuti/Izin Saya"

@@ -47,7 +47,7 @@ class Index extends Component
             // Log activity
             ActivityLogService::logProductDeleted($productName);
             
-            $this->dispatch('alert', type: 'success', message: 'Produk berhasil dihapus');
+            $this->dispatch('toast', message: 'Produk berhasil dihapus', type: 'success');
         }
     }
 

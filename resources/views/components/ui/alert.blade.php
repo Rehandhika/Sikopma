@@ -2,27 +2,28 @@
     'variant' => 'info',
     'dismissible' => false,
     'icon' => true,
+    'title' => null,
 ])
 
 @php
 $variants = [
     'success' => [
-        'container' => 'bg-success-50 border-success-200 text-success-800',
+        'container' => 'bg-success-50 dark:bg-success-900/30 border-success-200 dark:border-success-700 text-success-800 dark:text-success-400',
         'icon' => 'check-circle',
         'iconColor' => 'text-success-400',
     ],
     'danger' => [
-        'container' => 'bg-danger-50 border-danger-200 text-danger-800',
+        'container' => 'bg-danger-50 dark:bg-danger-900/30 border-danger-200 dark:border-danger-700 text-danger-800 dark:text-danger-400',
         'icon' => 'x-circle',
         'iconColor' => 'text-danger-400',
     ],
     'warning' => [
-        'container' => 'bg-warning-50 border-warning-200 text-warning-800',
+        'container' => 'bg-warning-50 dark:bg-warning-900/30 border-warning-200 dark:border-warning-700 text-warning-800 dark:text-warning-400',
         'icon' => 'exclamation-triangle',
         'iconColor' => 'text-warning-400',
     ],
     'info' => [
-        'container' => 'bg-info-50 border-info-200 text-info-800',
+        'container' => 'bg-info-50 dark:bg-info-900/30 border-info-200 dark:border-info-700 text-info-800 dark:text-info-400',
         'icon' => 'information-circle',
         'iconColor' => 'text-info-400',
     ],
@@ -50,7 +51,14 @@ $config = $variants[$variant];
         @endif
         
         <div @class(['ml-3' => $icon, 'flex-1'])>
-            {{ $slot }}
+            @if($title)
+            <h3 class="text-sm font-medium mb-1">
+                {{ $title }}
+            </h3>
+            @endif
+            <div class="text-sm">
+                {{ $slot }}
+            </div>
         </div>
 
         @if($dismissible)

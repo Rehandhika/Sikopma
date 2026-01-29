@@ -45,7 +45,7 @@ class MyRequests extends Component
             ->first();
 
         if (!$request) {
-            $this->dispatch('alert', type: 'error', message: 'Permintaan tidak ditemukan atau tidak dapat dibatalkan.');
+            $this->dispatch('toast', message: 'Permintaan tidak ditemukan atau tidak dapat dibatalkan.', type: 'error');
             return;
         }
 
@@ -55,7 +55,7 @@ class MyRequests extends Component
             ->subHours(24);
         
         if (now()->greaterThan($deadline)) {
-            $this->dispatch('alert', type: 'error', message: 'Tidak dapat membatalkan permintaan dalam 24 jam sebelum shift.');
+            $this->dispatch('toast', message: 'Tidak dapat membatalkan permintaan dalam 24 jam sebelum shift.', type: 'error');
             return;
         }
 
@@ -88,12 +88,12 @@ class MyRequests extends Component
 
             DB::commit();
 
-            $this->dispatch('alert', type: 'success', message: 'Permintaan tukar shift berhasil dibatalkan.');
+            $this->dispatch('toast', message: 'Permintaan tukar shift berhasil dibatalkan.', type: 'success');
             $this->reset(['showCancelModal', 'cancelReason', 'selectedRequest']);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->dispatch('alert', type: 'error', message: 'Gagal membatalkan permintaan: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal membatalkan permintaan: ' . $e->getMessage(), type: 'error');
         }
     }
 
@@ -110,7 +110,7 @@ class MyRequests extends Component
         if ($this->selectedRequest && $this->selectedRequest->requester_id === auth()->id()) {
             $this->showDetailModal = true;
         } else {
-            $this->dispatch('alert', type: 'error', message: 'Permintaan tidak ditemukan.');
+            $this->dispatch('toast', message: 'Permintaan tidak ditemukan.', type: 'error');
         }
     }
 

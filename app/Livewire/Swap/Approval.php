@@ -55,7 +55,7 @@ class Approval extends Component
                 $swap->requesterAssignment->date->format('d M Y')
             );
 
-            $this->dispatch('alert', type: 'success', message: 'Tukar shift disetujui dan jadwal telah diperbarui');
+            $this->dispatch('toast', message: 'Tukar shift disetujui dan jadwal telah diperbarui', type: 'success');
             $this->reset(['showModal', 'approvalNotes', 'selectedSwap']);
         }
     }
@@ -78,7 +78,7 @@ class Approval extends Component
                 $swap->requesterAssignment->date->format('d M Y')
             );
 
-            $this->dispatch('alert', type: 'success', message: 'Tukar shift ditolak');
+            $this->dispatch('toast', message: 'Tukar shift ditolak', type: 'success');
             $this->reset(['showModal', 'approvalNotes', 'selectedSwap']);
         }
     }

@@ -9,8 +9,18 @@ const defaultConfig = {
     plugins: ['remove_button', 'clear_button'],
     render: {
         no_results: function(data, escape) {
-            return '<div class="no-results">Tidak ada hasil untuk "' + escape(data.input) + '"</div>';
+            return '<div class="no-results px-3 py-2 text-sm text-gray-500">Tidak ada hasil untuk "' + escape(data.input) + '"</div>';
         },
+        option: function(data, escape) {
+            const isSelected = this.items.indexOf(data.value) !== -1;
+            return `<div class="px-3 py-2 cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/20 flex items-center justify-between ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400' : ''}">
+                <span>${escape(data.text)}</span>
+                ${isSelected ? '<svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' : ''}
+            </div>`;
+        },
+        item: function(data, escape) {
+            return `<div class="text-sm">${escape(data.text)}</div>`;
+        }
     }
 };
 
@@ -51,12 +61,16 @@ window.initUserSelect = function(selector, options = {}) {
         searchField: ['name', 'email', 'nim'],
         render: {
             option: function(data, escape) {
-                return `<div class="py-2">
-                    <div class="font-medium">${escape(data.name)}</div>
-                    <div class="text-xs text-gray-500">${escape(data.email || '')} ${data.nim ? '- ' + escape(data.nim) : ''}</div>
+                const isSelected = this.items.indexOf(data.id) !== -1;
+                return `<div class="px-3 py-2 cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/20 flex items-center justify-between ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}">
+                    <div>
+                        <div class="font-medium text-sm">${escape(data.name)}</div>
+                        <div class="text-xs text-gray-500">${escape(data.email || '')} ${data.nim ? '- ' + escape(data.nim) : ''}</div>
+                    </div>
+                    ${isSelected ? '<svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' : ''}
                 </div>`;
             },
-            item: function(data, escape) { return `<div>${escape(data.name)}</div>`; }
+            item: function(data, escape) { return `<div class="text-sm">${escape(data.name)}</div>`; }
         },
         ...options
     });
@@ -69,12 +83,16 @@ window.initProductSelect = function(selector, options = {}) {
         searchField: ['name', 'sku'],
         render: {
             option: function(data, escape) {
-                return `<div class="py-2">
-                    <div class="font-medium">${escape(data.name)}</div>
-                    <div class="text-xs text-gray-500">SKU: ${escape(data.sku || '-') } | Harga: Rp ${escape(data.price || 0)}</div>
+                const isSelected = this.items.indexOf(data.id) !== -1;
+                return `<div class="px-3 py-2 cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/20 flex items-center justify-between ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}">
+                    <div>
+                        <div class="font-medium text-sm">${escape(data.name)}</div>
+                        <div class="text-xs text-gray-500">SKU: ${escape(data.sku || '-')} | Harga: Rp ${escape(data.price || 0)}</div>
+                    </div>
+                    ${isSelected ? '<svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' : ''}
                 </div>`;
             },
-            item: function(data, escape) { return `<div>${escape(data.name)}</div>`; }
+            item: function(data, escape) { return `<div class="text-sm">${escape(data.name)}</div>`; }
         },
         ...options
     });

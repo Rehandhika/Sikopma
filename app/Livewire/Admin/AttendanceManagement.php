@@ -150,7 +150,7 @@ class AttendanceManagement extends Component
             ->find($id);
 
         if (!$attendance) {
-            $this->dispatch('alert', type: 'error', message: 'Data tidak ditemukan');
+            $this->dispatch('toast', message: 'Data tidak ditemukan', type: 'error');
             return;
         }
 
@@ -188,7 +188,7 @@ class AttendanceManagement extends Component
         $attendance = Attendance::select(['id', 'status', 'check_in', 'check_out'])->find($id);
 
         if (!$attendance) {
-            $this->dispatch('alert', type: 'error', message: 'Data tidak ditemukan');
+            $this->dispatch('toast', message: 'Data tidak ditemukan', type: 'error');
             return;
         }
 
@@ -216,7 +216,7 @@ class AttendanceManagement extends Component
         $attendance = Attendance::find($this->editId);
 
         if (!$attendance) {
-            $this->dispatch('alert', type: 'error', message: 'Data tidak ditemukan');
+            $this->dispatch('toast', message: 'Data tidak ditemukan', type: 'error');
             return;
         }
 
@@ -246,7 +246,7 @@ class AttendanceManagement extends Component
 
         $this->closeEditModal();
         $this->clearStatsCache();
-        $this->dispatch('alert', type: 'success', message: 'Data berhasil diperbarui');
+        $this->dispatch('toast', message: 'Data berhasil diperbarui', type: 'success');
     }
 
     // === Export Excel ===

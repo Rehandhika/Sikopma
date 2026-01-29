@@ -1,16 +1,8 @@
 <div class="p-6">
     {{-- Flash Messages --}}
-    @if (session()->has('success'))
-    <x-ui.alert variant="success" dismissible="true" class="mb-6">
-        {{ session('success') }}
-    </x-ui.alert>
-    @endif
     
-    @if (session()->has('error'))
-    <x-ui.alert variant="danger" dismissible="true" class="mb-6">
-        {{ session('error') }}
-    </x-ui.alert>
-    @endif
+    
+    
 
     {{-- Header --}}
     <x-layout.page-header 

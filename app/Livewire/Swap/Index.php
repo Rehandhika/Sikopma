@@ -25,7 +25,7 @@ class Index extends Component
             $date = $swap->requesterAssignment?->date?->format('d/m/Y') ?? 'N/A';
             ActivityLogService::log("Membatalkan permintaan tukar shift tanggal {$date}");
             
-            $this->dispatch('alert', type: 'success', message: 'Permintaan tukar shift dibatalkan');
+            $this->dispatch('toast', message: 'Permintaan tukar shift dibatalkan', type: 'success');
         }
     }
 
@@ -50,7 +50,7 @@ class Index extends Component
             // Notify admins for final approval
             $this->notifyAdminsForApproval($swap);
             
-            $this->dispatch('alert', type: 'success', message: 'Permintaan tukar shift diterima');
+            $this->dispatch('toast', message: 'Permintaan tukar shift diterima', type: 'success');
         }
     }
 
@@ -76,7 +76,7 @@ class Index extends Component
                 'swap_request_id' => $swap->id,
             ]);
             
-            $this->dispatch('alert', type: 'success', message: 'Permintaan tukar shift ditolak');
+            $this->dispatch('toast', message: 'Permintaan tukar shift ditolak', type: 'success');
         }
     }
 

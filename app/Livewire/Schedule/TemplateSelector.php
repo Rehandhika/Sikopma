@@ -146,7 +146,7 @@ class TemplateSelector extends Component
             ActivityLogService::log("Menghapus template jadwal '{$templateName}'");
             
             $this->loadTemplates();
-            $this->dispatch('alert', type: 'success', message: 'Template berhasil dihapus.');
+            $this->dispatch('toast', message: 'Template berhasil dihapus.', type: 'success');
             
             // Clear preview if deleted template was being previewed
             if ($this->selectedTemplateId === $templateId) {
@@ -154,7 +154,7 @@ class TemplateSelector extends Component
                 $this->previewTemplate = null;
             }
         } else {
-            $this->dispatch('alert', type: 'error', message: 'Anda tidak memiliki izin untuk menghapus template ini.');
+            $this->dispatch('toast', message: 'Anda tidak memiliki izin untuk menghapus template ini.', type: 'error');
         }
     }
 

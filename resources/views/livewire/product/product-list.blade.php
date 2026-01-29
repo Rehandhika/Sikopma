@@ -1,15 +1,7 @@
 <div class="p-6">
-    @if (session()->has('success'))
-        <x-ui.alert variant="success" dismissible class="mb-4">
-            {{ session('success') }}
-        </x-ui.alert>
-    @endif
     
-    @if (session()->has('error'))
-        <x-ui.alert variant="danger" dismissible class="mb-4">
-            {{ session('error') }}
-        </x-ui.alert>
-    @endif
+    
+    
 
     <x-layout.page-header 
         title="Manajemen Produk"

@@ -92,7 +92,7 @@ class BannerManagement extends Component
                 // Log activity
                 ActivityLogService::logBannerUpdated($this->title);
                 
-                $this->dispatch('alert', type: 'success', message: 'Banner berhasil diperbarui');
+                $this->dispatch('toast', message: 'Banner berhasil diperbarui', type: 'success');
             } else {
                 // Create new banner
                 $this->bannerService->store([
@@ -103,14 +103,14 @@ class BannerManagement extends Component
                 // Log activity
                 ActivityLogService::logBannerCreated($this->title);
                 
-                $this->dispatch('alert', type: 'success', message: 'Banner berhasil dibuat');
+                $this->dispatch('toast', message: 'Banner berhasil dibuat', type: 'success');
             }
 
             $this->resetForm();
             $this->showForm = false;
             
         } catch (\Exception $e) {
-            $this->dispatch('alert', type: 'error', message: 'Gagal menyimpan banner: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal menyimpan banner: ' . $e->getMessage(), type: 'error');
         }
     }
 
@@ -124,10 +124,10 @@ class BannerManagement extends Component
             // Log activity
             ActivityLogService::logBannerDeleted($bannerTitle);
             
-            $this->dispatch('alert', type: 'success', message: 'Banner berhasil dihapus');
+            $this->dispatch('toast', message: 'Banner berhasil dihapus', type: 'success');
             
         } catch (\Exception $e) {
-            $this->dispatch('alert', type: 'error', message: 'Gagal menghapus banner: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal menghapus banner: ' . $e->getMessage(), type: 'error');
         }
     }
 
@@ -143,10 +143,10 @@ class BannerManagement extends Component
             ActivityLogService::logBannerStatusChanged($freshBanner->title, $freshBanner->is_active);
             
             $statusText = $freshBanner->is_active ? 'diaktifkan' : 'dinonaktifkan';
-            $this->dispatch('alert', type: 'success', message: "Banner berhasil {$statusText}");
+            $this->dispatch('toast', message: "Banner berhasil {$statusText}", type: 'success');
             
         } catch (\Exception $e) {
-            $this->dispatch('alert', type: 'error', message: 'Gagal mengubah status banner: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal mengubah status banner: ' . $e->getMessage(), type: 'error');
         }
     }
 

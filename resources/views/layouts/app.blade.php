@@ -147,55 +147,7 @@
     @livewireScripts
     
     {{-- Toast Notifications --}}
-    <div x-data="{ 
-        show: false, 
-        message: '', 
-        type: 'success',
-        display(msg, msgType = 'success') {
-            this.message = msg;
-            this.type = msgType;
-            this.show = true;
-            setTimeout(() => { this.show = false; }, 3000);
-        }
-    }"
-    @alert.window="display($event.detail.message, $event.detail.type)"
-    @show-access-denied.window="display('Anda tidak memiliki akses ke menu ' + $event.detail.menu, 'warning')"
-    x-show="show"
-    x-transition:enter="transition ease-out duration-300"
-    x-transition:enter-start="opacity-0 transform translate-y-2"
-    x-transition:enter-end="opacity-100 transform translate-y-0"
-    x-transition:leave="transition ease-in duration-200"
-    x-transition:leave-start="opacity-100 transform translate-y-0"
-    x-transition:leave-end="opacity-0 transform translate-y-2"
-    class="fixed top-4 right-4 z-50 max-w-sm w-full pointer-events-none"
-    style="display: none;"
-    role="alert"
-    aria-live="polite">
-        <div :class="{
-            'bg-success-50 border-success-200 text-success-800': type === 'success',
-            'bg-danger-50 border-danger-200 text-danger-800': type === 'error',
-            'bg-warning-50 border-warning-200 text-warning-800': type === 'warning',
-            'bg-info-50 border-info-200 text-info-800': type === 'info'
-        }" class="border-l-4 p-4 rounded-lg shadow-lg pointer-events-auto">
-            <div class="flex items-start">
-                <div class="flex-shrink-0">
-                    <x-ui.icon x-show="type === 'success'" name="check-circle" class="h-5 w-5 text-success-400" />
-                    <x-ui.icon x-show="type === 'error'" name="x-circle" class="h-5 w-5 text-danger-400" />
-                    <x-ui.icon x-show="type === 'warning'" name="exclamation-triangle" class="h-5 w-5 text-warning-400" />
-                    <x-ui.icon x-show="type === 'info'" name="information-circle" class="h-5 w-5 text-info-400" />
-                </div>
-                <div class="ml-3 flex-1">
-                    <p class="text-sm font-medium" x-text="message"></p>
-                </div>
-                <button @click="show = false" 
-                        type="button"
-                        class="ml-auto flex-shrink-0 inline-flex text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 rounded-lg p-1 transition-colors"
-                        aria-label="Close notification">
-                    <x-ui.icon name="x" class="h-5 w-5" />
-                </button>
-            </div>
-        </div>
-    </div>
+    <x-ui.toast />
     
     @stack('scripts')
 </body>

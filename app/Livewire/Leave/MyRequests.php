@@ -21,12 +21,12 @@ class MyRequests extends Component
             ->firstOrFail();
 
         if (!$request->canCancel()) {
-            session()->flash('error', 'Tidak dapat membatalkan permohonan ini');
+            $this->dispatch('toast', message: 'Tidak dapat membatalkan permohonan ini', type: 'error');
             return;
         }
 
         $request->update(['status' => 'cancelled']);
-        session()->flash('success', 'Permohonan berhasil dibatalkan');
+        $this->dispatch('toast', message: 'Permohonan berhasil dibatalkan', type: 'success');
     }
 
     #[On('leave-request-created')] 

@@ -142,7 +142,7 @@ class Pos extends Component
         if ($product) {
             $this->addToCart($product->id);
         } else {
-            $this->dispatch('alert', type: 'error', message: 'Produk tidak ditemukan');
+            $this->dispatch('toast', message: 'Produk tidak ditemukan', type: 'error');
         }
     }
 
@@ -153,7 +153,7 @@ class Pos extends Component
             ->find($productId);
         
         if (!$product) {
-            $this->dispatch('alert', type: 'error', message: 'Produk tidak ditemukan');
+            $this->dispatch('toast', message: 'Produk tidak ditemukan', type: 'error');
             return;
         }
 
@@ -169,7 +169,7 @@ class Pos extends Component
 
         // Non-variant product - add directly
         if ($product->stock < 1) {
-            $this->dispatch('alert', type: 'error', message: 'Stok tidak tersedia');
+            $this->dispatch('toast', message: 'Stok tidak tersedia', type: 'error');
             return;
         }
 
@@ -177,7 +177,7 @@ class Pos extends Component
         $currentQty = $this->cart[$cartKey]['quantity'] ?? 0;
         
         if ($currentQty >= $product->stock) {
-            $this->dispatch('alert', type: 'error', message: 'Stok tidak mencukupi');
+            $this->dispatch('toast', message: 'Stok tidak mencukupi', type: 'error');
             return;
         }
 
@@ -203,7 +203,7 @@ class Pos extends Component
         $variant = ProductVariant::with('product')->find($variantId);
         
         if (!$variant || $variant->stock < 1) {
-            $this->dispatch('alert', type: 'error', message: 'Stok varian tidak tersedia');
+            $this->dispatch('toast', message: 'Stok varian tidak tersedia', type: 'error');
             return;
         }
 
@@ -215,7 +215,7 @@ class Pos extends Component
         $freshStock = ProductVariant::where('id', $variantId)->value('stock');
         
         if ($currentQty >= $freshStock) {
-            $this->dispatch('alert', type: 'error', message: "Stok tidak mencukupi. Tersedia: {$freshStock}");
+            $this->dispatch('toast', message: "Stok tidak mencukupi. Tersedia: {$freshStock}", type: 'error');
             return;
         }
 
@@ -320,7 +320,7 @@ class Pos extends Component
         $this->cart[$cartKey]['stock'] = $currentStock;
         
         if ($this->cart[$cartKey]['quantity'] >= $currentStock) {
-            $this->dispatch('alert', type: 'error', message: "Stok tidak mencukupi. Tersedia: {$currentStock}");
+            $this->dispatch('toast', message: "Stok tidak mencukupi. Tersedia: {$currentStock}", type: 'error');
             return;
         }
         
@@ -348,7 +348,7 @@ class Pos extends Component
         }
         
         if ($quantity > $this->cart[$cartKey]['stock']) {
-            $this->dispatch('alert', type: 'error', message: 'Stok tidak mencukupi');
+            $this->dispatch('toast', message: 'Stok tidak mencukupi', type: 'error');
             return;
         }
         
@@ -380,14 +380,14 @@ class Pos extends Component
     public function openPayment(): void
     {
         if (empty($this->cart)) {
-            $this->dispatch('alert', type: 'error', message: 'Keranjang kosong');
+            $this->dispatch('toast', message: 'Keranjang kosong', type: 'error');
             return;
         }
         
         // Check if any payment methods are enabled - Requirements: 5.5
         $enabledMethods = app(PaymentConfigurationService::class)->getEnabledMethods();
         if (empty($enabledMethods)) {
-            $this->dispatch('alert', type: 'error', message: 'Tidak ada metode pembayaran yang tersedia. Hubungi admin.');
+            $this->dispatch('toast', message: 'Tidak ada metode pembayaran yang tersedia. Hubungi admin.', type: 'error');
             return;
         }
         
@@ -397,7 +397,7 @@ class Pos extends Component
         // Validate stock availability before opening payment
         $stockIssues = $this->validateCartStock();
         if (!empty($stockIssues)) {
-            $this->dispatch('alert', type: 'error', message: $stockIssues[0]);
+            $this->dispatch('toast', message: $stockIssues[0], type: 'error');
             return;
         }
         
@@ -468,10 +468,10 @@ class Pos extends Component
             if ($this->cart[$cartKey]['quantity'] > $currentStock) {
                 if ($currentStock > 0) {
                     $this->cart[$cartKey]['quantity'] = $currentStock;
-                    $this->dispatch('alert', type: 'warning', message: "Kuantitas '{$item['name']}' disesuaikan ke {$currentStock}");
+                    $this->dispatch('toast', message: "Kuantitas '{$item['name']}' disesuaikan ke {$currentStock}", type: 'warning');
                 } else {
                     unset($this->cart[$cartKey]);
-                    $this->dispatch('alert', type: 'warning', message: "'{$item['name']}' dihapus karena stok habis");
+                    $this->dispatch('toast', message: "'{$item['name']}' dihapus karena stok habis", type: 'warning');
                 }
             }
         }
@@ -490,14 +490,14 @@ class Pos extends Component
     public function processPayment(): void
     {
         if (empty($this->cart)) {
-            $this->dispatch('alert', type: 'error', message: 'Keranjang kosong');
+            $this->dispatch('toast', message: 'Keranjang kosong', type: 'error');
             return;
         }
 
         // Validate payment method is enabled - Requirements: 5.1
         $paymentService = app(PaymentConfigurationService::class);
         if (!$paymentService->isMethodEnabled($this->paymentMethod)) {
-            $this->dispatch('alert', type: 'error', message: 'Metode pembayaran tidak tersedia');
+            $this->dispatch('toast', message: 'Metode pembayaran tidak tersedia', type: 'error');
             return;
         }
 
@@ -509,14 +509,14 @@ class Pos extends Component
         }
 
         if ($this->paymentAmount < $total) {
-            $this->dispatch('alert', type: 'error', message: 'Pembayaran kurang dari total');
+            $this->dispatch('toast', message: 'Pembayaran kurang dari total', type: 'error');
             return;
         }
 
         // Final stock validation before processing - Requirements: 3.5, 3.6
         $stockIssues = $this->validateCartStock();
         if (!empty($stockIssues)) {
-            $this->dispatch('alert', type: 'error', message: 'Stok berubah: ' . $stockIssues[0]);
+            $this->dispatch('toast', message: 'Stok berubah: ' . $stockIssues[0], type: 'error');
             $this->showPayment = false;
             return;
         }
@@ -601,7 +601,7 @@ class Pos extends Component
                 ActivityLogService::logSaleCreated($sale->invoice_number, $total);
             });
 
-            $this->dispatch('alert', type: 'success', message: 'Transaksi berhasil!');
+            $this->dispatch('toast', message: 'Transaksi berhasil!', type: 'success');
             
             // Reset state
             $this->reset(['cart', 'paymentAmount', 'showPayment', 'showCart']);
@@ -612,7 +612,7 @@ class Pos extends Component
             
         } catch (\Exception $e) {
             report($e);
-            $this->dispatch('alert', type: 'error', message: $e->getMessage() ?: 'Gagal memproses transaksi');
+            $this->dispatch('toast', message: $e->getMessage() ?: 'Gagal memproses transaksi', type: 'error');
         }
     }
 

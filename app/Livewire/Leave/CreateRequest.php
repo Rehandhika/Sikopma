@@ -159,7 +159,7 @@ class CreateRequest extends Component
             Carbon::parse($this->end_date)->format('d M Y')
         );
 
-        session()->flash('success', 'Pengajuan cuti/izin berhasil dibuat dan menunggu persetujuan');
+        $this->dispatch('toast', message: 'Pengajuan cuti/izin berhasil dibuat dan menunggu persetujuan', type: 'success');
         
         return $this->redirect(route('leave.my-requests'), navigate: true);
     }

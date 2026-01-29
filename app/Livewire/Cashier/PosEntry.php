@@ -20,7 +20,7 @@ class PosEntry extends Component
     public function mount(): void
     {
         if (!auth()->user()->hasAnyRole(['Super Admin', 'Ketua', 'Wakil Ketua'])) {
-            session()->flash('error', 'Akses ditolak.');
+            $this->dispatch('toast', message: 'Akses ditolak.', type: 'error');
             $this->redirect(route('admin.dashboard'));
             return;
         }
@@ -94,7 +94,7 @@ class PosEntry extends Component
     public function submitAll(array $rows): void
     {
         if (empty($rows)) {
-            $this->dispatch('alert', type: 'error', message: 'Tidak ada data untuk disimpan.');
+            $this->dispatch('toast', message: 'Tidak ada data untuk disimpan.', type: 'error');
             return;
         }
 
@@ -102,7 +102,7 @@ class PosEntry extends Component
             // Validate rows first
             $validationResult = $this->validateRows($rows);
             if (!empty($validationResult['errors'])) {
-                $this->dispatch('alert', type: 'error', message: implode(', ', $validationResult['errors']));
+                $this->dispatch('toast', message: implode(', ', $validationResult['errors']), type: 'error');
                 return;
             }
 
@@ -111,7 +111,7 @@ class PosEntry extends Component
             // Clear cache and refresh
             Cache::forget('pos_products_active');
             
-            $this->dispatch('alert', type: 'success', message: "Berhasil menyimpan {$count} transaksi.");
+            $this->dispatch('toast', message: "Berhasil menyimpan {$count} transaksi.", type: 'success');
             $this->dispatch('transactions-saved');
             
         } catch (\Exception $e) {
@@ -120,7 +120,7 @@ class PosEntry extends Component
                 'date' => $this->selectedDate,
                 'user_id' => auth()->id(),
             ]);
-            $this->dispatch('alert', type: 'error', message: 'Gagal menyimpan: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal menyimpan: ' . $e->getMessage(), type: 'error');
         }
     }
 
@@ -275,11 +275,11 @@ class PosEntry extends Component
             });
             
             Cache::forget('pos_products_active');
-            $this->dispatch('alert', type: 'success', message: 'Transaksi berhasil dihapus.');
+            $this->dispatch('toast', message: 'Transaksi berhasil dihapus.', type: 'success');
             
         } catch (\Exception $e) {
             Log::error('Delete Transaction Error: ' . $e->getMessage(), ['sale_id' => $id]);
-            $this->dispatch('alert', type: 'error', message: 'Gagal menghapus: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal menghapus: ' . $e->getMessage(), type: 'error');
         }
     }
 

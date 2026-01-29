@@ -126,12 +126,12 @@ class AvailabilityManager extends Component
             ->exists();
 
         if ($alreadySubmitted) {
-            $this->dispatch('alert', type: 'error', message: 'Ketersediaan sudah dikirim untuk minggu ini.');
+            $this->dispatch('toast', message: 'Ketersediaan sudah dikirim untuk minggu ini.', type: 'error');
             return;
         }
 
         if ($this->totalSelected === 0) {
-            $this->dispatch('alert', type: 'error', message: 'Pilih minimal satu sesi.');
+            $this->dispatch('toast', message: 'Pilih minimal satu sesi.', type: 'error');
             return;
         }
 
@@ -179,10 +179,10 @@ class AvailabilityManager extends Component
                 Cache::forget("members_availability_{$this->weekStart->format('Y-m-d')}");
             });
 
-            $this->dispatch('alert', type: 'success', message: 'Ketersediaan berhasil dikirim!');
+            $this->dispatch('toast', message: 'Ketersediaan berhasil dikirim!', type: 'success');
             
         } catch (\Exception $e) {
-            $this->dispatch('alert', type: 'error', message: 'Gagal menyimpan: ' . $e->getMessage());
+            $this->dispatch('toast', message: 'Gagal menyimpan: ' . $e->getMessage(), type: 'error');
         }
     }
 
