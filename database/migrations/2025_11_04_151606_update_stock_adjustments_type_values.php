@@ -21,8 +21,11 @@ return new class extends Migration
             ->where('type', 'reduction')
             ->update(['type' => 'out']);
 
-        // Alter column enum values
-        DB::statement("ALTER TABLE stock_adjustments MODIFY COLUMN type ENUM('in', 'out') NOT NULL");
+        // Alter column enum values - only for MySQL
+        $driver = Schema::getConnection()->getDriverName();
+        if ($driver !== 'sqlite') {
+            DB::statement("ALTER TABLE stock_adjustments MODIFY COLUMN type ENUM('in', 'out') NOT NULL");
+        }
     }
 
     /**
@@ -39,7 +42,10 @@ return new class extends Migration
             ->where('type', 'out')
             ->update(['type' => 'reduction']);
 
-        // Revert column enum values
-        DB::statement("ALTER TABLE stock_adjustments MODIFY COLUMN type ENUM('addition', 'reduction') NOT NULL");
+        // Revert column enum values - only for MySQL
+        $driver = Schema::getConnection()->getDriverName();
+        if ($driver !== 'sqlite') {
+            DB::statement("ALTER TABLE stock_adjustments MODIFY COLUMN type ENUM('addition', 'reduction') NOT NULL");
+        }
     }
 };

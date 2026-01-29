@@ -1,0 +1,277 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\LeaveRequest;
+use App\Models\ScheduleAssignment;
+use App\Models\LeaveAffectedSchedule;
+use App\Models\Attendance;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Exception;
+
+class LeaveService
+{
+    /**
+     * Submit a new leave request
+     *
+     * @param int $userId
+     * @param string $leaveType
+     * @param Carbon $startDate
+     * @param Carbon $endDate
+     * @param string $reason
+     * @param string|null $attachmentPath
+     * @return LeaveRequest
+     * @throws Exception
+     */
+    public function submitRequest(
+        int $userId,
+        string $leaveType,
+        Carbon $startDate,
+        Carbon $endDate,
+        string $reason,
+        ?string $attachmentPath = null
+    ): LeaveRequest {
+        // Validate date range
+        if ($endDate->lt($startDate)) {
+            throw new Exception('End date must be after or equal to start date');
+        }
+
+        // Calculate total days
+        $totalDays = $startDate->diffInDays($endDate) + 1;
+
+        // Validate sick leave attachment requirement
+        if ($leaveType === 'sick' && $totalDays > 1 && empty($attachmentPath)) {
+            throw new Exception('Sick leave longer than 1 day requires attachment (surat keterangan)');
+        }
+
+        // Create leave request
+        $leaveRequest = LeaveRequest::create([
+            'user_id' => $userId,
+            'leave_type' => $leaveType,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'total_days' => $totalDays,
+            'reason' => $reason,
+            'attachment' => $attachmentPath,
+            'status' => 'pending',
+        ]);
+
+        return $leaveRequest;
+    }
+
+    /**
+     * Get schedule assignments affected by leave request
+     *
+     * @param LeaveRequest $request
+     * @return Collection
+     */
+    public function getAffectedAssignments(LeaveRequest $request): Collection
+    {
+        return ScheduleAssignment::where('user_id', $request->user_id)
+            ->whereBetween('date', [$request->start_date, $request->end_date])
+            ->whereIn('status', ['scheduled', 'excused'])
+            ->orderBy('date')
+            ->orderBy('session')
+            ->get();
+    }
+
+    /**
+     * Approve leave request
+     *
+     * @param LeaveRequest $request
+     * @param int $reviewerId
+     * @param string|null $notes
+     * @return bool
+     * @throws Exception
+     */
+    public function approve(
+        LeaveRequest $request,
+        int $reviewerId,
+        ?string $notes = null
+    ): bool {
+        if ($request->status !== 'pending') {
+            throw new Exception('Only pending leave requests can be approved');
+        }
+
+        // Check if there are any existing attendance records that conflict
+        $conflictingAttendances = Attendance::where('user_id', $request->user_id)
+            ->whereBetween('date', [$request->start_date, $request->end_date])
+            ->whereIn('status', ['present', 'late', 'absent'])
+            ->get();
+
+        if ($conflictingAttendances->isNotEmpty()) {
+            $dates = $conflictingAttendances->pluck('date')->map(function ($date) {
+                return $date->format('d/m/Y');
+            })->join(', ');
+            
+            throw new Exception("Cannot approve leave request. User already has attendance records on: {$dates}");
+        }
+
+        DB::beginTransaction();
+        try {
+            // Update leave request status
+            $request->update([
+                'status' => 'approved',
+                'reviewed_by' => $reviewerId,
+                'reviewed_at' => now(),
+                'review_notes' => $notes,
+            ]);
+
+            // Get affected assignments
+            $affectedAssignments = $this->getAffectedAssignments($request);
+
+            // Update all affected assignments to 'excused'
+            foreach ($affectedAssignments as $assignment) {
+                $assignment->update(['status' => 'excused']);
+
+                // Create LeaveAffectedSchedule record
+                LeaveAffectedSchedule::create([
+                    'leave_request_id' => $request->id,
+                    'schedule_assignment_id' => $assignment->id,
+                ]);
+            }
+
+            // Send notification to user
+            NotificationService::send(
+                $request->user,
+                'leave_approved',
+                'Pengajuan Izin Disetujui',
+                "Pengajuan izin Anda dari {$request->start_date->format('d/m/Y')} sampai {$request->end_date->format('d/m/Y')} telah disetujui.",
+                ['leave_request_id' => $request->id],
+                route('leave.my-requests')
+            );
+
+            DB::commit();
+            return true;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Reject leave request
+     *
+     * @param LeaveRequest $request
+     * @param int $reviewerId
+     * @param string $notes
+     * @return bool
+     * @throws Exception
+     */
+    public function reject(
+        LeaveRequest $request,
+        int $reviewerId,
+        string $notes
+    ): bool {
+        if ($request->status !== 'pending') {
+            throw new Exception('Only pending leave requests can be rejected');
+        }
+
+        // Update leave request status
+        $request->update([
+            'status' => 'rejected',
+            'reviewed_by' => $reviewerId,
+            'reviewed_at' => now(),
+            'review_notes' => $notes,
+        ]);
+
+        // Send notification to user
+        NotificationService::send(
+            $request->user,
+            'leave_rejected',
+            'Pengajuan Izin Ditolak',
+            "Pengajuan izin Anda dari {$request->start_date->format('d/m/Y')} sampai {$request->end_date->format('d/m/Y')} telah ditolak. Alasan: {$notes}",
+            ['leave_request_id' => $request->id],
+            route('leave.my-requests')
+        );
+
+        // Keep schedule assignments unchanged
+        return true;
+    }
+
+    /**
+     * Cancel leave request
+     *
+     * @param LeaveRequest $request
+     * @return bool
+     * @throws Exception
+     */
+    public function cancel(LeaveRequest $request): bool
+    {
+        // Only pending or approved requests can be cancelled
+        if (!in_array($request->status, ['pending', 'approved'])) {
+            throw new Exception('Only pending or approved leave requests can be cancelled');
+        }
+
+        // Check if leave has already started
+        if ($request->start_date->isPast()) {
+            throw new Exception('Cannot cancel leave that has already started');
+        }
+
+        DB::beginTransaction();
+        try {
+            // If leave was approved, revert affected assignments
+            if ($request->status === 'approved') {
+                // Get affected schedules
+                $affectedSchedules = LeaveAffectedSchedule::where('leave_request_id', $request->id)->get();
+
+                foreach ($affectedSchedules as $affectedSchedule) {
+                    // Revert assignment status to 'scheduled'
+                    $assignment = ScheduleAssignment::find($affectedSchedule->schedule_assignment_id);
+                    if ($assignment && $assignment->status === 'excused') {
+                        $assignment->update(['status' => 'scheduled']);
+                    }
+                }
+
+                // Delete affected schedule records
+                LeaveAffectedSchedule::where('leave_request_id', $request->id)->delete();
+            }
+
+            // Update leave request status
+            $request->update(['status' => 'cancelled']);
+
+            // Send notification to user
+            NotificationService::send(
+                $request->user,
+                'leave_cancelled',
+                'Pengajuan Izin Dibatalkan',
+                "Pengajuan izin Anda dari {$request->start_date->format('d/m/Y')} sampai {$request->end_date->format('d/m/Y')} telah dibatalkan.",
+                ['leave_request_id' => $request->id],
+                route('leave.my-requests')
+            );
+
+            DB::commit();
+            return true;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Validate sick leave requirements
+     *
+     * @param LeaveRequest $request
+     * @return array ['valid' => bool, 'errors' => array]
+     */
+    public function validateSickLeave(LeaveRequest $request): array
+    {
+        $errors = [];
+
+        if ($request->leave_type === 'sick') {
+            $totalDays = $request->start_date->diffInDays($request->end_date) + 1;
+
+            if ($totalDays > 1 && empty($request->attachment)) {
+                $errors[] = 'Sick leave longer than 1 day requires attachment (surat keterangan)';
+            }
+        }
+
+        return [
+            'valid' => empty($errors),
+            'errors' => $errors,
+        ];
+    }
+}
+

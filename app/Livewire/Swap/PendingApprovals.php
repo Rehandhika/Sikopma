@@ -45,7 +45,8 @@ class PendingApprovals extends Component
         }
 
         // Check if deadline has passed
-        $deadline = Carbon::parse($request->targetAssignment->date . ' ' . $request->targetAssignment->time_start)
+        $deadline = $request->targetAssignment->date->copy()
+            ->setTimeFromTimeString($request->targetAssignment->time_start)
             ->subHours(24);
         
         if (now()->greaterThan($deadline)) {
@@ -179,7 +180,8 @@ class PendingApprovals extends Component
         }
 
         // Check if deadline has passed
-        $deadline = Carbon::parse($request->targetAssignment->date . ' ' . $request->targetAssignment->time_start)
+        $deadline = $request->targetAssignment->date->copy()
+            ->setTimeFromTimeString($request->targetAssignment->time_start)
             ->subHours(24);
         
         return !now()->greaterThan($deadline);

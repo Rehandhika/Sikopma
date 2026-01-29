@@ -1,4 +1,4 @@
-<div class="space-y-6" x-data="attendanceLocation()">
+<div class="space-y-6">
     {{-- Today Status Card --}}
     <div class="bg-gradient-to-r from-primary-600 to-indigo-600 rounded-lg shadow-lg text-white p-6">
         <div class="flex items-center justify-between">
@@ -44,9 +44,7 @@
                         variant="primary" 
                         size="lg" 
                         class="w-full"
-                        wire:click="checkIn" 
-                        @click="getLocation()"
-                        x-bind:disabled="!hasLocation"
+                        wire:click="checkIn"
                     >
                         <x-ui.icon name="check-circle" class="w-5 h-5 mr-2" />
                         Check-in Sekarang
@@ -70,11 +68,6 @@
                     </div>
                 @endif
             </x-layout.grid>
-
-            <div class="mt-4 text-xs text-gray-500 flex items-center" x-show="hasLocation">
-                <x-ui.icon name="map-pin" class="w-4 h-4 mr-1" />
-                Lokasi terdeteksi
-            </div>
         </x-ui.card>
     @else
         <x-ui.alert variant="warning">
@@ -158,31 +151,4 @@
             />
         @endif
     </x-ui.card>
-
-    @script
-    <script>
-        window.attendanceLocation = function() {
-            return {
-                hasLocation: false,
-                init() {
-                    this.getLocation();
-                },
-                getLocation() {
-                    if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition(
-                            (position) => {
-                                this.hasLocation = true;
-                                $wire.call('updateLocation', position.coords.latitude, position.coords.longitude);
-                            },
-                            (error) => {
-                                this.hasLocation = false;
-                                console.error('Geolocation error:', error);
-                            }
-                        );
-                    }
-                }
-            }
-        }
-    </script>
-    @endscript
 </div>

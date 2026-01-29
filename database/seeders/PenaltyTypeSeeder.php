@@ -10,6 +10,43 @@ class PenaltyTypeSeeder extends Seeder
     public function run(): void
     {
         $penaltyTypes = [
+            // New integrated penalty types
+            [
+                'code' => 'LATE_MINOR',
+                'name' => 'Terlambat Ringan',
+                'description' => 'Terlambat 6-15 menit',
+                'points' => 5,
+                'is_active' => true,
+            ],
+            [
+                'code' => 'LATE_MODERATE',
+                'name' => 'Terlambat Sedang',
+                'description' => 'Terlambat 16-30 menit',
+                'points' => 10,
+                'is_active' => true,
+            ],
+            [
+                'code' => 'LATE_SEVERE',
+                'name' => 'Terlambat Berat',
+                'description' => 'Terlambat lebih dari 30 menit',
+                'points' => 15,
+                'is_active' => true,
+            ],
+            [
+                'code' => 'ABSENT',
+                'name' => 'Tidak Hadir',
+                'description' => 'Tidak hadir tanpa izin',
+                'points' => 20,
+                'is_active' => true,
+            ],
+            [
+                'code' => 'NO_CHECKOUT',
+                'name' => 'Tidak Checkout',
+                'description' => 'Tidak melakukan checkout',
+                'points' => 5,
+                'is_active' => true,
+            ],
+            // Legacy penalty types (kept for backward compatibility)
             [
                 'code' => 'MISSED_SCHEDULE',
                 'name' => 'Tidak Hadir Jadwal',

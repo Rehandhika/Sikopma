@@ -5,8 +5,8 @@ namespace App\Services;
 use App\Models\Attendance;
 use App\Models\ScheduleAssignment;
 use App\Models\Penalty;
+use App\Models\LeaveRequest;
 use App\Repositories\AttendanceRepository;
-use App\Exceptions\GeofenceException;
 use App\Exceptions\BusinessException;
 use App\Exceptions\ScheduleConflictException;
 use Carbon\Carbon;
@@ -16,10 +16,12 @@ use Illuminate\Support\Facades\Log;
 class AttendanceService
 {
     protected AttendanceRepository $repository;
+    protected PenaltyService $penaltyService;
 
-    public function __construct(AttendanceRepository $repository)
+    public function __construct(AttendanceRepository $repository, PenaltyService $penaltyService)
     {
         $this->repository = $repository;
+        $this->penaltyService = $penaltyService;
     }
 
     /**
@@ -27,16 +29,14 @@ class AttendanceService
      *
      * @param int $userId
      * @param int $scheduleAssignmentId
-     * @param float $latitude
-     * @param float $longitude
      * @param string|null $notes
      * @return Attendance
      * @throws \Exception
      */
-    public function checkIn(int $userId, int $scheduleAssignmentId, float $latitude, float $longitude, ?string $notes = null): Attendance
+    public function checkIn(int $userId, int $scheduleAssignmentId, ?string $notes = null): Attendance
     {
         try {
-            // Validate schedule exists
+            // Validate schedule exists and belongs to user
             $schedule = ScheduleAssignment::findOrFail($scheduleAssignmentId);
             
             if ($schedule->user_id !== $userId) {
@@ -48,6 +48,11 @@ class AttendanceService
                 throw new BusinessException('Jadwal tidak sesuai dengan user.', 'UNAUTHORIZED_SCHEDULE');
             }
 
+            // Validate schedule date is today
+            if (!$schedule->date->isToday()) {
+                throw new BusinessException('Hanya dapat check-in untuk jadwal hari ini.', 'INVALID_SCHEDULE_DATE');
+            }
+
             // Check if already checked in for this schedule
             $existing = Attendance::where('user_id', $userId)
                 ->where('schedule_assignment_id', $scheduleAssignmentId)
@@ -57,32 +62,61 @@ class AttendanceService
                 throw new BusinessException('Anda sudah check-in untuk jadwal ini.', 'ALREADY_CHECKED_IN');
             }
 
-            // Validate geofence
-            if (config('sikopma.attendance.require_geolocation', true)) {
-                if (!$this->isWithinGeofence($latitude, $longitude)) {
-                    throw new GeofenceException('Lokasi Anda berada di luar area yang diizinkan untuk check-in.');
-                }
+            $checkInTime = now();
+            
+            // Check if user has approved leave for this date
+            if ($this->hasApprovedLeave($userId, $checkInTime->toDateString())) {
+                // User has approved leave, mark as excused without penalty
+                return DB::transaction(function () use ($userId, $scheduleAssignmentId, $notes, $checkInTime, $schedule) {
+                    $attendance = $this->repository->create([
+                        'user_id' => $userId,
+                        'schedule_assignment_id' => $scheduleAssignmentId,
+                        'date' => today(),
+                        'check_in' => $checkInTime,
+                        'status' => 'excused',
+                        'notes' => $notes,
+                    ]);
+
+                    // Update schedule assignment status
+                    $schedule->update(['status' => 'excused']);
+
+                    // Log audit
+                    log_audit('check_in', $attendance);
+
+                    Log::info('User checked in with approved leave', [
+                        'user_id' => $userId,
+                        'attendance_id' => $attendance->id,
+                        'status' => 'excused',
+                    ]);
+
+                    return $attendance;
+                });
             }
 
-            $checkInTime = now();
-            $status = $this->determineStatus($checkInTime, $schedule);
+            // Determine status and late minutes
+            $statusData = $this->determineStatus($checkInTime, $schedule);
+            $status = $statusData['status'];
+            $lateMinutes = $statusData['late_minutes'];
             
             // Create attendance record within transaction
-            return DB::transaction(function () use ($userId, $scheduleAssignmentId, $latitude, $longitude, $notes, $checkInTime, $status, $schedule) {
+            return DB::transaction(function () use ($userId, $scheduleAssignmentId, $notes, $checkInTime, $status, $lateMinutes, $schedule) {
                 $attendance = $this->repository->create([
                     'user_id' => $userId,
                     'schedule_assignment_id' => $scheduleAssignmentId,
                     'date' => today(),
                     'check_in' => $checkInTime,
-                    'latitude' => $latitude,
-                    'longitude' => $longitude,
                     'status' => $status,
                     'notes' => $notes,
                 ]);
 
                 // Apply penalty if late
-                if ($status === 'late') {
-                    $this->applyLatePenalty($userId, $attendance, $schedule);
+                if ($status === 'late' && $lateMinutes > 0) {
+                    $this->applyLatePenalty($userId, $attendance, $lateMinutes);
+                }
+
+                // Update schedule assignment status
+                if ($status === 'present' || $status === 'late') {
+                    $schedule->update(['status' => 'completed']);
                 }
 
                 // Log audit
@@ -92,7 +126,7 @@ class AttendanceService
                     'user_id' => $userId,
                     'attendance_id' => $attendance->id,
                     'status' => $status,
-                    'location' => ['lat' => $latitude, 'lng' => $longitude]
+                    'late_minutes' => $lateMinutes,
                 ]);
 
                 return $attendance;
@@ -109,6 +143,92 @@ class AttendanceService
             ]);
             throw new BusinessException('Terjadi kesalahan saat melakukan check-in. Silakan coba lagi.', 'CHECK_IN_FAILED');
         }
+    }
+
+    /**
+     * Check if user has approved leave for the given date
+     *
+     * @param int $userId
+     * @param string|Carbon $date
+     * @return bool
+     */
+    public function hasApprovedLeave(int $userId, $date): bool
+    {
+        $dateCarbon = $date instanceof Carbon ? $date : Carbon::parse($date);
+        
+        return LeaveRequest::where('user_id', $userId)
+            ->where('status', 'approved')
+            ->where('start_date', '<=', $dateCarbon)
+            ->where('end_date', '>=', $dateCarbon)
+            ->exists();
+    }
+
+    /**
+     * Determine attendance status based on check-in time
+     * Returns array with status and late_minutes
+     *
+     * @param Carbon $checkInTime
+     * @param ScheduleAssignment $schedule
+     * @return array ['status' => string, 'late_minutes' => int]
+     */
+    public function determineStatus(Carbon $checkInTime, ScheduleAssignment $schedule): array
+    {
+        $scheduleStart = $this->getScheduleStartTime($schedule);
+        $gracePeriod = 5; // 5 minutes grace period
+        
+        // Calculate minutes late (negative if early)
+        $minutesLate = $checkInTime->diffInMinutes($scheduleStart, false);
+        
+        // Within grace period (0-5 minutes late)
+        if ($minutesLate <= $gracePeriod) {
+            return [
+                'status' => 'present',
+                'late_minutes' => 0,
+            ];
+        }
+        
+        // Late (more than 5 minutes)
+        return [
+            'status' => 'late',
+            'late_minutes' => (int) $minutesLate,
+        ];
+    }
+
+    /**
+     * Apply penalty for late attendance based on late minutes
+     * Grace period 5 menit = present, no penalty
+     * 6-15 menit = late, 5 poin
+     * 16-30 menit = late, 10 poin
+     * >30 menit = late, 15 poin
+     *
+     * @param int $userId
+     * @param Attendance $attendance
+     * @param int $lateMinutes
+     * @return void
+     */
+    protected function applyLatePenalty(int $userId, Attendance $attendance, int $lateMinutes): void
+    {
+        // Determine penalty type and points based on late minutes
+        if ($lateMinutes >= 6 && $lateMinutes <= 15) {
+            $penaltyTypeCode = 'LATE_MINOR';
+            $description = "Terlambat {$lateMinutes} menit pada " . $attendance->check_in->format('d/m/Y H:i');
+        } elseif ($lateMinutes >= 16 && $lateMinutes <= 30) {
+            $penaltyTypeCode = 'LATE_MODERATE';
+            $description = "Terlambat {$lateMinutes} menit pada " . $attendance->check_in->format('d/m/Y H:i');
+        } else { // > 30 minutes
+            $penaltyTypeCode = 'LATE_SEVERE';
+            $description = "Terlambat {$lateMinutes} menit pada " . $attendance->check_in->format('d/m/Y H:i');
+        }
+
+        // Create penalty using PenaltyService with automatic threshold checking
+        $this->penaltyService->createPenalty(
+            $userId,
+            $penaltyTypeCode,
+            $description,
+            'attendance',
+            $attendance->id,
+            $attendance->date
+        );
     }
 
     /**
@@ -143,121 +263,59 @@ class AttendanceService
     }
 
     /**
-     * Determine attendance status based on check-in time
+     * Mark absent for users who didn't check in
+     * This method is called by ProcessAbsencesJob
      *
-     * @param Carbon $checkInTime
-     * @param ScheduleAssignment $schedule
-     * @return string
+     * @param ScheduleAssignment $assignment
+     * @return Attendance
+     * @throws Exception
      */
-    protected function determineStatus(Carbon $checkInTime, ScheduleAssignment $schedule): string
+    public function markAbsent(ScheduleAssignment $assignment): Attendance
     {
-        $scheduleStart = Carbon::parse($schedule->date . ' ' . $schedule->time_start);
-        $lateThreshold = config('sikopma.late_threshold_minutes', 15);
-        
-        $minutesLate = $checkInTime->diffInMinutes($scheduleStart, false);
-
-        if ($minutesLate > $lateThreshold) {
-            return 'late';
+        // Validate assignment exists and is valid
+        if (!$assignment->exists) {
+            throw new Exception('Invalid schedule assignment');
         }
 
-        return 'present';
-    }
+        // Check if attendance already exists
+        $existingAttendance = Attendance::where('user_id', $assignment->user_id)
+            ->where('schedule_assignment_id', $assignment->id)
+            ->first();
 
-    /**
-     * Apply penalty for late attendance
-     *
-     * @param int $userId
-     * @param Attendance $attendance
-     * @param ScheduleAssignment $schedule
-     * @return void
-     */
-    protected function applyLatePenalty(int $userId, Attendance $attendance, ScheduleAssignment $schedule): void
-    {
-        $scheduleStart = Carbon::parse($schedule->date . ' ' . $schedule->time_start);
-        $minutesLate = $attendance->check_in->diffInMinutes($scheduleStart);
+        if ($existingAttendance) {
+            throw new Exception('Attendance record already exists for this assignment');
+        }
 
-        // Calculate penalty points (e.g., 1 point per 15 minutes late)
-        $penaltyPoints = ceil($minutesLate / 15) * 5;
-
-        Penalty::create([
-            'user_id' => $userId,
-            'type' => 'late',
-            'points' => $penaltyPoints,
-            'reason' => "Terlambat {$minutesLate} menit pada " . $attendance->check_in->format('d/m/Y H:i'),
-            'date' => today(),
-            'status' => 'active',
-        ]);
-    }
-
-    /**
-     * Mark absent for users who didn't check in
-     *
-     * @param Carbon $date
-     * @return int Number of users marked absent
-     */
-    public function markAbsent(Carbon $date): int
-    {
-        $scheduledUsers = ScheduleAssignment::where('date', $date)
-            ->pluck('user_id', 'id');
-
-        $checkedInUsers = Attendance::whereDate('check_in', $date)
-            ->pluck('user_id');
-
-        $absentUserIds = $scheduledUsers->keys()->diff($checkedInUsers);
-
-        $count = 0;
-        foreach ($absentUserIds as $scheduleId) {
-            $userId = $scheduledUsers[$scheduleId];
-            
-            Attendance::create([
-                'user_id' => $userId,
-                'schedule_assignment_id' => $scheduleId,
-                'date' => $date,
+        // Create absence attendance record
+        return DB::transaction(function () use ($assignment) {
+            $attendance = Attendance::create([
+                'user_id' => $assignment->user_id,
+                'schedule_assignment_id' => $assignment->id,
+                'date' => $assignment->date,
                 'status' => 'absent',
             ]);
 
-            // Apply absent penalty
-            Penalty::create([
-                'user_id' => $userId,
-                'type' => 'absent',
-                'points' => 20, // Higher penalty for absence
-                'reason' => 'Tidak hadir pada ' . $date->format('d/m/Y'),
-                'date' => $date,
-                'status' => 'active',
+            // Apply absent penalty using PenaltyService
+            $this->penaltyService->createPenalty(
+                $assignment->user_id,
+                'ABSENT',
+                "Tidak hadir pada " . $assignment->date->format('d/m/Y') . " sesi " . $assignment->session,
+                'attendance',
+                $attendance->id,
+                $assignment->date
+            );
+
+            // Update assignment status
+            $assignment->update(['status' => 'missed']);
+
+            Log::info('User marked absent', [
+                'user_id' => $assignment->user_id,
+                'assignment_id' => $assignment->id,
+                'date' => $assignment->date->format('Y-m-d'),
             ]);
 
-            $count++;
-        }
-
-        return $count;
-    }
-
-    /**
-     * Check if coordinates are within geofence
-     */
-    private function isWithinGeofence(float $latitude, float $longitude): bool
-    {
-        $allowedLat = config('sikopma.geofence.latitude');
-        $allowedLng = config('sikopma.geofence.longitude');
-        $radius = config('sikopma.geofence.radius_meters', 100);
-        
-        // Haversine formula to calculate distance
-        $earthRadius = 6371000; // meters
-        
-        $latFrom = deg2rad($allowedLat);
-        $lonFrom = deg2rad($allowedLng);
-        $latTo = deg2rad($latitude);
-        $lonTo = deg2rad($longitude);
-        
-        $latDelta = $latTo - $latFrom;
-        $lonDelta = $lonTo - $lonFrom;
-        
-        $angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) +
-            cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
-        
-        $distance = $angle * $earthRadius;
-        
-        return $distance <= $radius;
+            return $attendance;
+        });
     }
 
     /**
@@ -274,65 +332,9 @@ class AttendanceService
     }
 
     /**
-     * Calculate late minutes with grace period
-     */
-    protected function calculateLateMinutes(\Carbon\Carbon $checkInTime, ScheduleAssignment $schedule): int
-    {
-        $scheduleStartTime = $this->getScheduleStartTime($schedule);
-        $gracePeriod = config('sikopma.penalty.grace_period_minutes', 5);
-        
-        $effectiveStartTime = $scheduleStartTime->copy()->addMinutes($gracePeriod);
-        
-        if ($checkInTime->lte($effectiveStartTime)) {
-            return 0;
-        }
-        
-        return $checkInTime->diffInMinutes($effectiveStartTime);
-    }
-
-    /**
-     * Calculate penalty amount based on late minutes
-     */
-    protected function calculatePenaltyAmount(int $lateMinutes): int
-    {
-        $baseAmount = config('sikopma.penalty.base_amount', 5000);
-        $incrementAmount = config('sikopma.penalty.increment_amount', 1000);
-        $incrementInterval = config('sikopma.penalty.increment_interval_minutes', 15);
-        
-        if ($lateMinutes <= $incrementInterval) {
-            return $baseAmount;
-        }
-        
-        $additionalIntervals = ceil($lateMinutes / $incrementInterval) - 1;
-        return $baseAmount + ($additionalIntervals * $incrementAmount);
-    }
-
-    /**
-     * Determine penalty type based on severity
-     */
-    protected function determinePenaltyType(int $lateMinutes): string
-    {
-        $thresholds = config('sikopma.penalty.thresholds', [
-            'minor' => 15,
-            'moderate' => 30,
-            'major' => 60,
-        ]);
-
-        if ($lateMinutes <= $thresholds['minor']) {
-            return 'minor';
-        } elseif ($lateMinutes <= $thresholds['moderate']) {
-            return 'moderate';
-        } elseif ($lateMinutes <= $thresholds['major']) {
-            return 'major';
-        } else {
-            return 'severe';
-        }
-    }
-
-    /**
      * Get schedule start time
      */
-    protected function getScheduleStartTime(ScheduleAssignment $schedule): \Carbon\Carbon
+    protected function getScheduleStartTime(ScheduleAssignment $schedule): Carbon
     {
         $sessionTimes = [
             1 => '07:30',
@@ -341,13 +343,13 @@ class AttendanceService
         ];
 
         $timeString = $sessionTimes[$schedule->session] ?? '07:30';
-        return $schedule->date->copy()->setTimeFromFormat('H:i', $timeString);
+        return $schedule->date->copy()->setTimeFromTimeString($timeString);
     }
 
     /**
      * Get attendance analytics
      */
-    public function getAttendanceAnalytics(\Carbon\Carbon $startDate, \Carbon\Carbon $endDate, ?int $userId = null): array
+    public function getAttendanceAnalytics(Carbon $startDate, Carbon $endDate, ?int $userId = null): array
     {
         $query = $this->repository->query()
             ->whereBetween('date', [$startDate, $endDate]);

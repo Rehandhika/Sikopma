@@ -96,6 +96,51 @@
                         <label class="text-sm font-medium text-gray-500">Alasan</label>
                         <div class="mt-1 text-gray-900">{{ $selectedLeave->reason }}</div>
                     </div>
+
+                    @if(count($affectedSchedules) > 0)
+                        <div class="col-span-2">
+                            <label class="text-sm font-medium text-gray-500 mb-2 block">
+                                Jadwal yang Akan Terdampak
+                                <span class="text-gray-400 font-normal">({{ count($affectedSchedules) }} jadwal)</span>
+                            </label>
+                            <div class="bg-gray-50 rounded-lg border border-gray-200 p-3 max-h-48 overflow-y-auto">
+                                <div class="space-y-2">
+                                    @foreach($affectedSchedules as $schedule)
+                                        <div class="flex items-center justify-between bg-white p-2 rounded border border-gray-200">
+                                            <div class="flex items-center space-x-2">
+                                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                                </svg>
+                                                <div>
+                                                    <p class="text-sm font-medium text-gray-900">{{ $schedule['date'] }}</p>
+                                                    <p class="text-xs text-gray-500">{{ $schedule['session_name'] }} ({{ $schedule['time'] }})</p>
+                                                </div>
+                                            </div>
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                                                @if($schedule['status'] === 'scheduled') bg-blue-100 text-blue-800
+                                                @elseif($schedule['status'] === 'excused') bg-green-100 text-green-800
+                                                @else bg-gray-100 text-gray-800
+                                                @endif">
+                                                {{ ucfirst($schedule['status']) }}
+                                            </span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">
+                                <svg class="w-3 h-3 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Status jadwal akan diubah menjadi "excused" jika disetujui
+                            </p>
+                        </div>
+                    @else
+                        <div class="col-span-2">
+                            <x-ui.alert variant="warning" :icon="true">
+                                Tidak ada jadwal yang terdampak pada periode ini
+                            </x-ui.alert>
+                        </div>
+                    @endif
                 </div>
 
                 <x-ui.textarea 

@@ -130,8 +130,10 @@ class PublicDataService
                 ->public()
                 ->active()
                 ->whereNotNull('category')
+                ->where('category', '!=', '')
                 ->distinct()
                 ->pluck('category')
+                ->filter(fn ($c) => !empty(trim($c)))
                 ->sort()
                 ->values();
         });

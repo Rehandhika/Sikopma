@@ -283,7 +283,7 @@ function ProductsSection({ initialCategories, initialProducts }) {
                             </SelectTrigger>
                             <SelectContent className="bg-popover border-border">
                                 <SelectItem value="all">Semua Kategori</SelectItem>
-                                {categories.map((c) => (
+                                {categories.filter((c) => c && c.trim() !== '').map((c) => (
                                     <SelectItem key={c} value={c}>
                                         {c}
                                     </SelectItem>

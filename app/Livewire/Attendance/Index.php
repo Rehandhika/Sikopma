@@ -18,8 +18,6 @@ class Index extends Component
     public $canCheckOut = false;
     public $recentAttendances;
     public $monthlyStats;
-    public $latitude;
-    public $longitude;
 
     public function mount()
     {
@@ -105,11 +103,6 @@ class Index extends Component
             return;
         }
 
-        if (!$this->latitude || !$this->longitude) {
-            $this->dispatch('alert', type: 'error', message: 'Lokasi tidak terdeteksi');
-            return;
-        }
-
         // Check if already checked in for this schedule
         $existingAttendance = Attendance::where('user_id', auth()->id())
             ->where('schedule_assignment_id', $this->currentSchedule->id)
@@ -132,8 +125,6 @@ class Index extends Component
             'date' => today(),
             'check_in' => $now,
             'status' => $status,
-            'location_lat' => $this->latitude,
-            'location_lng' => $this->longitude,
         ]);
 
         $this->dispatch('alert', type: 'success', message: 'Check-in berhasil!');
@@ -158,12 +149,6 @@ class Index extends Component
 
         $this->dispatch('alert', type: 'success', message: 'Check-out berhasil!');
         $this->loadData();
-    }
-
-    public function updateLocation($lat, $lng)
-    {
-        $this->latitude = $lat;
-        $this->longitude = $lng;
     }
 
     public function render()

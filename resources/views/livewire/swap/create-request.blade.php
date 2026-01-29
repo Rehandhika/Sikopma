@@ -104,7 +104,7 @@
                             
                             <!-- Deadline Warning -->
                             @php
-                                $deadline = \Carbon\Carbon::parse($assignment->date . ' ' . $assignment->time_start)->subHours(24);
+                                $deadline = $assignment->date->copy()->setTimeFromTimeString($assignment->time_start)->subHours(24);
                                 $isNearDeadline = now()->greaterThan($deadline->copy()->subHours(12));
                                 $isPastDeadline = now()->greaterThan($deadline);
                             @endphp

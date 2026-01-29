@@ -8,8 +8,7 @@ use Livewire\Attributes\Layout;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
-use App\Models\LoginHistory;
-use App\Services\ActivityLogService;
+use App\Jobs\LogLoginActivity;
 
 #[Title('Login - SIKOPMA')]
 #[Layout('layouts.guest')]
@@ -59,34 +58,29 @@ class LoginForm extends Component
             // Regenerate session
             session()->regenerate();
             
-            // Log successful login
-            LoginHistory::create([
-                'user_id' => Auth::id(),
-                'ip_address' => request()->ip(),
-                'user_agent' => request()->userAgent(),
-                'logged_in_at' => now(),
-                'status' => 'success',
-            ]);
+            // Dispatch async logging job (non-blocking)
+            LogLoginActivity::dispatch(
+                Auth::id(),
+                request()->ip(),
+                request()->userAgent() ?? 'Unknown',
+                'success'
+            );
             
-            // Log activity for activity log
-            ActivityLogService::logLogin();
-            
-            // Redirect to dashboard
+            // Redirect to dashboard immediately
             return redirect()->intended(route('admin.dashboard'));
         }
 
         // Increment rate limiter
         RateLimiter::hit($key, 60);
         
-        // Log failed login
-        LoginHistory::create([
-            'user_id' => null,
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent(),
-            'logged_in_at' => now(),
-            'status' => 'failed',
-            'failure_reason' => 'Invalid credentials or inactive account',
-        ]);
+        // Dispatch async logging for failed attempt (non-blocking)
+        LogLoginActivity::dispatch(
+            0,
+            request()->ip(),
+            request()->userAgent() ?? 'Unknown',
+            'failed',
+            'Invalid credentials or inactive account'
+        );
 
         $this->addError('nim', 'NIM atau password salah, atau akun tidak aktif.');
     }

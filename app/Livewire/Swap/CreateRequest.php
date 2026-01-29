@@ -150,7 +150,8 @@ class CreateRequest extends Component
         // Check if swap deadline has passed (e.g., 24 hours before shift)
         $requesterAssignment = ScheduleAssignment::find($this->selectedAssignment);
         if ($requesterAssignment) {
-            $deadline = Carbon::parse($requesterAssignment->date . ' ' . $requesterAssignment->time_start)
+            $deadline = $requesterAssignment->date->copy()
+                ->setTimeFromTimeString($requesterAssignment->time_start)
                 ->subHours(24);
             
             if (now()->greaterThan($deadline)) {

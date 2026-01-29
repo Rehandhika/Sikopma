@@ -92,7 +92,7 @@ class ScheduleChangeManager extends Component
         $assignment = ScheduleAssignment::find($this->selectedAssignment);
         
         // Validasi: minimal 24 jam sebelum jadwal
-        $deadline = Carbon::parse($assignment->date)->setTimeFromTimeString($assignment->time_start)->subHours(24);
+        $deadline = $assignment->date->copy()->setTimeFromTimeString($assignment->time_start)->subHours(24);
         if (now()->gt($deadline)) {
             $this->addError('selectedAssignment', 'Pengajuan minimal 24 jam sebelum jadwal');
             return;

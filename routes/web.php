@@ -39,6 +39,11 @@ Route::middleware(['auth', 'signed'])->group(function () {
 // Public Catalog (Home)
 Route::get('/', [PublicPageController::class, 'home'])->name('home');
 
+// Test route for debugging
+Route::get('/test-react', function () {
+    return view('public.test');
+})->name('test.react');
+
 // Public Products
 Route::get('/produk', [PublicPageController::class, 'home'])->name('public.products');
 

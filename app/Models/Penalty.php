@@ -6,6 +6,7 @@ use App\Models\PenaltyType;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Penalty extends Model
 {
@@ -48,6 +49,14 @@ class Penalty extends Model
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    /**
+     * Get the owning reference model (polymorphic relationship)
+     */
+    public function reference(): MorphTo
+    {
+        return $this->morphTo();
     }
 
     /**

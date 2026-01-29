@@ -15,8 +15,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // For MySQL, we need to alter the column type
-        DB::statement("ALTER TABLE notifications MODIFY COLUMN type VARCHAR(50) NOT NULL DEFAULT 'info'");
+        // For MySQL, we need to alter the column type - skip for SQLite
+        $driver = Schema::getConnection()->getDriverName();
+        if ($driver !== 'sqlite') {
+            DB::statement("ALTER TABLE notifications MODIFY COLUMN type VARCHAR(50) NOT NULL DEFAULT 'info'");
+        }
     }
 
     /**
@@ -24,7 +27,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Revert to enum (note: this may fail if there are values not in the enum)
-        DB::statement("ALTER TABLE notifications MODIFY COLUMN type ENUM('info', 'warning', 'error', 'success') NOT NULL DEFAULT 'info'");
+        // Revert to enum (note: this may fail if there are values not in the enum) - skip for SQLite
+        $driver = Schema::getConnection()->getDriverName();
+        if ($driver !== 'sqlite') {
+            DB::statement("ALTER TABLE notifications MODIFY COLUMN type ENUM('info', 'warning', 'error', 'success') NOT NULL DEFAULT 'info'");
+        }
     }
 };

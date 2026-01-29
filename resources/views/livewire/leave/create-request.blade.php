@@ -86,6 +86,52 @@
                     </x-ui.alert>
                 @endif
 
+                {{-- Affected Schedules --}}
+                @if(count($affectedSchedules) > 0)
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">
+                            Jadwal yang Akan Terdampak
+                            <span class="text-gray-500 font-normal">({{ count($affectedSchedules) }} jadwal)</span>
+                        </label>
+                        <div class="bg-gray-50 rounded-lg border border-gray-200 p-4 max-h-64 overflow-y-auto">
+                            <div class="space-y-2">
+                                @foreach($affectedSchedules as $schedule)
+                                    <div class="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="flex-shrink-0">
+                                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-medium text-gray-900">{{ $schedule['date'] }}</p>
+                                                <p class="text-xs text-gray-500">{{ $schedule['session_name'] }} ({{ $schedule['time'] }})</p>
+                                            </div>
+                                        </div>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            @if($schedule['status'] === 'scheduled') bg-blue-100 text-blue-800
+                                            @elseif($schedule['status'] === 'excused') bg-green-100 text-green-800
+                                            @else bg-gray-100 text-gray-800
+                                            @endif">
+                                            {{ ucfirst($schedule['status']) }}
+                                        </span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">
+                            <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Jadwal-jadwal ini akan diubah statusnya menjadi "excused" jika permohonan disetujui
+                        </p>
+                    </div>
+                @elseif($start_date && $end_date)
+                    <x-ui.alert variant="warning" :icon="true">
+                        Tidak ada jadwal yang terdampak pada periode yang dipilih.
+                    </x-ui.alert>
+                @endif
+
                 <x-ui.textarea 
                     name="reason"
                     label="Alasan"

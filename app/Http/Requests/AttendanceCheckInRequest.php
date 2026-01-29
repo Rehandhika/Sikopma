@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class AttendanceCheckInRequest extends FormRequest
 {
@@ -31,16 +32,6 @@ class AttendanceCheckInRequest extends FormRequest
                           ->where('status', 'scheduled');
                 })
             ],
-            'latitude' => [
-                'required',
-                'numeric',
-                'between:-90,90',
-            ],
-            'longitude' => [
-                'required',
-                'numeric',
-                'between:-180,180',
-            ],
             'notes' => [
                 'nullable',
                 'string',
@@ -60,12 +51,6 @@ class AttendanceCheckInRequest extends FormRequest
         return [
             'schedule_assignment_id.required' => 'ID jadwal diperlukan.',
             'schedule_assignment_id.exists' => 'Jadwal tidak valid atau tidak ditemukan.',
-            'latitude.required' => 'Lokasi diperlukan untuk check-in.',
-            'latitude.numeric' => 'Koordinat latitude harus berupa angka.',
-            'latitude.between' => 'Koordinat latitude tidak valid.',
-            'longitude.required' => 'Lokasi diperlukan untuk check-in.',
-            'longitude.numeric' => 'Koordinat longitude harus berupa angka.',
-            'longitude.between' => 'Koordinat longitude tidak valid.',
             'notes.max' => 'Catatan maksimal 500 karakter.',
             'photo_proof.image' => 'Bukti foto harus berupa gambar.',
             'photo_proof.mimes' => 'Format foto harus jpeg, png, atau jpg.',
@@ -87,27 +72,5 @@ class AttendanceCheckInRequest extends FormRequest
         }
 
         return $data;
-    }
-
-    /**
-     * Validate geofence after basic validation
-     *
-     * @return void
-     */
-    public function withValidator($validator)
-    {
-        $validator->after(function ($validator) {
-            if (config('sikopma.attendance.require_geolocation', true)) {
-                $latitude = $this->input('latitude');
-                $longitude = $this->input('longitude');
-
-                if ($latitude && $longitude && !is_within_geofence($latitude, $longitude)) {
-                    $validator->errors()->add(
-                        'location',
-                        'Anda berada di luar area yang diizinkan untuk check-in.'
-                    );
-                }
-            }
-        });
     }
 }

@@ -162,7 +162,7 @@
                             <select wire:model="selectedAssignment" class="w-full border-gray-300 rounded-lg text-sm">
                                 <option value="">Pilih jadwal...</option>
                                 @foreach($myAssignments as $a)
-                                <option value="{{ $a->id }}">{{ \Carbon\Carbon::parse($a->date)->format('d M Y') }} - Sesi {{ $a->session }} ({{ $a->time_start }} - {{ $a->time_end }})</option>
+                                <option value="{{ $a->id }}">{{ $a->date->format('d M Y') }} - Sesi {{ $a->session }} ({{ $a->time_start }} - {{ $a->time_end }})</option>
                                 @endforeach
                             </select>
                             @error('selectedAssignment') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror

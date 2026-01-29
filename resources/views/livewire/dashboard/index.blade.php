@@ -110,6 +110,194 @@
 
     {{-- Admin Stats --}}
     @if($this->isAdmin)
+    {{-- Today's Attendance Summary Widget --}}
+    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="font-semibold text-sm text-gray-900 dark:text-white">Ringkasan Kehadiran Hari Ini</h2>
+        </div>
+        <div class="p-4">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center shrink-0">
+                            <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Hadir</p>
+                            <p class="text-2xl font-bold text-emerald-900 dark:text-emerald-100">{{ $this->todayAttendanceSummary['present'] }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center shrink-0">
+                            <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-xs text-amber-600 dark:text-amber-400 font-medium">Terlambat</p>
+                            <p class="text-2xl font-bold text-amber-900 dark:text-amber-100">{{ $this->todayAttendanceSummary['late'] }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900/50 flex items-center justify-center shrink-0">
+                            <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-xs text-red-600 dark:text-red-400 font-medium">Tidak Hadir</p>
+                            <p class="text-2xl font-bold text-red-900 dark:text-red-100">{{ $this->todayAttendanceSummary['absent'] }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center shrink-0">
+                            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-xs text-blue-600 dark:text-blue-400 font-medium">Izin</p>
+                            <p class="text-2xl font-bold text-blue-900 dark:text-blue-100">{{ $this->todayAttendanceSummary['excused'] }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Pending Leave Requests Widget --}}
+    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <h2 class="font-semibold text-sm text-gray-900 dark:text-white">Pengajuan Izin Menunggu Persetujuan</h2>
+            @if($this->pendingLeaveRequests->count() > 0)
+                <a href="{{ route('admin.leave.approval') }}" class="text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
+                    Lihat Semua
+                </a>
+            @endif
+        </div>
+        <div class="divide-y divide-gray-200 dark:divide-gray-700">
+            @forelse($this->pendingLeaveRequests as $leave)
+                <div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $leave->user->name }}</p>
+                                <span class="px-2 py-0.5 text-xs font-medium rounded 
+                                    {{ $leave->leave_type === 'sick' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' }}">
+                                    {{ $leave->leave_type === 'sick' ? 'Sakit' : 'Izin' }}
+                                </span>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                {{ $leave->user->nim }}
+                            </p>
+                            <p class="text-xs text-gray-600 dark:text-gray-300 mb-2">
+                                {{ $leave->start_date->translatedFormat('d M Y') }} - {{ $leave->end_date->translatedFormat('d M Y') }}
+                                <span class="text-gray-400">({{ $leave->start_date->diffInDays($leave->end_date) + 1 }} hari)</span>
+                            </p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{{ $leave->reason }}</p>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <p class="text-xs text-gray-400 dark:text-gray-500">{{ $leave->created_at->diffForHumans() }}</p>
+                            <a href="{{ route('admin.leave.approval') }}" 
+                                class="inline-flex items-center gap-1 mt-2 text-xs font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
+                                Tinjau
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="text-center py-8">
+                    <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Tidak ada pengajuan izin yang menunggu</p>
+                </div>
+            @endforelse
+        </div>
+    </div>
+
+    {{-- Penalty Threshold Warning Widget --}}
+    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <h2 class="font-semibold text-sm text-gray-900 dark:text-white">Peringatan Threshold Penalti</h2>
+                @if($this->usersApproachingThreshold->count() > 0)
+                    <span class="px-2 py-0.5 text-xs font-medium rounded bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                        {{ $this->usersApproachingThreshold->count() }}
+                    </span>
+                @endif
+            </div>
+            @if($this->usersApproachingThreshold->count() > 0)
+                <a href="{{ route('admin.penalty.manage') }}" class="text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
+                    Lihat Semua
+                </a>
+            @endif
+        </div>
+        <div class="divide-y divide-gray-200 dark:divide-gray-700">
+            @forelse($this->usersApproachingThreshold as $user)
+                <div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                    <div class="flex items-center justify-between gap-4">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $user->name }}</p>
+                                @if($user->total_points >= 50)
+                                    <span class="px-2 py-0.5 text-xs font-medium rounded bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                                        Suspended
+                                    </span>
+                                @elseif($user->total_points >= 40)
+                                    <span class="px-2 py-0.5 text-xs font-medium rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                                        Mendekati Threshold
+                                    </span>
+                                @endif
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $user->nim }}</p>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="flex items-center gap-2">
+                                <div class="text-right">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Total Poin</p>
+                                    <p class="text-lg font-bold {{ $user->total_points >= 50 ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400' }}">
+                                        {{ $user->total_points }}
+                                    </p>
+                                </div>
+                                <div class="w-16 h-16">
+                                    <svg class="transform -rotate-90" viewBox="0 0 36 36">
+                                        <circle cx="18" cy="18" r="16" fill="none" class="stroke-gray-200 dark:stroke-gray-700" stroke-width="3"></circle>
+                                        <circle cx="18" cy="18" r="16" fill="none" 
+                                            class="{{ $user->total_points >= 50 ? 'stroke-red-500' : 'stroke-amber-500' }}" 
+                                            stroke-width="3" 
+                                            stroke-dasharray="{{ ($user->total_points / 50) * 100 }}, 100"
+                                            stroke-linecap="round"></circle>
+                                    </svg>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ round(($user->total_points / 50) * 100) }}% dari threshold</p>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="text-center py-8">
+                    <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Tidak ada user yang mendekati threshold</p>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Semua user dalam kondisi baik</p>
+                </div>
+            @endforelse
+        </div>
+    </div>
+
     <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
             <h2 class="font-semibold text-sm text-gray-900 dark:text-white">Statistik Admin Hari Ini</h2>

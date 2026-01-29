@@ -109,8 +109,8 @@ class CheckInOut extends Component
         // Load attendance data and determine schedule status
         if ($this->currentSchedule) {
             // Determine schedule status
-            $scheduleStart = Carbon::parse($this->currentSchedule->date->format('Y-m-d') . ' ' . $this->currentSchedule->time_start);
-            $scheduleEnd = Carbon::parse($this->currentSchedule->date->format('Y-m-d') . ' ' . $this->currentSchedule->time_end);
+            $scheduleStart = $this->currentSchedule->date->copy()->setTimeFromTimeString($this->currentSchedule->time_start);
+            $scheduleEnd = $this->currentSchedule->date->copy()->setTimeFromTimeString($this->currentSchedule->time_end);
             
             if ($now->between($scheduleStart, $scheduleEnd)) {
                 $this->scheduleStatus = 'active';
@@ -155,7 +155,7 @@ class CheckInOut extends Component
             }
 
             // Validate timing
-            $scheduleStart = Carbon::parse($this->currentSchedule->date->format('Y-m-d') . ' ' . $this->currentSchedule->time_start);
+            $scheduleStart = $this->currentSchedule->date->copy()->setTimeFromTimeString($this->currentSchedule->time_start);
             $now = now();
             $tolerance = config('sikopma.attendance.allow_early_checkin_minutes', 30);
             
@@ -322,7 +322,7 @@ class CheckInOut extends Component
      */
     private function determineAttendanceStatus(Carbon $checkInTime): string
     {
-        $scheduleStart = Carbon::parse($this->currentSchedule->date->format('Y-m-d') . ' ' . $this->currentSchedule->time_start);
+        $scheduleStart = $this->currentSchedule->date->copy()->setTimeFromTimeString($this->currentSchedule->time_start);
         $lateThreshold = config('sikopma.late_threshold_minutes', 15);
 
         if ($checkInTime->greaterThan($scheduleStart->copy()->addMinutes($lateThreshold))) {
@@ -346,7 +346,7 @@ class CheckInOut extends Component
         }
 
         // Allow check-in with tolerance
-        $scheduleStart = Carbon::parse($this->currentSchedule->date->format('Y-m-d') . ' ' . $this->currentSchedule->time_start);
+        $scheduleStart = $this->currentSchedule->date->copy()->setTimeFromTimeString($this->currentSchedule->time_start);
         $now = now();
         $tolerance = config('sikopma.attendance.allow_early_checkin_minutes', 30);
         
@@ -362,7 +362,7 @@ class CheckInOut extends Component
             return null;
         }
 
-        $scheduleStart = Carbon::parse($this->currentSchedule->date->format('Y-m-d') . ' ' . $this->currentSchedule->time_start);
+        $scheduleStart = $this->currentSchedule->date->copy()->setTimeFromTimeString($this->currentSchedule->time_start);
         $tolerance = config('sikopma.attendance.allow_early_checkin_minutes', 30);
         $checkInAvailable = $scheduleStart->copy()->subMinutes($tolerance);
         

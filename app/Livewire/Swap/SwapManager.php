@@ -90,7 +90,7 @@ class SwapManager extends Component
         $myAssignment = ScheduleAssignment::find($this->selectedAssignment);
         
         // Check 24h deadline
-        $deadline = Carbon::parse($myAssignment->date)->setTimeFromTimeString($myAssignment->time_start)->subHours(24);
+        $deadline = $myAssignment->date->copy()->setTimeFromTimeString($myAssignment->time_start)->subHours(24);
         if (now()->gt($deadline)) {
             $this->addError('selectedAssignment', 'Minimal 24 jam sebelum shift');
             return;

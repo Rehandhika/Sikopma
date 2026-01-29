@@ -12,16 +12,18 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            RolePermissionSeeder::class,
-            UserSeeder::class,
-            VariantOptionSeeder::class,
-            ProductSeeder::class,
-            PurchaseSeeder::class,
-            SaleSeeder::class,
-            ScheduleSeeder::class,
+            // Konfigurasi & Setting Sistem (Krusial)
             PenaltyTypeSeeder::class,
             SystemSettingSeeder::class,
-            AttendanceSeeder::class,
+            StoreSettingSeeder::class,
+            ScheduleConfigurationSeeder::class,
+            
+            // Users, Roles & Permissions
+            RolePermissionSeeder::class,
+            UserSeeder::class,
+            
+            // Products dari Katalog
+            KatalogSeeder::class,
         ]);
     }
 }

@@ -50,7 +50,8 @@ class MyRequests extends Component
         }
 
         // Check if deadline has passed
-        $deadline = Carbon::parse($request->requesterAssignment->date . ' ' . $request->requesterAssignment->time_start)
+        $deadline = $request->requesterAssignment->date->copy()
+            ->setTimeFromTimeString($request->requesterAssignment->time_start)
             ->subHours(24);
         
         if (now()->greaterThan($deadline)) {

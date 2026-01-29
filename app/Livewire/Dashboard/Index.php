@@ -159,6 +159,87 @@ class Index extends Component
     }
 
     #[Computed]
+    public function todayAttendanceSummary(): array
+    {
+        $today = now()->format('Y-m-d');
+
+        try {
+            $stats = DB::selectOne("
+                SELECT
+                    (SELECT COUNT(*) FROM attendances WHERE DATE(date) = ? AND status = 'present') as present,
+                    (SELECT COUNT(*) FROM attendances WHERE DATE(date) = ? AND status = 'late') as late,
+                    (SELECT COUNT(*) FROM attendances WHERE DATE(date) = ? AND status = 'absent') as absent,
+                    (SELECT COUNT(*) FROM attendances WHERE DATE(date) = ? AND status = 'excused') as excused
+            ", [$today, $today, $today, $today]);
+        } catch (\Exception $e) {
+            $stats = (object) ['present' => 0, 'late' => 0, 'absent' => 0, 'excused' => 0];
+        }
+
+        return [
+            'present' => (int)($stats->present ?? 0),
+            'late' => (int)($stats->late ?? 0),
+            'absent' => (int)($stats->absent ?? 0),
+            'excused' => (int)($stats->excused ?? 0),
+        ];
+    }
+
+    #[Computed]
+    public function pendingLeaveRequests(): \Illuminate\Support\Collection
+    {
+        if (!$this->isAdmin) {
+            return collect();
+        }
+
+        try {
+            return LeaveRequest::where('status', 'pending')
+                ->with(['user:id,name,nim'])
+                ->select('id', 'user_id', 'leave_type', 'start_date', 'end_date', 'reason', 'created_at')
+                ->latest()
+                ->limit(5)
+                ->get();
+        } catch (\Exception $e) {
+            return collect();
+        }
+    }
+
+    #[Computed]
+    public function usersApproachingThreshold(): \Illuminate\Support\Collection
+    {
+        if (!$this->isAdmin) {
+            return collect();
+        }
+
+        try {
+            // Get users with active penalty points >= 40 (80% of 50 point threshold)
+            $usersWithPoints = DB::select("
+                SELECT 
+                    u.id,
+                    u.name,
+                    u.nim,
+                    COALESCE(SUM(p.points), 0) as total_points
+                FROM users u
+                LEFT JOIN penalties p ON u.id = p.user_id AND p.status = 'active'
+                WHERE u.status = 'active' AND u.deleted_at IS NULL
+                GROUP BY u.id, u.name, u.nim
+                HAVING total_points >= 40
+                ORDER BY total_points DESC
+                LIMIT 5
+            ");
+
+            return collect($usersWithPoints)->map(function ($user) {
+                return (object) [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'nim' => $user->nim,
+                    'total_points' => (int)$user->total_points,
+                ];
+            });
+        } catch (\Exception $e) {
+            return collect();
+        }
+    }
+
+    #[Computed]
     public function adminStats(): array
     {
         if (!$this->isAdmin) {

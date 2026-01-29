@@ -20,8 +20,15 @@ return new class extends Migration
             // Indexes for efficient querying (Requirements 5.1)
             $table->index('user_id');
             $table->index('created_at');
-            $table->fullText('activity');
         });
+        
+        // Add fulltext index only for MySQL (SQLite doesn't support it)
+        $driver = Schema::getConnection()->getDriverName();
+        if ($driver !== 'sqlite') {
+            Schema::table('activity_logs', function (Blueprint $table) {
+                $table->fullText('activity');
+            });
+        }
     }
 
     /**
