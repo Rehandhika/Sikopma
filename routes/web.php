@@ -238,6 +238,9 @@ Route::prefix('admin')
             Route::get('/banner', \App\Livewire\Admin\BannerNewsManagement::class)
                 ->middleware('role:Super Admin|Ketua')
                 ->name('banners');
+            Route::get('/pembayaran', \App\Livewire\Settings\PaymentSettings::class)
+                ->middleware('role:Super Admin|Ketua|Wakil Ketua')
+                ->name('payment');
         });
         
         // Profile (Profil)

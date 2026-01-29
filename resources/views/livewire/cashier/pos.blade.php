@@ -260,20 +260,44 @@
                         <p class="text-2xl font-bold text-primary-700 dark:text-primary-300">Rp {{ number_format($this->cartTotal, 0, ',', '.') }}</p>
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Metode</label>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button wire:click="$set('paymentMethod', 'cash')" 
-                                class="p-3 rounded-xl border-2 flex items-center justify-center gap-2 {{ $paymentMethod === 'cash' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30' : 'border-gray-200 dark:border-gray-700' }}">
-                                <span class="font-semibold text-sm {{ $paymentMethod === 'cash' ? 'text-primary-700' : 'text-gray-700 dark:text-gray-300' }}">Tunai</span>
-                            </button>
-                            <button wire:click="$set('paymentMethod', 'qris')" 
-                                class="p-3 rounded-xl border-2 flex items-center justify-center gap-2 {{ $paymentMethod === 'qris' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30' : 'border-gray-200 dark:border-gray-700' }}">
-                                <span class="font-semibold text-sm {{ $paymentMethod === 'qris' ? 'text-primary-700' : 'text-gray-700 dark:text-gray-300' }}">QRIS</span>
-                            </button>
+                    {{-- Dynamic Payment Methods - Requirements: 5.1 --}}
+                    @if(count($this->paymentMethods) > 0)
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Metode</label>
+                            <div class="grid grid-cols-{{ min(count($this->paymentMethods), 3) }} gap-2">
+                                @foreach($this->paymentMethods as $method)
+                                    <button wire:click="$set('paymentMethod', '{{ $method['id'] }}')" 
+                                        class="p-3 rounded-xl border-2 flex flex-col items-center justify-center gap-1 {{ $paymentMethod === $method['id'] ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30' : 'border-gray-200 dark:border-gray-700' }}">
+                                        @if($method['icon'] === 'cash')
+                                            <svg class="w-5 h-5 {{ $paymentMethod === $method['id'] ? 'text-primary-600' : 'text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                            </svg>
+                                        @elseif($method['icon'] === 'bank')
+                                            <svg class="w-5 h-5 {{ $paymentMethod === $method['id'] ? 'text-primary-600' : 'text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                            </svg>
+                                        @elseif($method['icon'] === 'qr-code')
+                                            <svg class="w-5 h-5 {{ $paymentMethod === $method['id'] ? 'text-primary-600' : 'text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                                            </svg>
+                                        @endif
+                                        <span class="font-semibold text-sm {{ $paymentMethod === $method['id'] ? 'text-primary-700' : 'text-gray-700 dark:text-gray-300' }}">{{ $method['name'] }}</span>
+                                    </button>
+                                @endforeach
+                            </div>
                         </div>
-                    </div>
+                    @else
+                        {{-- No payment methods available - Requirements: 5.5 --}}
+                        <div class="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">
+                            <svg class="w-12 h-12 mx-auto text-red-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                            <p class="text-red-600 dark:text-red-400 font-medium">Tidak ada metode pembayaran tersedia</p>
+                            <p class="text-red-500 dark:text-red-400 text-sm mt-1">Hubungi admin untuk mengaktifkan metode pembayaran</p>
+                        </div>
+                    @endif
 
+                    {{-- Cash Payment Interface - Requirements: 5.4 --}}
                     @if($paymentMethod === 'cash')
                         <div class="space-y-3">
                             <div>
@@ -305,9 +329,71 @@
                                 </div>
                             @endif
                         </div>
-                    @else
-                        <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                            <p class="text-blue-700 dark:text-blue-400 text-sm">Pembayaran QRIS dengan jumlah pas.</p>
+
+                    {{-- QRIS Payment Interface - Requirements: 5.2 --}}
+                    @elseif($paymentMethod === 'qris')
+                        <div class="space-y-3">
+                            @if($this->paymentConfig['qris_image_url'])
+                                <div class="bg-white dark:bg-gray-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 text-center mb-3">Scan QR Code untuk membayar</p>
+                                    <div class="flex justify-center">
+                                        <img src="{{ $this->paymentConfig['qris_image_url'] }}" alt="QRIS" class="max-w-full h-auto max-h-64 rounded-lg shadow-sm">
+                                    </div>
+                                </div>
+                            @else
+                                <div class="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl text-center">
+                                    <svg class="w-10 h-10 mx-auto text-yellow-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    </svg>
+                                    <p class="text-yellow-700 dark:text-yellow-400 font-medium">Gambar QRIS belum dikonfigurasi</p>
+                                    <p class="text-yellow-600 dark:text-yellow-400 text-sm mt-1">Hubungi admin untuk mengupload gambar QRIS</p>
+                                </div>
+                            @endif
+                            <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                                <p class="text-blue-700 dark:text-blue-400 text-sm text-center">Pembayaran QRIS dengan jumlah pas: <span class="font-bold">Rp {{ number_format($this->cartTotal, 0, ',', '.') }}</span></p>
+                            </div>
+                        </div>
+
+                    {{-- Transfer Payment Interface - Requirements: 5.3 --}}
+                    @elseif($paymentMethod === 'transfer')
+                        <div class="space-y-3">
+                            @if($this->paymentConfig['transfer_details'] && count($this->paymentConfig['transfer_details']) > 0)
+                                <p class="text-sm text-gray-600 dark:text-gray-400 text-center">Pilih rekening tujuan transfer:</p>
+                                
+                                <div class="space-y-3 max-h-64 overflow-y-auto">
+                                    @foreach($this->paymentConfig['transfer_details'] as $bank)
+                                        <div class="bg-white dark:bg-gray-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600 space-y-2">
+                                            <div class="flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-600">
+                                                <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                                    <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                                    </svg>
+                                                </div>
+                                                <span class="font-semibold text-gray-900 dark:text-white">{{ $bank['bank_name'] }}</span>
+                                            </div>
+                                            <div class="flex justify-between items-center py-1">
+                                                <span class="text-sm text-gray-500 dark:text-gray-400">No. Rekening</span>
+                                                <span class="font-semibold text-gray-900 dark:text-white font-mono">{{ $bank['account_number'] }}</span>
+                                            </div>
+                                            <div class="flex justify-between items-center py-1">
+                                                <span class="text-sm text-gray-500 dark:text-gray-400">Atas Nama</span>
+                                                <span class="font-semibold text-gray-900 dark:text-white">{{ $bank['account_holder'] }}</span>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <div class="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl text-center">
+                                    <svg class="w-10 h-10 mx-auto text-yellow-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    </svg>
+                                    <p class="text-yellow-700 dark:text-yellow-400 font-medium">Detail rekening belum dikonfigurasi</p>
+                                    <p class="text-yellow-600 dark:text-yellow-400 text-sm mt-1">Hubungi admin untuk mengisi informasi rekening</p>
+                                </div>
+                            @endif
+                            <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                                <p class="text-blue-700 dark:text-blue-400 text-sm text-center">Transfer dengan jumlah pas: <span class="font-bold">Rp {{ number_format($this->cartTotal, 0, ',', '.') }}</span></p>
+                            </div>
                         </div>
                     @endif
                 </div>
@@ -316,6 +402,7 @@
                     <button wire:click="processPayment" 
                         wire:loading.attr="disabled"
                         @if($paymentMethod === 'cash' && $paymentAmount < $this->cartTotal) disabled @endif
+                        @if(count($this->paymentMethods) === 0) disabled @endif
                         class="w-full py-3.5 bg-green-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white font-bold rounded-xl">
                         <span wire:loading.remove wire:target="processPayment">Proses Pembayaran</span>
                         <span wire:loading wire:target="processPayment">Memproses...</span>

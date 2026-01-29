@@ -394,34 +394,38 @@ class ActivityLogService
     /**
      * Log news creation
      */
-    public static function logNewsCreated(string $title): void
+    public static function logNewsCreated(?string $title): void
     {
-        self::log("Membuat berita baru '{$title}'");
+        $displayTitle = $title ?: 'Tanpa Judul';
+        self::log("Membuat berita baru '{$displayTitle}'");
     }
 
     /**
      * Log news update
      */
-    public static function logNewsUpdated(string $title): void
+    public static function logNewsUpdated(?string $title): void
     {
-        self::log("Mengubah berita '{$title}'");
+        $displayTitle = $title ?: 'Tanpa Judul';
+        self::log("Mengubah berita '{$displayTitle}'");
     }
 
     /**
      * Log news deletion
      */
-    public static function logNewsDeleted(string $title): void
+    public static function logNewsDeleted(?string $title): void
     {
-        self::log("Menghapus berita '{$title}'");
+        $displayTitle = $title ?: 'Tanpa Judul';
+        self::log("Menghapus berita '{$displayTitle}'");
     }
 
     /**
      * Log news status toggle
      */
-    public static function logNewsStatusChanged(string $title, bool $isActive): void
+    public static function logNewsStatusChanged(?string $title, bool $isActive): void
     {
+        $displayTitle = $title ?: 'Tanpa Judul';
         $statusText = $isActive ? 'mengaktifkan' : 'menonaktifkan';
-        self::log("Berhasil {$statusText} berita '{$title}'");
+        self::log("Berhasil {$statusText} berita '{$displayTitle}'");
     }
 
     // ==========================================

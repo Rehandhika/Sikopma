@@ -134,6 +134,7 @@ return [
                 ['key' => 'settings.system', 'label' => 'Pengaturan Sistem', 'route' => 'admin.settings.system', 'permissions' => ['manage.settings', 'manage.system'], 'permission_logic' => 'any'],
                 ['key' => 'settings.store', 'label' => 'Pengaturan Toko', 'route' => 'admin.settings.store', 'permissions' => ['manage.settings', 'manage.toko'], 'permission_logic' => 'any', 'roles' => ['Super Admin', 'Ketua', 'Wakil Ketua']],
                 ['key' => 'settings.banners', 'label' => 'Banner & Berita', 'route' => 'admin.settings.banners', 'permissions' => ['manage.settings'], 'roles' => ['Super Admin', 'Ketua']],
+                ['key' => 'settings.payment', 'label' => 'Pengaturan Pembayaran', 'route' => 'admin.settings.payment', 'permissions' => ['manage.settings'], 'roles' => ['Super Admin', 'Ketua', 'Wakil Ketua']],
             ],
         ],
         [

@@ -11,6 +11,7 @@ use App\Models\{Product, ProductVariant, Sale, SaleItem};
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use App\Services\ActivityLogService;
+use App\Services\PaymentConfigurationService;
 
 #[Title('Point of Sale')]
 class Pos extends Component
@@ -107,6 +108,31 @@ class Pos extends Component
     public function change(): int
     {
         return max(0, $this->paymentAmount - $this->cartTotal);
+    }
+
+    /**
+     * Get enabled payment methods from configuration
+     * Requirements: 5.1, 6.4
+     */
+    #[Computed]
+    public function paymentMethods(): array
+    {
+        return app(PaymentConfigurationService::class)->getEnabledMethods();
+    }
+
+    /**
+     * Get full payment configuration including QRIS/transfer details
+     * Requirements: 5.2, 5.3, 5.4
+     */
+    #[Computed]
+    public function paymentConfig(): array
+    {
+        $service = app(PaymentConfigurationService::class);
+        return [
+            'config' => $service->getAll(),
+            'transfer_details' => $service->getTransferDetails(),
+            'qris_image_url' => $service->getQrisImageUrl(),
+        ];
     }
 
     public function handleBarcode(string $barcode): void
@@ -358,6 +384,16 @@ class Pos extends Component
             return;
         }
         
+        // Check if any payment methods are enabled - Requirements: 5.5
+        $enabledMethods = app(PaymentConfigurationService::class)->getEnabledMethods();
+        if (empty($enabledMethods)) {
+            $this->dispatch('alert', type: 'error', message: 'Tidak ada metode pembayaran yang tersedia. Hubungi admin.');
+            return;
+        }
+        
+        // Set default payment method to first enabled method
+        $this->paymentMethod = $enabledMethods[0]['id'];
+        
         // Validate stock availability before opening payment
         $stockIssues = $this->validateCartStock();
         if (!empty($stockIssues)) {
@@ -458,10 +494,17 @@ class Pos extends Component
             return;
         }
 
+        // Validate payment method is enabled - Requirements: 5.1
+        $paymentService = app(PaymentConfigurationService::class);
+        if (!$paymentService->isMethodEnabled($this->paymentMethod)) {
+            $this->dispatch('alert', type: 'error', message: 'Metode pembayaran tidak tersedia');
+            return;
+        }
+
         $total = $this->cartTotal;
 
-        // For QRIS, set payment amount to exact total
-        if ($this->paymentMethod === 'qris') {
+        // For QRIS and Transfer, set payment amount to exact total
+        if ($this->paymentMethod === 'qris' || $this->paymentMethod === 'transfer') {
             $this->paymentAmount = $total;
         }
 

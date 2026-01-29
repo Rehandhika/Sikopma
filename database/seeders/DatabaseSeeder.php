@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             SystemSettingSeeder::class,
             StoreSettingSeeder::class,
             ScheduleConfigurationSeeder::class,
+            PaymentConfigurationSeeder::class,
             
             // Users, Roles & Permissions
             RolePermissionSeeder::class,
