@@ -33,14 +33,16 @@ class SecurityHeaders
             //     "connect-src 'self' ws://localhost:5173 ws://localhost:5174 http://localhost:5173 http://localhost:5174"
             // );
         } else {
-            // Production CSP - stricter
+            // Production CSP - allow Vite assets and external fonts
             $response->headers->set('Content-Security-Policy',
                 "default-src 'self'; ".
                 "script-src 'self' 'unsafe-inline' 'unsafe-eval'; ".
-                "style-src 'self' 'unsafe-inline'; ".
+                "style-src 'self' 'unsafe-inline' https://fonts.bunny.net https://cdnjs.cloudflare.com; ".
+                "font-src 'self' data: https://fonts.bunny.net https://cdnjs.cloudflare.com; ".
                 "img-src 'self' data: https:; ".
-                "font-src 'self' data:; ".
-                "connect-src 'self'"
+                "connect-src 'self' https:; ".
+                "object-src 'none'; ".
+                "base-uri 'self'"
             );
         }
 

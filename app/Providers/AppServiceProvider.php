@@ -33,6 +33,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Force HTTPS in production
+        if ($this->app->environment('production')) {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+            
+            // Trust proxies for proper HTTPS detection
+            $this->app['request']->server->set('HTTPS', 'on');
+        }
+
         Attendance::observe(AttendanceObserver::class);
 
         // Register event listeners for permission cache invalidation
