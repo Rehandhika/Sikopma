@@ -3,6 +3,9 @@
 namespace App\Services;
 
 use App\Models\Product;
+use App\Models\ProductVariant;
+use App\Models\Purchase;
+use App\Models\PurchaseItem;
 use App\Models\StockAdjustment;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -171,6 +174,129 @@ class ProductService
 
             return $product->fresh();
         });
+    }
+
+    /**
+     * Process procurement (purchasing)
+     * Handles stock increment and cost price update (Weighted Average)
+     */
+    public function createProcurement(array $data, array $items): Purchase
+    {
+        return DB::transaction(function () use ($data, $items) {
+            // 1. Create Purchase Record
+            $purchase = Purchase::create([
+                'user_id' => auth()->id(),
+                'supplier_name' => $data['supplier_name'] ?? null,
+                'invoice_number' => $data['invoice_number'],
+                'date' => $data['date'],
+                'notes' => $data['notes'] ?? null,
+                'payment_status' => 'paid', // Assuming paid for simplicity, or add field in form
+                'total_amount' => 0, // Will update after calculating items
+            ]);
+
+            $totalAmount = 0;
+
+            foreach ($items as $item) {
+                // 2. Create Purchase Item
+                $subtotal = $item['quantity'] * $item['cost_price'];
+                $totalAmount += $subtotal;
+
+                PurchaseItem::create([
+                    'purchase_id' => $purchase->id,
+                    'product_id' => $item['product_id'],
+                    'product_variant_id' => $item['variant_id'] ?? null,
+                    'quantity' => $item['quantity'],
+                    'cost_price' => $item['cost_price'],
+                    'subtotal' => $subtotal,
+                ]);
+
+                // 3. Update Product Stock & Cost Price (Weighted Average)
+                if (!empty($item['variant_id'])) {
+                    $this->updateVariantStockAndCost($item['product_id'], $item['variant_id'], $item['quantity'], $item['cost_price'], $purchase->invoice_number);
+                } else {
+                    // Check if product actually has variants but no variant_id provided
+                    $product = Product::find($item['product_id']);
+                    if ($product && $product->has_variants) {
+                        throw new \Exception("Produk '{$product->name}' memiliki varian. Mohon pilih varian spesifik.");
+                    }
+                    
+                    $this->updateProductStockAndCost($item['product_id'], $item['quantity'], $item['cost_price'], $purchase->invoice_number);
+                }
+            }
+
+            // Update total amount
+            $purchase->update(['total_amount' => $totalAmount]);
+
+            ActivityLogService::logPurchaseCreated($purchase->invoice_number, $purchase->total_amount);
+
+            return $purchase;
+        });
+    }
+
+    private function updateProductStockAndCost(int $productId, int $qty, float $newCost, string $ref)
+    {
+        $product = Product::find($productId);
+        if (!$product) return;
+
+        $oldStock = $product->stock;
+        $oldCost = $product->cost_price;
+
+        // Calculate Weighted Average Cost
+        // If stock is negative or zero, we take the new cost as the base
+        if ($oldStock <= 0) {
+            $avgCost = $newCost;
+        } else {
+            $avgCost = (($oldStock * $oldCost) + ($qty * $newCost)) / ($oldStock + $qty);
+        }
+
+        $product->stock += $qty;
+        $product->cost_price = $avgCost;
+        $product->save();
+
+        // Log Adjustment
+        StockAdjustment::create([
+            'product_id' => $productId,
+            'type' => 'in',
+            'quantity' => $qty,
+            'previous_stock' => $oldStock,
+            'new_stock' => $product->stock,
+            'reason' => "Procurement: {$ref}",
+            'user_id' => auth()->id(),
+        ]);
+    }
+
+    private function updateVariantStockAndCost(int $productId, int $variantId, int $qty, float $newCost, string $ref)
+    {
+        $variant = ProductVariant::find($variantId);
+        if (!$variant) return;
+
+        $oldStock = $variant->stock;
+        $oldCost = $variant->cost_price;
+
+        if ($oldStock <= 0) {
+            $avgCost = $newCost;
+        } else {
+            $avgCost = (($oldStock * $oldCost) + ($qty * $newCost)) / ($oldStock + $qty);
+        }
+
+        $variant->stock += $qty;
+        $variant->cost_price = $avgCost;
+        $variant->save();
+
+        // Sync Parent Stock
+        app(\App\Services\ProductVariantService::class)->syncProductTotalStock(Product::find($productId));
+
+        // Log Adjustment
+        StockAdjustment::create([
+            'product_id' => $productId,
+            'variant_id' => $variantId,
+            'type' => 'in',
+            'quantity' => $qty,
+            'previous_stock' => $oldStock,
+            'new_stock' => $variant->stock,
+            'reason' => "Procurement: {$ref} (Var)",
+            'user_id' => auth()->id(),
+        ]);
     }
 
     /**

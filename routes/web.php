@@ -151,8 +151,6 @@ Route::middleware(['auth'])->group(function () {
         // Stock Management (Stok)
         Route::prefix('stok')->name('stock.')->group(function () {
             Route::get('/', \App\Livewire\Stock\Index::class)->name('index');
-            Route::get('/manajemen', \App\Livewire\Stock\StockManager::class)->name('manager');
-            Route::get('/penyesuaian', \App\Livewire\Stock\StockAdjustment::class)->name('adjustment');
         });
 
         // Products (Produk)

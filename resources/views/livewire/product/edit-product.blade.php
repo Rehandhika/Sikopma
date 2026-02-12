@@ -63,24 +63,32 @@
                 {{-- Pricing & Stock --}}
                 <x-ui.card padding="true">
                     <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Harga & Stok</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <x-ui.input type="number" label="Harga Beli / Modal (Rp)" wire:model.live="cost_price" min="0" step="100" required :error="$errors->first('cost_price')" hint="Harga pembelian dari supplier" />
-                        <x-ui.input type="number" label="Harga Jual (Rp)" wire:model.live="price" min="0" step="100" required :error="$errors->first('price')" />
-                    </div>
-
-                    @if($cost_price && $price && $price > 0)
-                        @php $profit = $price - $cost_price; $margin = round(($profit / $price) * 100, 1); @endphp
-                        <div class="p-3 rounded-lg mb-4 {{ $profit > 0 ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800' }}">
-                            <div class="flex items-center justify-between text-sm">
-                                <span class="{{ $profit > 0 ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400' }}">
-                                    <strong>Keuntungan per unit:</strong> Rp {{ number_format($profit, 0, ',', '.') }}
-                                </span>
-                                <span class="{{ $profit > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }} font-semibold">{{ $margin }}% margin</span>
-                            </div>
-                        </div>
-                    @endif
-
+                    
                     @if(!$has_variants)
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <x-ui.input 
+                                type="number" 
+                                label="Harga Beli / Modal (Rp)" 
+                                wire:model="cost_price" 
+                                disabled 
+                                hint="Harga dihitung otomatis dari rata-rata pengadaan (Weighted Average)."
+                                class="bg-gray-100 text-gray-500 cursor-not-allowed"
+                            />
+                            <x-ui.input type="number" label="Harga Jual (Rp)" wire:model.live="price" min="0" step="100" required :error="$errors->first('price')" />
+                        </div>
+
+                        @if($cost_price && $price && $price > 0)
+                            @php $profit = $price - $cost_price; $margin = round(($profit / $price) * 100, 1); @endphp
+                            <div class="p-3 rounded-lg mb-4 {{ $profit > 0 ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800' }}">
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="{{ $profit > 0 ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400' }}">
+                                        <strong>Keuntungan per unit:</strong> Rp {{ number_format($profit, 0, ',', '.') }}
+                                    </span>
+                                    <span class="{{ $profit > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }} font-semibold">{{ $margin }}% margin</span>
+                                </div>
+                            </div>
+                        @endif
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <x-ui.input type="number" label="Stok Saat Ini" wire:model="stock" min="0" required :error="$errors->first('stock')" />
                             <x-ui.input type="number" label="Minimal Stok" wire:model="min_stock" min="0" required :error="$errors->first('min_stock')" hint="Alert jika stok di bawah nilai ini" />
@@ -88,7 +96,7 @@
                     @else
                         <div class="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-blue-700 dark:text-blue-400">
                             <x-ui.icon name="information-circle" class="w-4 h-4 inline mr-1" />
-                            Stok dikelola per varian di bagian bawah.
+                            Harga dan Stok dikelola per varian di bagian bawah.
                         </div>
                     @endif
                 </x-ui.card>
@@ -107,16 +115,40 @@
                         {{-- Variant Options Selection --}}
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pilih Tipe Varian</label>
-                            <div class="flex flex-wrap gap-2">
-                                @foreach($variantOptions as $option)
-                                    <label class="inline-flex items-center px-3 py-2 border rounded-lg cursor-pointer transition-colors
-                                        {{ collect($selectedVariantOptions)->contains($option->id) 
-                                            ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-500 text-primary-700 dark:text-primary-400' 
-                                            : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600' }}">
-                                        <input type="checkbox" wire:model.live="selectedVariantOptions" value="{{ $option->id }}" class="sr-only">
-                                        <span class="text-sm">{{ $option->name }}</span>
-                                    </label>
-                                @endforeach
+                            <div class="space-y-3">
+                                <div class="flex flex-wrap gap-2">
+                                    @foreach($variantOptions as $option)
+                                        <label class="inline-flex items-center px-3 py-2 border rounded-lg cursor-pointer transition-colors
+                                            {{ collect($selectedVariantOptions)->contains($option->id) 
+                                                ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-500 text-primary-700 dark:text-primary-400' 
+                                                : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600' }}">
+                                            <input type="checkbox" wire:model.live="selectedVariantOptions" value="{{ $option->id }}" class="sr-only">
+                                            <span class="text-sm">{{ $option->name }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                                
+                                {{-- Add New Variant Option Input --}}
+                                <div class="flex items-center gap-2">
+                                    <div class="relative flex-grow max-w-xs">
+                                        <x-ui.input 
+                                            wire:model="newVariantOptionName" 
+                                            placeholder="Buat tipe varian baru (misal: Rasa)" 
+                                            class="text-sm"
+                                            wire:keydown.enter.prevent="createVariantOption"
+                                        />
+                                    </div>
+                                    <button 
+                                        type="button" 
+                                        wire:click="createVariantOption" 
+                                        class="px-3 py-2 text-sm font-medium text-white bg-gray-600 rounded-lg hover:bg-gray-700 focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50"
+                                        wire:loading.attr="disabled"
+                                        wire:target="createVariantOption"
+                                    >
+                                        <span wire:loading.remove wire:target="createVariantOption">Tambah</span>
+                                        <span wire:loading wire:target="createVariantOption">...</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -127,9 +159,19 @@
                                 <div class="flex items-center flex-wrap gap-x-4 gap-y-1 text-sm text-blue-700 dark:text-blue-400">
                                     <span><strong>{{ $summary['count'] }}</strong> varian</span>
                                     <span>Total stok: <strong>{{ number_format($summary['total_stock']) }}</strong></span>
+                                    @if($summary['cost_range'])
+                                        <span>
+                                            Modal: 
+                                            @if($summary['cost_range']['min'] == $summary['cost_range']['max'])
+                                                <strong>Rp {{ number_format($summary['cost_range']['min'], 0, ',', '.') }}</strong>
+                                            @else
+                                                <strong>Rp {{ number_format($summary['cost_range']['min'], 0, ',', '.') }} - {{ number_format($summary['cost_range']['max'], 0, ',', '.') }}</strong>
+                                            @endif
+                                        </span>
+                                    @endif
                                     @if($summary['price_range'])
                                         <span>
-                                            Harga: 
+                                            Jual: 
                                             @if($summary['price_range']['min'] == $summary['price_range']['max'])
                                                 <strong>Rp {{ number_format($summary['price_range']['min'], 0, ',', '.') }}</strong>
                                             @else
@@ -153,8 +195,10 @@
                                                         <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ $option->name }}</th>
                                                     @endif
                                                 @endforeach
-                                                <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-28">Harga</th>
+                                                <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-28">Harga Beli</th>
+                                                <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-28">Harga Jual</th>
                                                 <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-24">Stok</th>
+                                                <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-24">Min Stok</th>
                                                 <th class="px-3 py-2 w-12"></th>
                                             </tr>
                                         </thead>
@@ -172,11 +216,21 @@
                                                         @endif
                                                     @endforeach
                                                     <td class="px-3 py-2">
+                                                        <input type="number" wire:model="variants.{{ $index }}.cost_price" min="0" step="100"
+                                                            class="w-full text-right text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                                            placeholder="Beli">
+                                                    </td>
+                                                    <td class="px-3 py-2">
                                                         <input type="number" wire:model="variants.{{ $index }}.price" min="0" step="100"
-                                                            class="w-full text-right text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                                                            class="w-full text-right text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                                            placeholder="Jual">
                                                     </td>
                                                     <td class="px-3 py-2">
                                                         <input type="number" wire:model="variants.{{ $index }}.stock" min="0"
+                                                            class="w-full text-right text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                                                    </td>
+                                                    <td class="px-3 py-2">
+                                                        <input type="number" wire:model="variants.{{ $index }}.min_stock" min="0"
                                                             class="w-full text-right text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md shadow-sm focus:border-primary-500 focus:ring-primary-500">
                                                     </td>
                                                     <td class="px-3 py-2 text-center">
@@ -208,11 +262,35 @@
 
                 {{-- Status --}}
                 <x-ui.card padding="true">
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Status</h3>
-                    <x-ui.select label="Status Produk" wire:model="status" :error="$errors->first('status')">
-                        <option value="active">Aktif - Dapat dijual</option>
-                        <option value="inactive">Tidak Aktif - Tidak ditampilkan</option>
-                    </x-ui.select>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Status & Visibilitas</h3>
+                    <div class="space-y-3">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Status Publikasi
+                        </label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none hover:bg-gray-50 {{ $status === 'active' ? 'border-primary-500 ring-1 ring-primary-500' : 'border-gray-300' }}">
+                                <input type="radio" name="status" value="active" wire:model.live="status" class="sr-only">
+                                <span class="flex flex-1">
+                                    <span class="flex flex-col">
+                                        <span class="block text-sm font-medium text-gray-900">Munculkan di Katalog</span>
+                                    </span>
+                                </span>
+                                <x-ui.icon name="eye" class="h-5 w-5 {{ $status === 'active' ? 'text-primary-600' : 'text-gray-400' }}" />
+                                <span class="pointer-events-none absolute -inset-px rounded-lg border-2 {{ $status === 'active' ? 'border-primary-500' : 'border-transparent' }}" aria-hidden="true"></span>
+                            </label>
+
+                            <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none hover:bg-gray-50 {{ $status === 'inactive' ? 'border-primary-500 ring-1 ring-primary-500' : 'border-gray-300' }}">
+                                <input type="radio" name="status" value="inactive" wire:model.live="status" class="sr-only">
+                                <span class="flex flex-1">
+                                    <span class="flex flex-col">
+                                        <span class="block text-sm font-medium text-gray-900">Sembunyikan dari Katalog</span>
+                                    </span>
+                                </span>
+                                <x-ui.icon name="eye-slash" class="h-5 w-5 {{ $status === 'inactive' ? 'text-primary-600' : 'text-gray-400' }}" />
+                                <span class="pointer-events-none absolute -inset-px rounded-lg border-2 {{ $status === 'inactive' ? 'border-primary-500' : 'border-transparent' }}" aria-hidden="true"></span>
+                            </label>
+                        </div>
+                    </div>
                 </x-ui.card>
 
                 {{-- Actions --}}

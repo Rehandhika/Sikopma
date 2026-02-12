@@ -49,6 +49,8 @@ class EditProduct extends Component
     public $has_variants = false;
 
     public $selectedVariantOptions = []; // IDs of variant option types (Ukuran, Warna, etc)
+    
+    public $newVariantOptionName = ''; // For creating new variant option
 
     public $variants = []; // Array of variant rows with free text values
 
@@ -104,8 +106,8 @@ class EditProduct extends Component
         $rules = [
             'name' => 'required|string|max:255',
             'sku' => ['nullable', 'string', 'max:50', Rule::unique('products', 'sku')->ignore($this->product->id)],
-            'price' => 'required|numeric|min:0',
-            'cost_price' => 'required|numeric|min:0',
+            // 'price' => 'required|numeric|min:0', // Removed from main rules, handled conditionally
+            // 'cost_price' => 'required|numeric|min:0', // Removed from main rules, handled conditionally
             'category' => 'nullable|string|max:100',
             'description' => 'nullable|string',
             'status' => 'required|in:active,inactive',
@@ -114,8 +116,17 @@ class EditProduct extends Component
         ];
 
         if (! $this->has_variants) {
+            $rules['price'] = 'required|numeric|min:0';
+            $rules['cost_price'] = 'required|numeric|min:0';
             $rules['stock'] = 'required|integer|min:0';
             $rules['min_stock'] = 'required|integer|min:0';
+        } else {
+            // Variant validation
+            $rules['variants'] = 'required|array|min:1';
+            $rules['variants.*.price'] = 'required|numeric|min:0';
+            $rules['variants.*.cost_price'] = 'required|numeric|min:0';
+            $rules['variants.*.stock'] = 'required|integer|min:0';
+            $rules['variants.*.min_stock'] = 'required|integer|min:0';
         }
 
         return $rules;
@@ -127,6 +138,11 @@ class EditProduct extends Component
         'image.image' => 'File harus berupa gambar.',
         'cost_price.required' => 'Harga beli wajib diisi.',
         'cost_price.min' => 'Harga beli tidak boleh negatif.',
+        'variants.*.price.required' => 'Harga jual varian wajib diisi.',
+        'variants.*.price.min' => 'Harga jual varian tidak boleh negatif.',
+        'variants.*.cost_price.required' => 'Harga beli varian wajib diisi.',
+        'variants.*.cost_price.min' => 'Harga beli varian tidak boleh negatif.',
+        'variants.*.stock.min' => 'Stok varian tidak boleh negatif.',
     ];
 
     public function updatedImage()
@@ -152,6 +168,32 @@ class EditProduct extends Component
             $this->existingImage = null;
             $this->dispatch('toast', message: 'Gambar berhasil dihapus.', type: 'success');
         }
+    }
+
+    /**
+     * Create a new custom variant option type
+     */
+    public function createVariantOption()
+    {
+        $this->validate([
+            'newVariantOptionName' => 'required|string|min:2|max:50|unique:variant_options,name'
+        ], [
+            'newVariantOptionName.required' => 'Nama tipe varian tidak boleh kosong.',
+            'newVariantOptionName.unique' => 'Tipe varian ini sudah ada.',
+        ]);
+
+        $option = VariantOption::create([
+            'name' => trim($this->newVariantOptionName),
+            'display_order' => VariantOption::max('display_order') + 1
+        ]);
+
+        // Add to selected options automatically
+        $this->selectedVariantOptions[] = $option->id;
+        
+        // Reset input
+        $this->newVariantOptionName = '';
+        
+        $this->dispatch('toast', message: 'Tipe varian berhasil ditambahkan.', type: 'success');
     }
 
     /**
@@ -190,16 +232,18 @@ class EditProduct extends Component
     public function getVariantSummary(): array
     {
         if (empty($this->variants)) {
-            return ['count' => 0, 'total_stock' => 0, 'price_range' => null];
+            return ['count' => 0, 'total_stock' => 0, 'price_range' => null, 'cost_range' => null];
         }
 
         $prices = collect($this->variants)->pluck('price')->filter()->map(fn ($p) => (float) $p);
+        $costs = collect($this->variants)->pluck('cost_price')->filter()->map(fn ($p) => (float) $p);
         $totalStock = collect($this->variants)->sum('stock');
 
         return [
             'count' => count($this->variants),
             'total_stock' => $totalStock,
             'price_range' => $prices->isNotEmpty() ? ['min' => $prices->min(), 'max' => $prices->max()] : null,
+            'cost_range' => $costs->isNotEmpty() ? ['min' => $costs->min(), 'max' => $costs->max()] : null,
         ];
     }
 
@@ -283,36 +327,57 @@ class EditProduct extends Component
             }
         }
 
-        $this->product->update([
-            'name' => $this->name,
-            'sku' => $this->sku ?: null,
-            'price' => $this->price,
-            'cost_price' => $this->cost_price,
-            'stock' => $this->has_variants ? 0 : $this->stock,
-            'min_stock' => $this->min_stock,
-            'category' => $this->category,
-            'description' => $this->description,
-            'status' => $this->status,
-            'has_variants' => $this->has_variants,
-            'image' => $imagePath,
-        ]);
+        // Sync parent price to minimum variant price if has variants
+        if ($this->has_variants && !empty($this->variants)) {
+            $minPrice = collect($this->variants)->min('price');
+            $this->price = $minPrice;
+            
+            // Also sync cost_price from minimum cost variant
+            $minCostPrice = collect($this->variants)->min('cost_price');
+            $this->cost_price = $minCostPrice;
+        }
 
-        if ($this->has_variants) {
-            $variantService = app(ProductVariantService::class);
-            $variantOptions = VariantOption::findMany($this->selectedVariantOptions);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($imagePath) {
+            $this->product->update([
+                'name' => $this->name,
+                'sku' => $this->sku ?: null,
+                'price' => $this->price ?? 0,
+                'cost_price' => $this->cost_price ?? 0,
+                'stock' => $this->has_variants ? 0 : $this->stock,
+                'min_stock' => $this->has_variants ? 0 : $this->min_stock,
+                'category' => $this->category,
+                'description' => $this->description,
+                'status' => $this->status,
+                'has_variants' => $this->has_variants,
+                'image' => $imagePath,
+            ]);
 
-            $existingVariantIds = $this->product->variants()->pluck('id')->toArray();
-            $updatedVariantIds = [];
+            if ($this->has_variants) {
+                $variantService = app(ProductVariantService::class);
+                $variantOptions = VariantOption::findMany($this->selectedVariantOptions);
 
-            foreach ($this->variants as $variantData) {
-                $optionValues = $this->buildOptionValues($variantData['option_texts'], $variantOptions);
+                $existingVariantIds = $this->product->variants()->pluck('id')->toArray();
+                $updatedVariantIds = [];
 
-                if (! empty($variantData['id'])) {
-                    $variant = $this->product->variants()->find($variantData['id']);
-                    if ($variant) {
-                        $variant->update([
+                foreach ($this->variants as $variantData) {
+                    $optionValues = $this->buildOptionValues($variantData['option_texts'], $variantOptions);
+
+                    if (! empty($variantData['id'])) {
+                        $variant = $this->product->variants()->find($variantData['id']);
+                        if ($variant) {
+                            $variant->update([
+                                'option_values' => $optionValues,
+                                'variant_name' => $this->product->name.' - '.collect($optionValues)->pluck('value')->implode(' / '),
+                                'price' => $variantData['price'],
+                                'cost_price' => $variantData['cost_price'],
+                                'stock' => $variantData['stock'],
+                                'min_stock' => $variantData['min_stock'],
+                            ]);
+                            $updatedVariantIds[] = $variant->id;
+                        }
+                    } else {
+                        $variant = $variantService->createVariant($this->product, [
                             'option_values' => $optionValues,
-                            'variant_name' => $this->product->name.' - '.collect($optionValues)->pluck('value')->implode(' / '),
                             'price' => $variantData['price'],
                             'cost_price' => $variantData['cost_price'],
                             'stock' => $variantData['stock'],
@@ -320,34 +385,25 @@ class EditProduct extends Component
                         ]);
                         $updatedVariantIds[] = $variant->id;
                     }
-                } else {
-                    $variant = $variantService->createVariant($this->product, [
-                        'option_values' => $optionValues,
-                        'price' => $variantData['price'],
-                        'cost_price' => $variantData['cost_price'],
-                        'stock' => $variantData['stock'],
-                        'min_stock' => $variantData['min_stock'],
-                    ]);
-                    $updatedVariantIds[] = $variant->id;
+                }
+
+                $variantsToDelete = array_diff($existingVariantIds, $updatedVariantIds);
+                if (! empty($variantsToDelete)) {
+                    $this->product->variants()->whereIn('id', $variantsToDelete)->delete();
+                }
+
+                $this->product->variantOptions()->sync($this->selectedVariantOptions);
+                $variantService->syncProductTotalStock($this->product);
+            } else {
+                if ($this->product->variants()->exists()) {
+                    $this->product->variants()->delete();
+                    $this->product->variantOptions()->detach();
                 }
             }
-
-            $variantsToDelete = array_diff($existingVariantIds, $updatedVariantIds);
-            if (! empty($variantsToDelete)) {
-                $this->product->variants()->whereIn('id', $variantsToDelete)->delete();
-            }
-
-            $this->product->variantOptions()->sync($this->selectedVariantOptions);
-            $variantService->syncProductTotalStock($this->product);
-        } else {
-            if ($this->product->variants()->exists()) {
-                $this->product->variants()->delete();
-                $this->product->variantOptions()->detach();
-            }
-        }
-
-        // Log activity
-        ActivityLogService::logProductUpdated($this->name);
+            
+            // Log activity
+            ActivityLogService::logProductUpdated($this->name);
+        });
 
         $this->dispatch('toast', message: 'Produk berhasil diperbarui.', type: 'success');
 
