@@ -155,7 +155,7 @@ return [
     /**
      * Date/Time formats
      * Note: These are fallback formats. The actual formats are managed
-     * dynamically via System Settings (DateTimeSettingsService).
+     * dynamically via System Settings (DateTimeHelper).
      * Use the helper functions format_date(), format_time(), format_datetime()
      * or Blade directives @formatDate, @formatTime, @formatDateTime
      */

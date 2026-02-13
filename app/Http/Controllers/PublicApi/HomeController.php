@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\PublicApi;
 
+use App\Helpers\DateTimeHelper;
 use App\Http\Controllers\Controller;
-use App\Services\DateTimeSettingsService;
 use App\Services\PublicDataService;
 use App\Services\StoreStatusService;
 use Illuminate\Http\Request;
@@ -79,10 +79,16 @@ class HomeController extends Controller
         ], 5, 10);
     }
 
-    public function dateTimeSettings(Request $request, DateTimeSettingsService $dateTimeService): Response
+    public function dateTimeSettings(Request $request): Response
     {
         return $this->respondCachedJson($request, [
-            'data' => $dateTimeService->getForFrontend(),
+            'data' => [
+                'timezone' => DateTimeHelper::getTimezone(),
+                'date_format' => DateTimeHelper::getDateFormat(),
+                'time_format' => DateTimeHelper::getTimeFormat(),
+                'datetime_format' => DateTimeHelper::getDateTimeFormat(),
+                'locale' => DateTimeHelper::getLocale(),
+            ],
         ], 60, 300);
     }
 

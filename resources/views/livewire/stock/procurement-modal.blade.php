@@ -142,6 +142,7 @@
                                                 type="number" 
                                                 wire:model.live.debounce.500ms="items.{{ $index }}.cost_price" 
                                                 min="0"
+                                                step="any"
                                                 class="block w-full text-right rounded-md border-gray-300 py-1.5 text-gray-900 shadow-sm focus:ring-primary-600 focus:border-primary-600 sm:text-sm sm:leading-6"
                                             >
                                         </td>

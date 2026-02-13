@@ -1,6 +1,6 @@
 <?php
 
-use App\Services\DateTimeSettingsService;
+use App\Helpers\DateTimeHelper;
 use Carbon\Carbon;
 
 if (! function_exists('format_currency')) {
@@ -39,7 +39,7 @@ if (! function_exists('format_date')) {
      */
     function format_date($date): string
     {
-        return app(DateTimeSettingsService::class)->formatDate($date);
+        return DateTimeHelper::formatDate($date);
     }
 }
 
@@ -49,7 +49,7 @@ if (! function_exists('format_time')) {
      */
     function format_time($time): string
     {
-        return app(DateTimeSettingsService::class)->formatTime($time);
+        return DateTimeHelper::formatTime($time);
     }
 }
 
@@ -59,7 +59,7 @@ if (! function_exists('format_datetime')) {
      */
     function format_datetime($datetime): string
     {
-        return app(DateTimeSettingsService::class)->formatDateTime($datetime);
+        return DateTimeHelper::formatDateTime($datetime);
     }
 }
 
@@ -69,7 +69,7 @@ if (! function_exists('format_date_human')) {
      */
     function format_date_human($date): string
     {
-        return app(DateTimeSettingsService::class)->formatDateHuman($date);
+        return DateTimeHelper::formatDateHuman($date);
     }
 }
 
@@ -79,7 +79,7 @@ if (! function_exists('format_datetime_human')) {
      */
     function format_datetime_human($datetime): string
     {
-        return app(DateTimeSettingsService::class)->formatDateTimeHuman($datetime);
+        return DateTimeHelper::formatDateTimeHuman($datetime);
     }
 }
 
@@ -89,18 +89,17 @@ if (! function_exists('diff_for_humans')) {
      */
     function diff_for_humans($datetime): string
     {
-        return app(DateTimeSettingsService::class)->diffForHumans($datetime);
+        return DateTimeHelper::diffForHumans($datetime);
     }
 }
 
 if (! function_exists('system_now')) {
     /**
      * Get current time in system timezone
-     * Returns custom time if custom datetime is enabled
      */
     function system_now(): Carbon
     {
-        return app(DateTimeSettingsService::class)->now();
+        return DateTimeHelper::now();
     }
 }
 
@@ -110,7 +109,7 @@ if (! function_exists('real_now')) {
      */
     function real_now(): Carbon
     {
-        return app(DateTimeSettingsService::class)->realNow();
+        return DateTimeHelper::now();
     }
 }
 
@@ -120,7 +119,7 @@ if (! function_exists('is_custom_datetime_enabled')) {
      */
     function is_custom_datetime_enabled(): bool
     {
-        return app(DateTimeSettingsService::class)->isCustomDateTimeEnabled();
+        return false;
     }
 }
 
@@ -130,7 +129,7 @@ if (! function_exists('system_timezone')) {
      */
     function system_timezone(): string
     {
-        return app(DateTimeSettingsService::class)->getTimezone();
+        return DateTimeHelper::getTimezone();
     }
 }
 
@@ -140,7 +139,7 @@ if (! function_exists('system_locale')) {
      */
     function system_locale(): string
     {
-        return app(DateTimeSettingsService::class)->getLocale();
+        return DateTimeHelper::getLocale();
     }
 }
 
@@ -150,7 +149,7 @@ if (! function_exists('parse_date')) {
      */
     function parse_date(string $date): Carbon
     {
-        return app(DateTimeSettingsService::class)->parse($date);
+        return DateTimeHelper::parse($date);
     }
 }
 

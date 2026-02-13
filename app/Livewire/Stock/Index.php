@@ -37,30 +37,6 @@ class Index extends Component
     public string $historyType = 'all';
 
     // Modal state
-    public bool $showAdjustModal = false;
-
-    public ?int $selectedProductId = null;
-
-    public ?int $selectedVariantId = null;
-
-    public string $adjustType = 'in';
-
-    public int $adjustQuantity = 1;
-
-    public string $adjustReason = '';
-
-    // Expanded variants
-    public array $expandedProducts = [];
-
-    // Bulk
-    public array $selectedProducts = [];
-
-    public bool $showBulkModal = false;
-
-    public string $bulkType = 'in';
-
-    public string $bulkReason = '';
-
     public bool $readyToLoad = false;
 
     public function init(): void
@@ -71,8 +47,7 @@ class Index extends Component
     protected function rules(): array
     {
         return [
-            'adjustQuantity' => 'required|integer|min:1|max:99999',
-            'adjustReason' => 'required|string|min:2|max:255',
+            // No validation needed for now
         ];
     }
 
@@ -117,248 +92,59 @@ class Index extends Component
         }
     }
 
-    /**
-     * Open adjust modal - for product or variant
-     */
-    public function quickAdjust(int $productId, string $type = 'in', ?int $variantId = null): void
+    public function exportHistory()
     {
-        $this->selectedProductId = $productId;
-        $this->selectedVariantId = $variantId;
-        $this->adjustType = $type;
-        $this->adjustQuantity = 1;
-        $this->adjustReason = '';
-        $this->showAdjustModal = true;
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\StockHistoryExport($this->historySearch, $this->historyType),
+            'riwayat-stok-' . date('Y-m-d-His') . '.xlsx'
+        );
     }
 
-    /**
-     * Open adjust modal for a specific variant
-     */
-    public function adjustVariant(int $variantId, string $type = 'in'): void
+    public function exportProducts()
     {
-        $variant = ProductVariant::find($variantId);
-        if ($variant) {
-            $this->quickAdjust($variant->product_id, $type, $variantId);
-        }
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\StockProductsExport($this->search, $this->categoryFilter, $this->stockFilter),
+            'stok-produk-' . date('Y-m-d-His') . '.xlsx'
+        );
     }
 
-    public function closeAdjustModal(): void
+    // Expanded variants
+    public array $expandedProducts = [];
+
+    // Detail Modal State
+    public bool $showDetailModal = false;
+    public ?\App\Models\Purchase $selectedProcurement = null;
+    public ?StockAdjustment $selectedAdjustment = null;
+
+    public function showDetail(int $adjustmentId)
     {
-        $this->showAdjustModal = false;
-        $this->reset(['selectedProductId', 'selectedVariantId', 'adjustQuantity', 'adjustReason']);
-        $this->resetValidation();
-    }
-
-    public function saveAdjustment(): void
-    {
-        $this->validate();
-
-        try {
-            $product = Product::find($this->selectedProductId);
-
-            if (! $product) {
-                throw new \Exception('Produk tidak ditemukan.');
+        $this->selectedAdjustment = StockAdjustment::with(['product', 'variant', 'user'])->find($adjustmentId);
+        
+        if ($this->selectedAdjustment) {
+            $this->selectedProcurement = $this->selectedAdjustment->getProcurement();
+            
+            // If procurement found, load its items
+            if ($this->selectedProcurement) {
+                $this->selectedProcurement->load(['items.product', 'items.variant']);
             }
-
-            // If product has variants, variant must be selected
-            if ($product->has_variants && ! $this->selectedVariantId) {
-                throw new \Exception('Pilih varian terlebih dahulu.');
-            }
-
-            app(ProductService::class)->adjustStock(
-                $this->selectedProductId,
-                $this->adjustType,
-                $this->adjustQuantity,
-                $this->adjustReason,
-                $this->selectedVariantId
-            );
-
-            $this->closeAdjustModal();
-            Cache::forget('stock:stats');
-            $this->dispatch('notify', type: 'success', message: 'Stok berhasil diperbarui');
-        } catch (\Exception $e) {
-            $this->dispatch('notify', type: 'error', message: $e->getMessage());
+            
+            $this->showDetailModal = true;
         }
     }
 
-    /**
-     * Quick increment for non-variant products only
-     */
-    public function quickIncrement(int $productId): void
+    public function closeDetailModal()
     {
-        $product = Product::find($productId);
-        if (! $product) {
-            return;
-        }
-
-        if ($product->has_variants) {
-            // Expand to show variants instead
-            if (! in_array($productId, $this->expandedProducts)) {
-                $this->expandedProducts[] = $productId;
-            }
-            $this->dispatch('notify', type: 'info', message: 'Pilih varian untuk adjust stok');
-
-            return;
-        }
-
-        $this->doQuickAdjust($productId, 'in', 1, 'Quick +1');
-    }
-
-    /**
-     * Quick decrement for non-variant products only
-     */
-    public function quickDecrement(int $productId): void
-    {
-        $product = Product::find($productId);
-        if (! $product) {
-            return;
-        }
-
-        if ($product->has_variants) {
-            if (! in_array($productId, $this->expandedProducts)) {
-                $this->expandedProducts[] = $productId;
-            }
-            $this->dispatch('notify', type: 'info', message: 'Pilih varian untuk adjust stok');
-
-            return;
-        }
-
-        if ($product->stock <= 0) {
-            $this->dispatch('notify', type: 'error', message: 'Stok sudah habis');
-
-            return;
-        }
-
-        $this->doQuickAdjust($productId, 'out', 1, 'Quick -1');
-    }
-
-    /**
-     * Quick increment for variant
-     */
-    public function quickIncrementVariant(int $variantId): void
-    {
-        $variant = ProductVariant::find($variantId);
-        if (! $variant) {
-            return;
-        }
-
-        $this->doQuickAdjust($variant->product_id, 'in', 1, 'Quick +1', $variantId);
-    }
-
-    /**
-     * Quick decrement for variant
-     */
-    public function quickDecrementVariant(int $variantId): void
-    {
-        $variant = ProductVariant::find($variantId);
-        if (! $variant) {
-            return;
-        }
-
-        if ($variant->stock <= 0) {
-            $this->dispatch('notify', type: 'error', message: 'Stok varian sudah habis');
-
-            return;
-        }
-
-        $this->doQuickAdjust($variant->product_id, 'out', 1, 'Quick -1', $variantId);
-    }
-
-    private function doQuickAdjust(int $productId, string $type, int $qty, string $reason, ?int $variantId = null): void
-    {
-        try {
-            app(ProductService::class)->adjustStock($productId, $type, $qty, $reason, $variantId);
-            Cache::forget('stock:stats');
-            $this->dispatch('notify', type: 'success', message: 'Stok diperbarui');
-        } catch (\Exception $e) {
-            $this->dispatch('notify', type: 'error', message: $e->getMessage());
-        }
-    }
-
-    // Bulk operations
-    public function toggleProductSelection(int $productId): void
-    {
-        $product = Product::find($productId);
-        // Skip variant products for bulk selection
-        if ($product && $product->has_variants) {
-            $this->dispatch('notify', type: 'info', message: 'Produk varian tidak dapat dipilih untuk bulk adjust');
-
-            return;
-        }
-
-        if (in_array($productId, $this->selectedProducts)) {
-            $this->selectedProducts = array_values(array_diff($this->selectedProducts, [$productId]));
-        } else {
-            $this->selectedProducts[] = $productId;
-        }
-    }
-
-    public function selectAllVisible(): void
-    {
-        // Only select non-variant products
-        $ids = $this->products->filter(fn ($p) => ! $p->has_variants)->pluck('id')->toArray();
-        $this->selectedProducts = count($this->selectedProducts) === count($ids) ? [] : $ids;
-    }
-
-    public function clearSelection(): void
-    {
-        $this->selectedProducts = [];
-    }
-
-    public function openBulkModal(): void
-    {
-        if (empty($this->selectedProducts)) {
-            return;
-        }
-        $this->showBulkModal = true;
-    }
-
-    public function closeBulkModal(): void
-    {
-        $this->showBulkModal = false;
-        $this->reset(['bulkReason']);
-    }
-
-    public function saveBulkAdjustment(): void
-    {
-        $this->validate([
-            'adjustQuantity' => 'required|integer|min:1',
-            'bulkReason' => 'required|string|min:2|max:255',
-        ]);
-
-        $service = app(ProductService::class);
-        $success = 0;
-
-        DB::transaction(function () use ($service, &$success) {
-            foreach ($this->selectedProducts as $id) {
-                try {
-                    $service->adjustStock($id, $this->bulkType, $this->adjustQuantity, $this->bulkReason);
-                    $success++;
-                } catch (\Exception $e) {
-                }
-            }
-        });
-
-        $this->closeBulkModal();
-        $this->clearSelection();
-        Cache::forget('stock:stats');
-        $this->dispatch('notify', type: 'success', message: "{$success} produk diperbarui");
+        $this->showDetailModal = false;
+        $this->selectedProcurement = null;
+        $this->selectedAdjustment = null;
     }
 
     #[Computed(persist: true)]
     public function stats(): array
     {
-        if (! $this->readyToLoad) {
-            return [
-                'total' => 0,
-                'low_stock' => 0,
-                'out_of_stock' => 0,
-                'normal_stock' => 0,
-                'total_value' => 0,
-                'total_cost' => 0,
-                'potential_profit' => 0,
-            ];
-        }
-
+        // Always calculate stats, skip the readyToLoad check for stats to ensure they show up
+        // The readyToLoad is mainly for heavy table data rendering
+        
         return Cache::remember('stock:stats', 120, function () {
             return app(StockCalculationService::class)->calculateStockStats();
         });

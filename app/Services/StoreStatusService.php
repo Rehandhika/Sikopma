@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Helpers\DateTimeHelper;
 use App\Models\Attendance;
 use App\Models\StoreSetting;
 use Carbon\Carbon;
@@ -11,19 +12,12 @@ use Illuminate\Support\Facades\Log;
 
 class StoreStatusService
 {
-    protected DateTimeSettingsService $dateTimeService;
-
-    public function __construct(DateTimeSettingsService $dateTimeService)
-    {
-        $this->dateTimeService = $dateTimeService;
-    }
-
     /**
      * Get current time using system timezone
      */
     protected function now(): Carbon
     {
-        return $this->dateTimeService->now();
+        return DateTimeHelper::now();
     }
 
     /**
@@ -106,8 +100,8 @@ class StoreStatusService
 
         // Check operating hours
         if ($todaySchedule && $todaySchedule['is_open']) {
-            $openTime = Carbon::parse($todaySchedule['open'], $this->dateTimeService->getTimezone());
-            $closeTime = Carbon::parse($todaySchedule['close'], $this->dateTimeService->getTimezone());
+            $openTime = Carbon::parse($todaySchedule['open'], DateTimeHelper::getTimezone());
+            $closeTime = Carbon::parse($todaySchedule['close'], DateTimeHelper::getTimezone());
 
             $isWithinHours = $now->between($openTime, $closeTime);
 
@@ -302,7 +296,7 @@ class StoreStatusService
         }
 
         $now = $this->now();
-        $locale = $this->dateTimeService->getLocale();
+        $locale = DateTimeHelper::getLocale();
 
         // Priority 1: Check for custom mode (academic holidays)
         if ($setting->next_open_mode === StoreSetting::MODE_CUSTOM) {
@@ -346,8 +340,8 @@ class StoreStatusService
 
         // If today is an operating day
         if ($todaySchedule && $todaySchedule['is_open']) {
-            $openTime = Carbon::parse($todaySchedule['open'], $this->dateTimeService->getTimezone());
-            $closeTime = Carbon::parse($todaySchedule['close'], $this->dateTimeService->getTimezone());
+            $openTime = Carbon::parse($todaySchedule['open'], DateTimeHelper::getTimezone());
+            $closeTime = Carbon::parse($todaySchedule['close'], DateTimeHelper::getTimezone());
 
             // If before opening time today
             if ($now->lt($openTime)) {
@@ -377,7 +371,7 @@ class StoreStatusService
                     $postHolidaySchedule = $operatingHours[$postHolidayDay] ?? null;
 
                     if ($postHolidaySchedule && $postHolidaySchedule['is_open']) {
-                        $nextOpenTime = Carbon::parse($postHolidaySchedule['open'], $this->dateTimeService->getTimezone())->setDateFrom($nextDate);
+                        $nextOpenTime = Carbon::parse($postHolidaySchedule['open'], DateTimeHelper::getTimezone())->setDateFrom($nextDate);
 
                         return $nextOpenTime->locale($locale)->isoFormat('dddd, D MMMM YYYY [pukul] HH:mm');
                     }
@@ -385,7 +379,7 @@ class StoreStatusService
                     continue;
                 }
 
-                $nextOpenTime = Carbon::parse($nextSchedule['open'], $this->dateTimeService->getTimezone())->setDateFrom($nextDate);
+                $nextOpenTime = Carbon::parse($nextSchedule['open'], DateTimeHelper::getTimezone())->setDateFrom($nextDate);
 
                 return $nextOpenTime->locale($locale)->isoFormat('dddd, D MMM YYYY [pukul] HH:mm');
             }

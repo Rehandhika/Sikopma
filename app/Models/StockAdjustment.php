@@ -196,4 +196,19 @@ class StockAdjustment extends Model
 
         return $this->product?->name ?? 'Unknown';
     }
+
+    /**
+     * Get the related procurement (purchase) record if available
+     * Parses the invoice number from the reason string (e.g., "Procurement: INV-2023...")
+     */
+    public function getProcurement(): ?Purchase
+    {
+        // Example reason: "Procurement: PO-20260212-0001" or "Procurement: PO-20260212-0001 (Var)"
+        if (preg_match('/Procurement: (PO-[\w-]+)/', $this->reason, $matches)) {
+            $invoiceNumber = $matches[1];
+            return Purchase::where('invoice_number', $invoiceNumber)->first();
+        }
+
+        return null;
+    }
 }

@@ -2,55 +2,44 @@
 
 namespace App\Helpers;
 
-use App\Services\DateTimeSettingsService;
 use Carbon\Carbon;
 
 class DateTimeHelper
 {
-    protected static ?DateTimeSettingsService $service = null;
-
     /**
-     * Get the DateTimeSettingsService instance
-     */
-    protected static function service(): DateTimeSettingsService
-    {
-        if (static::$service === null) {
-            static::$service = app(DateTimeSettingsService::class);
-        }
-
-        return static::$service;
-    }
-
-    /**
-     * Format date using system settings
+     * Format date
+     * Format: 13 Februari 2026
      */
     public static function formatDate($date): string
     {
-        return static::service()->formatDate($date);
+        return static::parse($date)->translatedFormat('d F Y');
     }
 
     /**
-     * Format time using system settings
+     * Format time
+     * Format: 13:45
      */
     public static function formatTime($time): string
     {
-        return static::service()->formatTime($time);
+        return static::parse($time)->format('H:i');
     }
 
     /**
-     * Format datetime using system settings
+     * Format datetime
+     * Format: 13 Februari 2026 13:45
      */
     public static function formatDateTime($datetime): string
     {
-        return static::service()->formatDateTime($datetime);
+        return static::parse($datetime)->translatedFormat('d F Y H:i');
     }
 
     /**
      * Format date in human readable format
+     * Same as formatDate for now, but can be customized
      */
     public static function formatDateHuman($date): string
     {
-        return static::service()->formatDateHuman($date);
+        return static::parse($date)->translatedFormat('l, d F Y');
     }
 
     /**
@@ -58,7 +47,7 @@ class DateTimeHelper
      */
     public static function formatDateTimeHuman($datetime): string
     {
-        return static::service()->formatDateTimeHuman($datetime);
+        return static::parse($datetime)->translatedFormat('l, d F Y H:i');
     }
 
     /**
@@ -66,23 +55,27 @@ class DateTimeHelper
      */
     public static function diffForHumans($datetime): string
     {
-        return static::service()->diffForHumans($datetime);
+        return static::parse($datetime)->diffForHumans();
     }
 
     /**
-     * Get current time in configured timezone
+     * Get current time in Jakarta timezone
      */
     public static function now(): Carbon
     {
-        return static::service()->now();
+        return Carbon::now('Asia/Jakarta');
     }
 
     /**
-     * Parse a date string with configured timezone
+     * Parse a date string with Jakarta timezone
      */
-    public static function parse(string $date): Carbon
+    public static function parse($date): Carbon
     {
-        return static::service()->parse($date);
+        if ($date instanceof Carbon) {
+            return $date->setTimezone('Asia/Jakarta');
+        }
+
+        return Carbon::parse($date)->setTimezone('Asia/Jakarta');
     }
 
     /**
@@ -90,31 +83,31 @@ class DateTimeHelper
      */
     public static function getTimezone(): string
     {
-        return static::service()->getTimezone();
+        return 'Asia/Jakarta';
     }
 
     /**
-     * Get current date format
+     * Get current date format (Standard)
      */
     public static function getDateFormat(): string
     {
-        return static::service()->getDateFormat();
+        return 'd F Y';
     }
 
     /**
-     * Get current time format
+     * Get current time format (Standard)
      */
     public static function getTimeFormat(): string
     {
-        return static::service()->getTimeFormat();
+        return 'H:i';
     }
 
     /**
-     * Get current datetime format
+     * Get current datetime format (Standard)
      */
     public static function getDateTimeFormat(): string
     {
-        return static::service()->getDateTimeFormat();
+        return 'd F Y H:i';
     }
 
     /**
@@ -122,6 +115,6 @@ class DateTimeHelper
      */
     public static function getLocale(): string
     {
-        return static::service()->getLocale();
+        return 'id';
     }
 }

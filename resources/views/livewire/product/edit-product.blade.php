@@ -74,7 +74,7 @@
                                 hint="Harga dihitung otomatis dari rata-rata pengadaan (Weighted Average)."
                                 class="bg-gray-100 text-gray-500 cursor-not-allowed"
                             />
-                            <x-ui.input type="number" label="Harga Jual (Rp)" wire:model.live="price" min="0" step="100" required :error="$errors->first('price')" />
+                            <x-ui.input type="number" label="Harga Jual (Rp)" wire:model.live="price" min="0" step="any" required :error="$errors->first('price')" />
                         </div>
 
                         @if($cost_price && $price && $price > 0)
@@ -216,12 +216,12 @@
                                                         @endif
                                                     @endforeach
                                                     <td class="px-3 py-2">
-                                                        <input type="number" wire:model="variants.{{ $index }}.cost_price" min="0" step="100"
+                                                        <input type="number" wire:model="variants.{{ $index }}.cost_price" min="0" step="any"
                                                             class="w-full text-right text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md shadow-sm focus:border-primary-500 focus:ring-primary-500"
                                                             placeholder="Beli">
                                                     </td>
                                                     <td class="px-3 py-2">
-                                                        <input type="number" wire:model="variants.{{ $index }}.price" min="0" step="100"
+                                                        <input type="number" wire:model="variants.{{ $index }}.price" min="0" step="any"
                                                             class="w-full text-right text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md shadow-sm focus:border-primary-500 focus:ring-primary-500"
                                                             placeholder="Jual">
                                                     </td>

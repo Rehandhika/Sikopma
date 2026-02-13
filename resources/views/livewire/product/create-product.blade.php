@@ -44,8 +44,8 @@
                     
                     @if(!$has_variants)
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <x-ui.input type="number" label="Harga Beli Awal (Rp)" wire:model.live="cost_price" min="0" step="100" required :error="$errors->first('cost_price')" hint="Harga dasar untuk stok awal. Akan berubah otomatis mengikuti rata-rata pembelian selanjutnya." />
-                            <x-ui.input type="number" label="Harga Jual (Rp)" wire:model.live="price" min="0" step="100" required :error="$errors->first('price')" />
+                            <x-ui.input type="number" label="Harga Beli Awal (Rp)" wire:model.live="cost_price" min="0" step="any" required :error="$errors->first('cost_price')" hint="Harga dasar untuk stok awal. Akan berubah otomatis mengikuti rata-rata pembelian selanjutnya." />
+                            <x-ui.input type="number" label="Harga Jual (Rp)" wire:model.live="price" min="0" step="any" required :error="$errors->first('price')" />
                         </div>
 
                         @if($cost_price && $price && $price > 0)
@@ -194,12 +194,12 @@
                                                         @endif
                                                     @endforeach
                                                     <td class="px-3 py-2">
-                                                        <input type="number" wire:model="variants.{{ $index }}.cost_price" min="0" step="100"
+                                                        <input type="number" wire:model="variants.{{ $index }}.cost_price" min="0" step="any"
                                                             class="w-full text-right text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md shadow-sm focus:border-primary-500 focus:ring-primary-500"
                                                             placeholder="Beli">
                                                     </td>
                                                     <td class="px-3 py-2">
-                                                        <input type="number" wire:model="variants.{{ $index }}.price" min="0" step="100"
+                                                        <input type="number" wire:model="variants.{{ $index }}.price" min="0" step="any"
                                                             class="w-full text-right text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md shadow-sm focus:border-primary-500 focus:ring-primary-500"
                                                             placeholder="Jual">
                                                     </td>

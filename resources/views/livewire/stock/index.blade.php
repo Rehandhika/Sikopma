@@ -5,24 +5,14 @@
         description="Kelola stok produk, varian, dan riwayat penyesuaian."
     >
         <x-slot:actions>
-            <div class="flex items-center gap-2">
-                @if(count($selectedProducts) > 0)
-                    <div class="flex items-center gap-2 mr-4">
-                        <span class="text-sm text-gray-600">{{ count($selectedProducts) }} dipilih</span>
-                        <x-ui.button variant="primary" size="sm" wire:click="openBulkModal" icon="adjustments-horizontal">Bulk Adjust</x-ui.button>
-                        <x-ui.button variant="ghost" size="sm" wire:click="clearSelection" icon="x-mark"></x-ui.button>
-                    </div>
-                @endif
-
-                <x-ui.button 
-                    variant="primary" 
-                    x-data 
-                    @click="$dispatch('openProcurementModal')" 
-                    icon="shopping-cart"
-                >
-                    Pengadaan Baru
-                </x-ui.button>
-            </div>
+            <x-ui.button 
+                variant="primary" 
+                x-data 
+                @click="$dispatch('openProcurementModal')" 
+                icon="shopping-cart"
+            >
+                Pengadaan Baru
+            </x-ui.button>
         </x-slot:actions>
     </x-layout.page-header>
 
@@ -37,21 +27,21 @@
         />
         <x-layout.stat-card
             label="Nilai Modal"
-            :value="'Rp ' . number_format($this->stats['total_cost'], 0, ',', '.')"
+            :value="'Rp ' . number_format($this->stats['total_cost'] ?? 0, 0, ',', '.')"
             icon="banknotes"
             iconColor="bg-gray-100"
             iconTextColor="text-gray-600"
         />
         <x-layout.stat-card
             label="Nilai Jual"
-            :value="'Rp ' . number_format($this->stats['total_value'], 0, ',', '.')"
+            :value="'Rp ' . number_format($this->stats['total_value'] ?? 0, 0, ',', '.')"
             icon="currency-dollar"
             iconColor="bg-blue-100"
             iconTextColor="text-blue-600"
         />
         <x-layout.stat-card
             label="Potensi Profit"
-            :value="'Rp ' . number_format($this->stats['potential_profit'], 0, ',', '.')"
+            :value="'Rp ' . number_format($this->stats['potential_profit'] ?? 0, 0, ',', '.')"
             icon="arrow-trending-up"
             iconColor="bg-success-100"
             iconTextColor="text-success-600"
@@ -123,12 +113,13 @@
                             <option value="{{ $cat }}">{{ $cat }}</option>
                         @endforeach
                     </select>
+                    <x-ui.button variant="secondary" wire:click="exportProducts" icon="arrow-down-tray">
+                        Ekspor
+                    </x-ui.button>
                 @else
-                    <select wire:model.live="historyType" class="text-sm border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
-                        <option value="all">Semua Tipe</option>
-                        <option value="in">Masuk (+)</option>
-                        <option value="out">Keluar (-)</option>
-                    </select>
+                    <x-ui.button variant="secondary" wire:click="exportHistory" icon="arrow-down-tray">
+                        Ekspor
+                    </x-ui.button>
                 @endif
             </div>
         </div>
@@ -139,13 +130,9 @@
                 <table class="w-full text-sm text-left">
                     <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b">
                         <tr>
-                            <th class="px-4 py-3 w-10">
-                                <input type="checkbox" wire:click="selectAllVisible"
-                                    @checked(count($selectedProducts) > 0 && count($selectedProducts) === $this->products->filter(fn($p) => !$p->has_variants)->count())
-                                    class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
-                            </th>
                             <th class="px-4 py-3">Produk</th>
                             <th class="px-4 py-3 text-center">Stok</th>
+                            <th class="px-4 py-3 text-right">Harga Beli</th>
                             <th class="px-4 py-3 text-right">Harga Jual</th>
                             <th class="px-4 py-3 text-right">Nilai Aset</th>
                         </tr>
@@ -154,18 +141,10 @@
                         @forelse($this->products as $product)
                             <tr wire:key="p-{{ $product->id }}" class="hover:bg-gray-50 transition-colors {{ in_array($product->id, $expandedProducts) ? 'bg-gray-50' : '' }}">
                                 <td class="px-4 py-3">
-                                    @if(!$product->has_variants)
-                                        <input type="checkbox" wire:click="toggleProductSelection({{ $product->id }})"
-                                            @checked(in_array($product->id, $selectedProducts))
-                                            class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
-                                    @endif
-                                </td>
-                                <td class="px-4 py-3">
                                     <div class="flex items-center gap-3">
                                         <x-ui.product-image :src="$product->image_thumbnail_url" :alt="$product->name" size="w-10 h-10" />
                                         <div>
                                             <div class="font-medium text-gray-900">{{ $product->name }}</div>
-                                            <div class="text-xs text-gray-500">{{ $product->sku ?? '-' }}</div>
                                             @if($product->has_variants)
                                                 <button wire:click="toggleExpand({{ $product->id }})" class="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1 mt-1">
                                                     <x-ui.icon :name="in_array($product->id, $expandedProducts) ? 'chevron-down' : 'chevron-right'" class="w-3 h-3" />
@@ -193,6 +172,23 @@
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 text-right">
+                                    <div class="text-sm font-medium text-gray-600">
+                                        @if($product->has_variants)
+                                            @php
+                                                $minCost = $product->variants->min('cost_price');
+                                                $maxCost = $product->variants->max('cost_price');
+                                            @endphp
+                                            @if($minCost == $maxCost)
+                                                Rp {{ number_format($minCost, 0, ',', '.') }}
+                                            @else
+                                                Rp {{ number_format($minCost, 0, ',', '.') }} - {{ number_format($maxCost, 0, ',', '.') }}
+                                            @endif
+                                        @else
+                                            Rp {{ number_format($product->cost_price, 0, ',', '.') }}
+                                        @endif
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 text-right">
                                     <div class="text-sm font-medium">{{ $product->display_price }}</div>
                                 </td>
                                 <td class="px-4 py-3 text-right font-medium text-gray-700">
@@ -204,12 +200,10 @@
                             @if($product->has_variants && in_array($product->id, $expandedProducts))
                                 @foreach($product->variants as $variant)
                                     <tr wire:key="v-{{ $variant->id }}" class="bg-gray-50/50">
-                                        <td class="px-4 py-2"></td>
                                         <td class="px-4 py-2 pl-12">
                                             <div class="flex items-center gap-2">
                                                 <x-ui.icon name="tag" class="w-4 h-4 text-gray-400" />
                                                 <span class="text-sm text-gray-600">{{ $variant->variant_name }}</span>
-                                                <span class="text-xs text-gray-400">({{ $variant->sku }})</span>
                                             </div>
                                         </td>
                                         <td class="px-4 py-2 text-center">
@@ -218,6 +212,9 @@
                                                 'text-danger-600' => $variant->stock <= 0,
                                                 'text-warning-600' => $variant->stock > 0 && $variant->stock <= $variant->min_stock,
                                             ])>{{ $variant->stock }}</span>
+                                        </td>
+                                        <td class="px-4 py-2 text-right text-sm text-gray-600">
+                                            Rp {{ number_format($variant->cost_price, 0, ',', '.') }}
                                         </td>
                                         <td class="px-4 py-2 text-right text-sm text-gray-600">
                                             Rp {{ number_format($variant->price, 0, ',', '.') }}
@@ -251,35 +248,40 @@
         @if($activeTab === 'history')
             <div class="divide-y divide-gray-100">
                 @forelse($this->adjustments as $adj)
-                    <div class="p-4 flex items-center gap-4 hover:bg-gray-50">
-                        <div @class([
-                            'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0',
-                            'bg-green-100 text-green-600' => $adj->type === 'in',
-                            'bg-red-100 text-red-600' => $adj->type === 'out',
-                        ])>
-                            <x-ui.icon :name="$adj->type === 'in' ? 'arrow-up' : 'arrow-down'" class="w-5 h-5" />
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2">
-                                <span class="font-medium text-gray-900">{{ $adj->product->name ?? 'Produk Dihapus' }}</span>
-                                @if($adj->variant)
-                                    <x-ui.badge variant="gray" size="sm">{{ $adj->variant->variant_name }}</x-ui.badge>
-                                @endif
-                            </div>
-                            <p class="text-sm text-gray-500">{{ $adj->reason }}</p>
-                            <p class="text-xs text-gray-400 mt-1">Oleh: {{ $adj->user->name ?? 'System' }} • {{ $adj->created_at->format('d M Y H:i') }}</p>
-                        </div>
-                        <div class="text-right">
-                            <span @class([
-                                'text-lg font-bold',
-                                'text-green-600' => $adj->type === 'in',
-                                'text-red-600' => $adj->type === 'out',
+                    <button type="button" wire:click="showDetail({{ $adj->id }})" class="w-full text-left focus:outline-none focus:bg-gray-50">
+                        <div class="p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors">
+                            <div @class([
+                                'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0',
+                                'bg-green-100 text-green-600' => $adj->type === 'in',
+                                'bg-red-100 text-red-600' => $adj->type === 'out',
                             ])>
-                                {{ $adj->type === 'in' ? '+' : '-' }}{{ $adj->quantity }}
-                            </span>
-                            <div class="text-xs text-gray-500">Stok: {{ $adj->previous_stock }} → {{ $adj->new_stock }}</div>
+                                <x-ui.icon :name="$adj->type === 'in' ? 'arrow-up' : 'arrow-down'" class="w-5 h-5" />
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-medium text-gray-900">{{ $adj->product->name ?? 'Produk Dihapus' }}</span>
+                                    @if($adj->variant)
+                                        <x-ui.badge variant="gray" size="sm">{{ $adj->variant->variant_name }}</x-ui.badge>
+                                    @endif
+                                </div>
+                                <p class="text-sm text-gray-500">{{ $adj->reason }}</p>
+                                <p class="text-xs text-gray-400 mt-1">Oleh: {{ $adj->user->name ?? 'System' }} • {{ $adj->created_at->format('d M Y H:i') }}</p>
+                            </div>
+                            <div class="text-right">
+                                <span @class([
+                                    'text-lg font-bold',
+                                    'text-green-600' => $adj->type === 'in',
+                                    'text-red-600' => $adj->type === 'out',
+                                ])>
+                                    {{ $adj->type === 'in' ? '+' : '-' }}{{ $adj->quantity }}
+                                </span>
+                                <div class="text-xs text-gray-500">Stok: {{ $adj->previous_stock }} → {{ $adj->new_stock }}</div>
+                            </div>
+                            <div class="ml-2">
+                                <x-ui.icon name="chevron-right" class="w-4 h-4 text-gray-400" />
+                            </div>
                         </div>
-                    </div>
+                    </button>
                 @empty
                     <div class="p-8 text-center">
                         <x-layout.empty-state
@@ -296,83 +298,154 @@
         @endif
     </x-ui.card>
 
-    {{-- Adjust Modal --}}
-    <x-ui.modal wire:model="showAdjustModal" title="Penyesuaian Stok">
-        @if($this->selectedProduct)
-            <div class="space-y-4">
-                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <x-ui.product-image :src="$this->selectedProduct->image_thumbnail_url" class="w-12 h-12" />
-                    <div>
-                        <div class="font-medium">{{ $this->selectedProduct->name }}</div>
-                        @if($this->selectedVariant)
-                            <div class="text-sm text-gray-600">Varian: {{ $this->selectedVariant->variant_name }}</div>
-                            <div class="text-xs text-gray-500">Stok Saat Ini: {{ $this->selectedVariant->stock }}</div>
-                        @else
-                            <div class="text-xs text-gray-500">Stok Saat Ini: {{ $this->selectedProduct->stock }}</div>
-                        @endif
+    {{-- Detail Modal --}}
+    <div
+        x-data="{ show: @entangle('showDetailModal') }"
+        x-show="show"
+        x-cloak
+        class="fixed inset-0 z-50 overflow-y-auto"
+        style="display: none;"
+    >
+        <!-- Backdrop -->
+        <div 
+            x-show="show"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+            wire:click="closeDetailModal"
+        ></div>
+
+        <!-- Modal Panel -->
+        <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+            <div
+                x-show="show"
+                x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl"
+            >
+                @if($selectedAdjustment)
+                    <!-- Header -->
+                    <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4 border-b">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-xl font-semibold leading-6 text-gray-900">Detail Riwayat Stok</h3>
+                            <button wire:click="closeDetailModal" class="text-gray-400 hover:text-gray-500">
+                                <x-ui.icon name="x-mark" class="h-6 w-6" />
+                            </button>
+                        </div>
                     </div>
-                </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <button type="button" wire:click="$set('adjustType', 'in')" @class([
-                        'p-3 rounded-lg border text-center font-medium transition-colors',
-                        'bg-green-50 border-green-200 text-green-700' => $adjustType === 'in',
-                        'hover:bg-gray-50' => $adjustType !== 'in',
-                    ])>
-                        Masuk (+)
-                    </button>
-                    <button type="button" wire:click="$set('adjustType', 'out')" @class([
-                        'p-3 rounded-lg border text-center font-medium transition-colors',
-                        'bg-red-50 border-red-200 text-red-700' => $adjustType === 'out',
-                        'hover:bg-gray-50' => $adjustType !== 'out',
-                    ])>
-                        Keluar (-)
-                    </button>
-                </div>
+                    <!-- Body -->
+                    <div class="px-4 py-5 sm:p-6">
+                        <div class="space-y-6">
+                            {{-- Header Status --}}
+                            <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                                <div @class([
+                                    'w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0',
+                                    'bg-green-100 text-green-600' => $selectedAdjustment->type === 'in',
+                                    'bg-red-100 text-red-600' => $selectedAdjustment->type === 'out',
+                                ])>
+                                    <x-ui.icon :name="$selectedAdjustment->type === 'in' ? 'arrow-up' : 'arrow-down'" class="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <div class="text-sm text-gray-500 uppercase tracking-wider font-semibold">
+                                        {{ $selectedAdjustment->type === 'in' ? 'Stok Masuk' : 'Stok Keluar' }}
+                                    </div>
+                                    <div class="text-2xl font-bold text-gray-900">
+                                        {{ $selectedAdjustment->quantity }} Unit
+                                    </div>
+                                </div>
+                            </div>
 
-                <x-ui.input type="number" label="Jumlah" wire:model="adjustQuantity" min="1" class="text-lg font-bold" />
-                
-                <x-ui.textarea label="Alasan Penyesuaian" wire:model="adjustReason" placeholder="Contoh: Barang rusak, stok opname, restock..." />
+                            {{-- Product Info --}}
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs text-gray-500 uppercase font-medium mb-1">Produk</label>
+                                    <div class="font-medium text-gray-900">{{ $selectedAdjustment->product->name ?? 'Produk Dihapus' }}</div>
+                                    @if($selectedAdjustment->variant)
+                                        <div class="text-sm text-gray-600 mt-1">
+                                            <span class="bg-gray-100 px-2 py-0.5 rounded text-xs border">
+                                                {{ $selectedAdjustment->variant->variant_name }}
+                                            </span>
+                                        </div>
+                                    @endif
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 uppercase font-medium mb-1">Perubahan Stok</label>
+                                    <div class="flex items-center gap-2 text-sm">
+                                        <span class="text-gray-500">{{ $selectedAdjustment->previous_stock }}</span>
+                                        <x-ui.icon name="arrow-right" class="w-3 h-3 text-gray-400" />
+                                        <span class="font-bold text-gray-900">{{ $selectedAdjustment->new_stock }}</span>
+                                    </div>
+                                </div>
+                            </div>
 
-                <div class="flex justify-end gap-2 pt-4">
-                    <x-ui.button variant="secondary" wire:click="closeAdjustModal">Batal</x-ui.button>
-                    <x-ui.button variant="primary" wire:click="saveAdjustment">Simpan</x-ui.button>
-                </div>
-            </div>
-        @endif
-    </x-ui.modal>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs text-gray-500 uppercase font-medium mb-1">Tanggal</label>
+                                    <div class="text-sm text-gray-900">{{ $selectedAdjustment->created_at->format('d F Y, H:i') }}</div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 uppercase font-medium mb-1">Oleh</label>
+                                    <div class="text-sm text-gray-900">{{ $selectedAdjustment->user->name ?? 'System' }}</div>
+                                </div>
+                            </div>
 
-    {{-- Bulk Modal --}}
-    <x-ui.modal wire:model="showBulkModal" title="Bulk Adjustment">
-        <div class="space-y-4">
-            <p class="text-sm text-gray-600">Anda akan melakukan penyesuaian stok untuk <strong>{{ count($selectedProducts) }} produk</strong> terpilih.</p>
-            
-            <div class="grid grid-cols-2 gap-3">
-                <button type="button" wire:click="$set('bulkType', 'in')" @class([
-                    'p-3 rounded-lg border text-center font-medium transition-colors',
-                    'bg-green-50 border-green-200 text-green-700' => $bulkType === 'in',
-                    'hover:bg-gray-50' => $bulkType !== 'in',
-                ])>
-                    Masuk (+)
-                </button>
-                <button type="button" wire:click="$set('bulkType', 'out')" @class([
-                    'p-3 rounded-lg border text-center font-medium transition-colors',
-                    'bg-red-50 border-red-200 text-red-700' => $bulkType === 'out',
-                    'hover:bg-gray-50' => $bulkType !== 'out',
-                ])>
-                    Keluar (-)
-                </button>
-            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 uppercase font-medium mb-1">Keterangan / Referensi</label>
+                                <div class="p-3 bg-gray-50 rounded-md text-sm text-gray-700 border border-gray-200">
+                                    {{ $selectedAdjustment->reason }}
+                                </div>
+                            </div>
 
-            <x-ui.input type="number" label="Jumlah (per produk)" wire:model="adjustQuantity" min="1" />
-            <x-ui.textarea label="Alasan" wire:model="bulkReason" />
+                            {{-- Related Procurement Info --}}
+                            @if($selectedProcurement)
+                                <div class="border-t pt-4 mt-4">
+                                    <h4 class="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                                        <x-ui.icon name="document-text" class="w-4 h-4 text-primary-600" />
+                                        Detail Pengadaan
+                                    </h4>
+                                    
+                                    <div class="bg-blue-50 border border-blue-100 rounded-lg p-4 space-y-3">
+                                        <div class="flex justify-between">
+                                            <span class="text-sm text-gray-600">No. Invoice</span>
+                                            <span class="text-sm font-medium text-gray-900">{{ $selectedProcurement->invoice_number }}</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-sm text-gray-600">Supplier</span>
+                                            <span class="text-sm font-medium text-gray-900">{{ $selectedProcurement->supplier_name ?: '-' }}</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-sm text-gray-600">Total Item</span>
+                                            <span class="text-sm font-medium text-gray-900">{{ $selectedProcurement->items->sum('quantity') }} unit</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-sm text-gray-600">Total Biaya</span>
+                                            <span class="text-sm font-bold text-primary-700">Rp {{ number_format($selectedProcurement->total_amount, 0, ',', '.') }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
 
-            <div class="flex justify-end gap-2 pt-4">
-                <x-ui.button variant="secondary" wire:click="closeBulkModal">Batal</x-ui.button>
-                <x-ui.button variant="primary" wire:click="saveBulkAdjustment">Simpan</x-ui.button>
+                    <!-- Footer -->
+                    <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                        <x-ui.button variant="secondary" wire:click="closeDetailModal" class="w-full sm:w-auto">
+                            Tutup
+                        </x-ui.button>
+                    </div>
+                @endif
             </div>
         </div>
-    </x-ui.modal>
+    </div>
 
     {{-- Procurement Modal --}}
     <livewire:stock.procurement-modal />
