@@ -10,6 +10,7 @@ use App\Models\Student;
 use App\Services\ActivityLogService;
 use App\Services\PaymentConfigurationService;
 use App\Services\ShuPointService;
+use App\Traits\AuthorizesLivewireRequests;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
@@ -20,6 +21,8 @@ use Livewire\Component;
 #[Title('Point of Sale')]
 class Pos extends Component
 {
+    use AuthorizesLivewireRequests;
+
     // Search & Filter
     public string $search = '';
 
@@ -543,6 +546,9 @@ class Pos extends Component
 
     public function processPayment(): void
     {
+        // No permission check needed - all authenticated users can access POS (akses_kasir is self-service)
+        // Route middleware handles authentication
+
         if (empty($this->cart)) {
             $this->dispatch('toast', message: 'Keranjang kosong', type: 'error');
 

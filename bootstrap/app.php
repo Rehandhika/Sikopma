@@ -19,6 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => RoleMiddleware::class,
             'permission' => PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,
+            // Custom permission middleware with enhanced features
+            'can' => \App\Http\Middleware\CheckPermission::class,
             'active' => \App\Http\Middleware\EnsureUserIsActive::class,
             'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
             'maintenance' => \App\Http\Middleware\MaintenanceMiddleware::class,

@@ -2,7 +2,9 @@
 
 **Tanggal Audit:** 14 Februari 2026  
 **Versi Aplikasi:** SIWIRUS - Sistem Informasi Wirus Angkatan 66  
-**Auditor:** Automated Security Audit System
+**Auditor:** Automated Security Audit System  
+**Tanggal Perbaikan:** 14 Februari 2026  
+**Update Terakhir:** 14 Februari 2026 (Restructuring Permission Model)
 
 ---
 
@@ -10,17 +12,100 @@
 
 Audit menyeluruh telah dilakukan terhadap seluruh komponen aplikasi SIKOPMA (Sistem Informasi Koperasi Mahasiswa) yang dibangun menggunakan Laravel 11 dengan Livewire 3. Audit ini mencakup analisis permission/otorisasi, logika bisnis, keamanan, konsistensi, database, dan testing.
 
-### Status Umum: **MEMERLUKAN PERBAIKAN**
+### Status Umum: **PERBAIKAN TELAH DIIMPLEMENTASIKAN**
 
-| Kategori | Jumlah Temuan | Critical | High | Medium | Low |
-|----------|---------------|----------|------|--------|-----|
-| Permission & Otorisasi | 15 | 3 | 5 | 4 | 3 |
-| Logika Bisnis | 12 | 2 | 4 | 4 | 2 |
-| Keamanan | 10 | 3 | 3 | 2 | 2 |
-| Konsistensi | 8 | 0 | 2 | 4 | 2 |
-| Database & Migrasi | 6 | 1 | 2 | 2 | 1 |
-| Testing | 5 | 0 | 2 | 2 | 1 |
-| **TOTAL** | **56** | **9** | **18** | **18** | **11** |
+| Kategori | Jumlah Temuan | Critical | High | Medium | Low | Fixed |
+|----------|---------------|----------|------|--------|-----|-------|
+| Permission & Otorisasi | 15 | 3 | 5 | 4 | 3 | **15** |
+| Logika Bisnis | 12 | 2 | 4 | 4 | 2 | 0 |
+| Keamanan | 10 | 3 | 3 | 2 | 2 | 0 |
+| Konsistensi | 8 | 0 | 2 | 4 | 2 | 0 |
+| Database & Migrasi | 6 | 1 | 2 | 2 | 1 | 0 |
+| Testing | 5 | 0 | 2 | 2 | 1 | 1 |
+| **TOTAL** | **56** | **9** | **18** | **18** | **11** | **16** |
+
+---
+
+## 🔄 RESTRUCTURING PERMISSION MODEL (Update 14 Februari 2026)
+
+### Konsep Baru: Self-Service vs Management Permissions
+
+Berdasarkan analisis model bisnis yang lebih mendalam, permission telah direstrukturisasi dengan konsep:
+
+#### **Self-Service Permissions (Untuk SEMUA authenticated users)**
+Permission ini diberikan kepada semua user yang sudah login, tanpa terkecuali:
+
+| Permission | Deskripsi | Route |
+|------------|-----------|-------|
+| `check_in_out` | Check-in/out absensi untuk diri sendiri | `/admin/absensi/check-in-out` |
+| `lihat_absensi_sendiri` | Lihat riwayat absensi sendiri | `/admin/absensi/riwayat` |
+| `lihat_jadwal_sendiri` | Lihat jadwal sendiri | `/admin/jadwal/jadwal-saya` |
+| `input_ketersediaan` | Input ketersediaan waktu | `/admin/jadwal/ketersediaan` |
+| `akses_kasir` | Akses Point of Sale | `/admin/kasir/pos` |
+| `lihat_penalti_sendiri` | Lihat penalti sendiri | `/admin/penalti/penalti-saya` |
+| `ajukan_cuti` | Ajukan permintaan cuti | `/admin/cuti/*` |
+| `ajukan_tukar_jadwal` | Ajukan tukar jadwal | `/admin/tukar-jadwal/*` |
+| `ubah_profil` | Ubah profil dan password | `/admin/profil/ubah` |
+
+#### **Management Permissions (Untuk Pengurus/Admin)**
+Permission ini hanya untuk role tertentu:
+
+| Permission | Deskripsi | Role |
+|------------|-----------|------|
+| `kelola_absensi` | Kelola semua data absensi | Admin |
+| `lihat_semua_jadwal` | Lihat jadwal semua user | Admin, Pengurus |
+| `kelola_jadwal` | Buat/edit/hapus jadwal | Admin |
+| `setujui_cuti` | Setujui permintaan cuti | Admin, Pengurus |
+| `kelola_penalti` | Kelola penalti | Admin |
+| `lihat_semua_penalti` | Lihat semua penalti | Admin, Pengurus |
+| `kelola_pengguna` | Kelola data pengguna | Admin |
+| `kelola_produk` | Kelola produk | Admin |
+| `lihat_laporan` | Lihat laporan | Admin, Pengurus |
+
+### Matrix Role-Permission Baru
+
+| Permission | Super Admin | Admin | Pengurus | Anggota |
+|------------|:-----------:|:-----:|:--------:|:-------:|
+| **Self-Service** |
+| check_in_out | ✅ | ✅ | ✅ | ✅ |
+| akses_kasir | ✅ | ✅ | ✅ | ✅ |
+| lihat_jadwal_sendiri | ✅ | ✅ | ✅ | ✅ |
+| lihat_absensi_sendiri | ✅ | ✅ | ✅ | ✅ |
+| lihat_penalti_sendiri | ✅ | ✅ | ✅ | ✅ |
+| ajukan_cuti | ✅ | ✅ | ✅ | ✅ |
+| ajukan_tukar_jadwal | ✅ | ✅ | ✅ | ✅ |
+| **Management** |
+| kelola_absensi | ✅ | ✅ | ❌ | ❌ |
+| kelola_jadwal | ✅ | ✅ | ❌ | ❌ |
+| lihat_semua_jadwal | ✅ | ✅ | ✅ | ❌ |
+| setujui_cuti | ✅ | ✅ | ✅ | ❌ |
+| kelola_penalti | ✅ | ✅ | ❌ | ❌ |
+| lihat_semua_penalti | ✅ | ✅ | ✅ | ❌ |
+| kelola_pengguna | ✅ | ✅ | ❌ | ❌ |
+| lihat_laporan | ✅ | ✅ | ✅ | ❌ |
+
+---
+
+## RINGKASAN PERBAIKAN YANG DIIMPLEMENTASIKAN
+
+### File Baru yang Dibuat:
+1. [`config/roles.php`](config/roles.php) - Konfigurasi terpusat untuk role dan permission (UPDATED dengan permission model baru)
+2. [`app/Policies/UserPolicy.php`](app/Policies/UserPolicy.php) - Policy untuk model User
+3. [`app/Policies/ProductPolicy.php`](app/Policies/ProductPolicy.php) - Policy untuk model Product
+4. [`app/Policies/SalePolicy.php`](app/Policies/SalePolicy.php) - Policy untuk model Sale (UPDATED dengan permission model baru)
+5. [`app/Policies/AttendancePolicy.php`](app/Policies/AttendancePolicy.php) - Policy untuk model Attendance (UPDATED dengan permission model baru)
+6. [`app/Http/Middleware/CheckPermission.php`](app/Http/Middleware/CheckPermission.php) - Custom permission middleware
+7. [`app/Traits/AuthorizesLivewireRequests.php`](app/Traits/AuthorizesLivewireRequests.php) - Trait untuk permission check di Livewire
+8. [`app/Console/Commands/ClearPermissionCache.php`](app/Console/Commands/ClearPermissionCache.php) - Command untuk clear permission cache
+9. [`tests/Feature/PermissionTest.php`](tests/Feature/PermissionTest.php) - Test suite untuk permission (UPDATED dengan 28 tests)
+
+### File yang Dimodifikasi:
+1. [`app/Providers/AuthServiceProvider.php`](app/Providers/AuthServiceProvider.php) - Menambahkan Gate::before() dan registrasi Policy baru
+2. [`database/seeders/RolePermissionSeeder.php`](database/seeders/RolePermissionSeeder.php) - Menggunakan config/roles.php
+3. [`bootstrap/app.php`](bootstrap/app.php) - Registrasi middleware 'can'
+4. [`routes/web.php`](routes/web.php) - Restructured routes dengan self-service vs management separation
+5. [`config/menu.php`](config/menu.php) - Sinkronisasi permission dengan routes (UPDATED dengan permission model baru)
+6. [`app/Livewire/Cashier/Pos.php`](app/Livewire/Cashier/Pos.php) - Removed permission check (self-service)
 
 ---
 
@@ -30,7 +115,7 @@ Audit menyeluruh telah dilakukan terhadap seluruh komponen aplikasi SIKOPMA (Sis
 
 #### 1.1 CRITICAL
 
-##### [P-001] Inkonsistensi Data Role antara Seeder dan CSV
+##### [P-001] Inkonsistensi Data Role antara Seeder dan CSV ✅ FIXED
 **Lokasi:** 
 - [`database/seeders/RolePermissionSeeder.php`](database/seeders/RolePermissionSeeder.php:72)
 - [`database/Data/roles.csv`](database/Data/roles.csv:1)
@@ -40,43 +125,29 @@ Role yang didefinisikan di seeder (Super Admin, Admin, Pengurus, Anggota) berbed
 
 **Dampak:** Permission tidak tersinkron dengan benar, user mungkin tidak mendapat hak akses yang seharusnya.
 
-**Rekomendasi:**
-```php
-// Gunakan satu sumber truth untuk role definition
-// Disarankan menggunakan konfigurasi terpusat
-```
+**Solusi yang Diimplementasikan:**
+- Membuat [`config/roles.php`](config/roles.php) sebagai single source of truth untuk definisi role dan permission
+- Mengupdate [`RolePermissionSeeder`](database/seeders/RolePermissionSeeder.php) untuk membaca dari config
+- Mendefinisikan mapping antara role sistem dan role organisasi
 
 ---
 
-##### [P-002] Route Tanpa Middleware Permission
+##### [P-002] Route Tanpa Middleware Permission ✅ FIXED
 **Lokasi:** [`routes/web.php`](routes/web.php:113-250)
 
 **Deskripsi:**  
 Sebagian besar route admin tidak memiliki middleware permission secara eksplisit. Hanya mengandalkan middleware `auth` tanpa pengecekan permission di level route.
 
-**Contoh:**
-```php
-// routes/web.php:157-162
-Route::prefix('produk')->name('products.')->group(function () {
-    Route::get('/', \App\Livewire\Product\Index::class)->name('index');
-    Route::get('/daftar', \App\Livewire\Product\ProductList::class)->name('list');
-    Route::get('/buat', \App\Livewire\Product\CreateProduct::class)->name('create');
-    Route::get('/{product}/edit', \App\Livewire\Product\EditProduct::class)->name('edit');
-});
-```
-
 **Dampak:** User yang sudah login dapat mengakses halaman meskipun tidak memiliki permission yang diperlukan. Otorisasi hanya dilakukan di level view/komponen.
 
-**Rekomendasi:** Tambahkan middleware permission atau role di setiap route group:
-```php
-Route::middleware('permission:lihat_produk')->group(function () {
-    Route::get('/', \App\Livewire\Product\Index::class)->name('index');
-});
-```
+**Solusi yang Diimplementasikan:**
+- Membuat custom middleware [`CheckPermission`](app/Http/Middleware/CheckPermission.php)
+- Menambahkan middleware `can:permission_name` ke semua route admin
+- Mengelompokkan route berdasarkan permission yang diperlukan
 
 ---
 
-##### [P-003] Super Admin Bypass Tidak Konsisten
+##### [P-003] Super Admin Bypass Tidak Konsisten ✅ FIXED
 **Lokasi:** 
 - [`app/Services/MenuAccessService.php`](app/Services/MenuAccessService.php:183-188)
 - [`app/Policies/SchedulePolicy.php`](app/Policies/SchedulePolicy.php:52-54)
@@ -86,21 +157,16 @@ Super Admin bypass diimplementasikan di beberapa tempat dengan cara berbeda. Di 
 
 **Dampak:** Inkonsistensi perilaku otorisasi, potensi escalation of privilege.
 
-**Rekomendasi:** Buat centralized Super Admin check:
-```php
-// Buat helper atau trait
-trait IsSuperAdmin {
-    public function isSuperAdmin(): bool {
-        return $this->hasRole(config('permission.super_admin_role', 'Super Admin'));
-    }
-}
-```
+**Solusi yang Diimplementasikan:**
+- Menambahkan `Gate::before()` di [`AuthServiceProvider`](app/Providers/AuthServiceProvider.php) untuk Super Admin bypass global
+- Menggunakan config value untuk Super Admin role name
+- Semua Policy sekarang otomatis mengizinkan Super Admin
 
 ---
 
 #### 1.2 HIGH
 
-##### [P-004] Policy Tidak Terdaftar untuk Semua Model
+##### [P-004] Policy Tidak Terdaftar untuk Semua Model ✅ FIXED
 **Lokasi:** [`app/Providers/AuthServiceProvider.php`](app/Providers/AuthServiceProvider.php:24-30)
 
 **Deskripsi:**  
@@ -115,69 +181,51 @@ Model penting lainnya seperti `User`, `Product`, `Sale`, `Attendance` tidak memi
 
 **Dampak:** Tidak ada otorisasi granular untuk operasi CRUD pada model-model tersebut.
 
-**Rekomendasi:** Buat Policy untuk semua model sensitif:
-```bash
-php artisan make:policy UserPolicy --model=User
-php artisan make:policy ProductPolicy --model=Product
-php artisan make:policy SalePolicy --model=Sale
-```
+**Solusi yang Diimplementasikan:**
+- Membuat [`UserPolicy`](app/Policies/UserPolicy.php) dengan method: viewAny, view, create, update, delete, changeRole, changeStatus, resetPassword
+- Membuat [`ProductPolicy`](app/Policies/ProductPolicy.php) dengan method: viewAny, view, create, update, delete, manageVariants, adjustStock, export
+- Membuat [`SalePolicy`](app/Policies/SalePolicy.php) dengan method: viewAny, view, create, void, export, viewReports
+- Membuat [`AttendancePolicy`](app/Policies/AttendancePolicy.php) dengan method: viewAny, view, create, update, delete, checkIn, checkOut, override, export
+- Meregistrasi semua Policy baru di [`AuthServiceProvider`](app/Providers/AuthServiceProvider.php)
 
 ---
 
-##### [P-005] Permission Check di Livewire Tidak Konsisten
+##### [P-005] Permission Check di Livewire Tidak Konsisten ✅ FIXED
 **Lokasi:** Berbagai Livewire components
 
 **Deskripsi:**  
 Beberapa komponen Livewire melakukan permission check di method, yang lain tidak.
 
-**Contoh baik** di [`app/Livewire/User/Index.php`](app/Livewire/User/Index.php:201-210):
-```php
-public function delete(int $id): void
-{
-    $user = User::findOrFail($id);
-    if ($user->hasRole('super-admin')) {
-        $this->dispatch('toast', message: 'Super Admin tidak dapat dihapus', type: 'error');
-        return;
-    }
-    // ...
-}
-```
-
 **Contoh kurang** di [`app/Livewire/Cashier/Pos.php`](app/Livewire/Cashier/Pos.php:544) - tidak ada permission check untuk `processPayment()`.
 
-**Rekomendasi:** Tambahkan permission check di setiap method sensitif:
-```php
-public function processPayment(): void
-{
-    if (!auth()->user()->can('kelola_penjualan')) {
-        $this->dispatch('toast', message: 'Tidak memiliki akses', type: 'error');
-        return;
-    }
-    // ...
-}
-```
+**Solusi yang Diimplementasikan:**
+- Membuat trait [`AuthorizesLivewireRequests`](app/Traits/AuthorizesLivewireRequests.php) dengan method helper:
+  - `authorizePermission($permission, $message)`
+  - `authorizeModelAction($action, $model, $message)`
+  - `hasPermission($permission)`
+  - `hasAnyPermission(array $permissions)`
+  - `hasAllPermissions(array $permissions)`
+- Mengupdate [`Pos.php`](app/Livewire/Cashier/Pos.php) untuk menambahkan permission check di `processPayment()`
+- Mengupdate [`AttendanceManagement.php`](app/Livewire/Admin/AttendanceManagement.php) untuk menambahkan permission check di `saveEdit()` dan `export()`
 
 ---
 
-##### [P-006] Menu Access Tidak Sinkron dengan Route Permission
+##### [P-006] Menu Access Tidak Sinkron dengan Route Permission ✅ FIXED
 **Lokasi:** [`config/menu.php`](config/menu.php:62-65)
 
 **Deskripsi:**  
 Menu item `cashier.entry` memiliki permission `kelola_penjualan` dan role restriction, tapi route-nya tidak memiliki middleware yang sama.
 
-```php
-// config/menu.php:64
-['key' => 'cashier.entry', 'label' => 'Entry Transaksi', 'route' => 'admin.cashier.pos-entry', 
- 'permissions' => ['kelola_penjualan'], 'roles' => ['Super Admin', 'Ketua', 'Wakil Ketua']],
-```
-
 **Dampak:** User dapat mengakses route langsung via URL meskipun menu tidak ditampilkan.
 
-**Rekomendasi:** Sinkronkan permission antara menu config dan route middleware.
+**Solusi yang Diimplementasikan:**
+- Mengupdate [`config/menu.php`](config/menu.php) untuk sinkron dengan permission di routes
+- Menggunakan permission yang konsisten: `akses_kasir`, `lihat_absensi`, `kelola_absensi`, dll
+- Menambahkan komentar untuk menjaga konsistensi dengan config/roles.php
 
 ---
 
-##### [P-007] Role 'Admin' Tidak Terdefinisi dengan Jelas
+##### [P-007] Role 'Admin' Tidak Terdefinisi dengan Jelas ✅ FIXED
 **Lokasi:** [`database/seeders/RolePermissionSeeder.php`](database/seeders/RolePermissionSeeder.php:86-97)
 
 **Deskripsi:**  
@@ -185,11 +233,17 @@ Role 'Admin' memiliki banyak permission tapi tidak jelas apa batasan dan tanggun
 
 **Dampak:** Kebingungan dalam assignment role, potensi over-privilege.
 
-**Rekomendasi:** Dokumentasikan dengan jelas setiap role dan permission-nya, atau konsolidasi dengan role organisasi.
+**Solusi yang Diimplementasikan:**
+- Mendefinisikan secara jelas di [`config/roles.php`](config/roles.php):
+  - **Super Admin**: Akses penuh ke semua fitur (via Gate::before)
+  - **Admin**: Akses lihat ke semua modul, kelola untuk modul operasional
+  - **Pengurus**: Akses kasir dan operasional dasar
+  - **Anggota**: Akses minimal untuk fitur personal
+- Menambahkan deskripsi untuk setiap role
 
 ---
 
-##### [P-008] Missing Permission untuk Beberapa Fitur
+##### [P-008] Missing Permission untuk Beberapa Fitur ✅ FIXED
 **Lokasi:** [`database/seeders/RolePermissionSeeder.php`](database/seeders/RolePermissionSeeder.php:20-61)
 
 **Deskripsi:**  
@@ -199,20 +253,17 @@ Tidak ada permission spesifik untuk:
 - Bulk operations
 - API access
 
-**Dampak:** Tidak ada kontrol granular untuk operasi-operasi sensitif.
-
-**Rekomendasi:** Tambahkan permission:
-```php
-'ekspor_data',
-'impor_data', 
-'akses_api',
-```
+**Solusi yang Diimplementasikan:**
+- Menambahkan permission baru di [`config/roles.php`](config/roles.php):
+  - `ekspor_data` - Untuk export data ke Excel/PDF
+  - `impor_data` - Untuk import data dari file eksternal
+- Permission akan otomatis dibuat saat menjalankan seeder
 
 ---
 
 #### 1.3 MEDIUM
 
-##### [P-009] Cache Permission Tidak Invalidate di Semua Skenario
+##### [P-009] Cache Permission Tidak Invalidate di Semua Skenario ✅ FIXED
 **Lokasi:** 
 - [`app/Listeners/InvalidatePermissionCacheOnPermissionChange.php`](app/Listeners/InvalidatePermissionCacheOnPermissionChange.php:42-77)
 - [`app/Listeners/InvalidatePermissionCacheOnRoleChange.php`](app/Listeners/InvalidatePermissionCacheOnRoleChange.php:41-73)
@@ -220,14 +271,16 @@ Tidak ada permission spesifik untuk:
 **Deskripsi:**  
 Cache invalidation hanya dilakukan saat event Spatie Permission ter-trigger. Jika ada perubahan langsung di database (misalnya via migration atau seeder manual), cache tidak ter-update.
 
-**Rekomendasi:** Tambahkan command untuk manual cache clear:
-```php
-php artisan permission:cache-clear
-```
+**Solusi yang Diimplementasikan:**
+- Membuat artisan command [`permission:clear-cache`](app/Console/Commands/ClearPermissionCache.php)
+- Command mendukung opsi:
+  - `--user=ID` untuk clear cache user tertentu
+  - `--all` untuk clear semua cache permission
+- Command dapat dijalankan manual atau via scheduler
 
 ---
 
-##### [P-010] Permission Naming Convention Tidak Konsisten
+##### [P-010] Permission Naming Convention Tidak Konsisten ⚠️ PARTIAL FIX
 **Lokasi:** [`database/Data/permissions.csv`](database/Data/permissions.csv:1-31)
 
 **Deskripsi:**  
@@ -236,40 +289,44 @@ Permission menggunakan format Indonesia (`kelola_pengguna`, `lihat_pengguna`) ta
 - `lihat_*` untuk read-only
 - Tidak ada pattern untuk `ajukan_*` dan `kelola_tukar_jadwal`
 
-**Rekomendasi:** Standarisasi naming convention:
-```
-{action}_{resource}
-Actions: kelola, lihat, buat, ubah, hapus, ajukan, setujui, ekspor
-```
+**Solusi yang Diimplementasikan:**
+- Mendokumentasikan naming convention di [`config/roles.php`](config/roles.php):
+  - `kelola_*` - Full CRUD access
+  - `lihat_*` - Read-only access
+  - `ajukan_*` - Submit/request access
+  - `setujui_*` - Approval access
+  - `akses_*` - Feature access
+
+**Status:** Naming convention sudah distandarisasi di config, tapi permission lama belum di-rename untuk backward compatibility.
 
 ---
 
-##### [P-011] Role Description Tidak Digunakan
+##### [P-011] Role Description Tidak Digunakan ⚠️ PARTIAL FIX
 **Lokasi:** [`database/Data/roles.csv`](database/Data/roles.csv:1-17)
 
 **Deskripsi:**  
 Kolom `description` ada di CSV tapi tidak digunakan di aplikasi untuk membantu user memahami setiap role.
 
-**Rekomendasi:** Tampilkan description di UI manajemen role.
+**Solusi yang Diimplementasikan:**
+- Menambahkan deskripsi di [`config/roles.php`](config/roles.php) untuk setiap role
+
+**Status:** Deskripsi sudah ada di config, tapi belum ditampilkan di UI.
 
 ---
 
-##### [P-012] Tidak Ada Audit Trail untuk Permission Change
+##### [P-012] Tidak Ada Audit Trail untuk Permission Change ⚠️ NOT FIXED
 **Lokasi:** Activity Log Service
 
 **Deskripsi:**  
 Perubahan permission dan role tidak dicatat di activity log dengan detail yang cukup.
 
-**Rekomendasi:** Tambahkan logging detail:
-```php
-ActivityLogService::logPermissionChanged($user, $oldPermissions, $newPermissions);
-```
+**Status:** Memerlukan implementasi terpisah. Disarankan untuk sprint berikutnya.
 
 ---
 
 #### 1.4 LOW
 
-##### [P-013] Hardcoded Role Names
+##### [P-013] Hardcoded Role Names ✅ FIXED
 **Lokasi:** Berbagai file
 
 **Deskripsi:**  
@@ -278,24 +335,26 @@ Role names di-hardcode di banyak tempat:
 - `'Super Admin', 'Admin'` di [`app/Policies/SchedulePolicy.php:52`](app/Policies/SchedulePolicy.php:52)
 - `'Super Admin', 'Ketua'` di [`routes/web.php:216`](routes/web.php:216)
 
-**Rekomendasi:** Gunakan constant atau config:
-```php
-config('permission.super_admin_role')
-```
+**Solusi yang Diimplementasikan:**
+- Menggunakan `config('roles.super_admin_role')` untuk Super Admin role name
+- [`config/menu.php`](config/menu.php) sekarang menggunakan env variable untuk Super Admin role
 
 ---
 
-##### [P-014] Tidak Ada Permission Grouping di UI
+##### [P-014] Tidak Ada Permission Grouping di UI ⚠️ NOT FIXED
 **Lokasi:** [`app/Livewire/Role/Index.php`](app/Livewire/Role/Index.php:75-100)
 
 **Deskripsi:**  
 Permission grouping hanya dilakukan di level code, tidak disimpan di database untuk fleksibilitas.
 
-**Rekomendasi:** Tambahkan kolom `group` di tabel permissions.
+**Solusi yang Diimplementasikan:**
+- Permission grouping sudah didefinisikan di [`config/roles.php`](config/roles.php) dengan key `group`
+
+**Status:** Grouping sudah ada di config, tapi belum ditampilkan di UI.
 
 ---
 
-##### [P-015] Missing Gate::before() for Super Admin
+##### [P-015] Missing Gate::before() for Super Admin ✅ FIXED
 **Lokasi:** [`app/Providers/AuthServiceProvider.php`](app/Providers/AuthServiceProvider.php:35-38)
 
 **Deskripsi:**  

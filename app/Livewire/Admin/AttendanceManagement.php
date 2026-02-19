@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\Exports\AttendanceExport;
 use App\Models\Attendance;
 use App\Services\ActivityLogService;
+use App\Traits\AuthorizesLivewireRequests;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Computed;
@@ -18,6 +19,7 @@ use Maatwebsite\Excel\Facades\Excel;
 class AttendanceManagement extends Component
 {
     use WithPagination;
+    use AuthorizesLivewireRequests;
 
     #[Url(as: 'from')]
     public string $dateFrom = '';
@@ -232,6 +234,9 @@ class AttendanceManagement extends Component
 
     public function saveEdit(): void
     {
+        // Authorization check - requires kelola_absensi permission
+        $this->authorizePermission('kelola_absensi', 'Anda tidak memiliki izin untuk mengubah data absensi.');
+
         $this->validate([
             'editStatus' => 'required|in:present,late,absent,excused',
             'editCheckIn' => 'nullable|date_format:H:i',
@@ -278,6 +283,9 @@ class AttendanceManagement extends Component
     // === Export Excel ===
     public function export()
     {
+        // Authorization check - requires ekspor_data permission
+        $this->authorizePermission('ekspor_data', 'Anda tidak memiliki izin untuk mengekspor data.');
+
         // Log activity
         ActivityLogService::logAttendanceExported($this->dateFrom, $this->dateTo);
 

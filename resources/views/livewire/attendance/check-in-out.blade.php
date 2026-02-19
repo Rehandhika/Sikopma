@@ -48,12 +48,8 @@
                                         {{ $status['label'] }}
                                     </span>
                                 </div>
-                                <div class="mt-2 text-sm {{ $status['text'] }} space-y-1">
+                                <div class="mt-2 text-sm {{ $status['text'] }}">
                                     <p>Sesi {{ $currentSchedule->session }}: {{ $currentSchedule->session_label }}</p>
-                                    <p>Waktu: {{ \Carbon\Carbon::parse($currentSchedule->time_start)->format('H:i') }} - {{ \Carbon\Carbon::parse($currentSchedule->time_end)->format('H:i') }}</p>
-                                    @if($currentSchedule->schedule)
-                                        <p class="text-xs opacity-75">Jadwal: {{ $currentSchedule->schedule->week_start_date->format('d M') }} - {{ $currentSchedule->schedule->week_end_date->format('d M Y') }}</p>
-                                    @endif
                                 </div>
                             </div>
                         </div>
