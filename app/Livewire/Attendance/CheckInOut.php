@@ -163,7 +163,7 @@ class CheckInOut extends Component
 
             // Validate schedule exists or override is allowed
             if (! $this->currentSchedule) {
-                if (config('siwirus.attendance.override_mode', false)) {
+                if (config('app-settings.attendance.override_mode', false)) {
                     $isOverride = true;
                 } else {
                     throw new \Exception('Tidak ada jadwal aktif saat ini.');
@@ -185,7 +185,7 @@ class CheckInOut extends Component
                 // Validate timing
                 $scheduleStart = $this->currentSchedule->date->copy()->setTimeFromTimeString($this->currentSchedule->time_start);
                 $now = now();
-                $tolerance = config('siwirus.attendance.allow_early_checkin_minutes', 30);
+                $tolerance = config('app-settings.attendance.allow_early_checkin_minutes', 30);
 
                 if ($now->lt($scheduleStart->copy()->subMinutes($tolerance))) {
                     throw new \Exception("Belum waktunya check-in. Check-in dapat dilakukan {$tolerance} menit sebelum jadwal dimulai.");
@@ -363,7 +363,7 @@ class CheckInOut extends Component
         }
 
         $scheduleStart = $this->currentSchedule->date->copy()->setTimeFromTimeString($this->currentSchedule->time_start);
-        $lateThreshold = config('siwirus.late_threshold_minutes', 15);
+        $lateThreshold = config('app-settings.late_threshold_minutes', 15);
 
         if ($checkInTime->greaterThan($scheduleStart->copy()->addMinutes($lateThreshold))) {
             return 'late';
@@ -383,13 +383,13 @@ class CheckInOut extends Component
 
         if (! $this->currentSchedule) {
             // Allow check-in if override mode is enabled
-            return config('siwirus.attendance.override_mode', false);
+            return config('app-settings.attendance.override_mode', false);
         }
 
         // Allow check-in with tolerance
         $scheduleStart = $this->currentSchedule->date->copy()->setTimeFromTimeString($this->currentSchedule->time_start);
         $now = now();
-        $tolerance = config('siwirus.attendance.allow_early_checkin_minutes', 30);
+        $tolerance = config('app-settings.attendance.allow_early_checkin_minutes', 30);
 
         return $now->gte($scheduleStart->copy()->subMinutes($tolerance));
     }
@@ -404,7 +404,7 @@ class CheckInOut extends Component
         }
 
         $scheduleStart = $this->currentSchedule->date->copy()->setTimeFromTimeString($this->currentSchedule->time_start);
-        $tolerance = config('siwirus.attendance.allow_early_checkin_minutes', 30);
+        $tolerance = config('app-settings.attendance.allow_early_checkin_minutes', 30);
         $checkInAvailable = $scheduleStart->copy()->subMinutes($tolerance);
 
         return $checkInAvailable->diffForHumans();

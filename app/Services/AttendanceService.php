@@ -64,7 +64,7 @@ class AttendanceService
                 }
             } else {
                 // Override Mode Check-in (No Schedule)
-                if (! config('siwirus.attendance.override_mode', false)) {
+                if (! config('app-settings.attendance.override_mode', false)) {
                     throw new BusinessException('Check-in tanpa jadwal tidak diizinkan.', 'OVERRIDE_DISABLED');
                 }
 

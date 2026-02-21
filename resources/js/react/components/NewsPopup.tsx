@@ -204,8 +204,12 @@ export default function NewsPopup({ news, onClose }: NewsPopupProps): React.Reac
                         'h-[65vh] md:h-[80vh] aspect-[9/16]',
                         'overflow-hidden',
                         'p-0'
-                    )}
-                >
+                )}
+            >
+                <DialogPrimitive.Title className="sr-only">
+                    {currentNews.title || 'Detail Berita'}
+                </DialogPrimitive.Title>
+
                 {/* Custom close button - positioned like Instagram story close button */}
                 <button
                     type="button"

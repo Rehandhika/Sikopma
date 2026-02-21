@@ -22,10 +22,8 @@ use Illuminate\Support\Facades\DB;
  * @property string $payment_amount
  * @property string $change_amount
  * @property int|null $shu_points_earned Number of SHU points earned from this sale
- * @property int|null $shu_percentage_bps CONVERSION AMOUNT (not percentage): The rupiah amount required to earn 1 point
- *                                         e.g., value of 10000 means 1 point per Rp 10,000 purchase
- *                                         This column was originally named for percentage basis points but
- *                                         now stores the conversion amount to avoid migration overhead.
+ * @property int|null $conversion_rate The rupiah amount required to earn 1 point (formerly shu_percentage_bps)
+ *                                    e.g., value of 10000 means 1 point per Rp 10,000 purchase
  * @property string|null $notes
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
@@ -45,7 +43,7 @@ class Sale extends Model
         'payment_amount',
         'change_amount',
         'shu_points_earned',
-        'shu_percentage_bps', // Stores conversion amount (rupiah per point)
+        'conversion_rate', // Stores conversion amount (rupiah per point)
         'notes',
     ];
 
@@ -55,7 +53,7 @@ class Sale extends Model
         'payment_amount' => 'decimal:2',
         'change_amount' => 'decimal:2',
         'shu_points_earned' => 'integer',
-        'shu_percentage_bps' => 'integer',
+        'conversion_rate' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -98,18 +96,7 @@ class Sale extends Model
         return $query->where('cashier_id', $cashierId);
     }
 
-    // Helpers
-    public function calculateTotal()
-    {
-        $this->total_amount = $this->items()->sum(DB::raw('quantity * price'));
-        $this->save();
-    }
 
-    public function calculateChange()
-    {
-        $this->change_amount = $this->payment_amount - $this->total_amount;
-        $this->save();
-    }
 
     public static function generateInvoiceNumber(?string $forDate = null): string
     {

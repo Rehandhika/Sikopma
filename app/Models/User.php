@@ -143,32 +143,7 @@ class User extends Authenticatable
         return $this->roles()->whereIn('name', $roles)->exists();
     }
 
-    /**
-     * Get user's dashboard route based on role
-     */
-    public function getDashboardRoute(): string
-    {
-        $role = $this->getPrimaryRole();
 
-        // Dashboard routes based on Wirus Angkatan 66 roles
-        return match ($role) {
-            'Super Admin' => 'dashboard',
-            'Ketua' => 'dashboard',
-            'Wakil Ketua' => 'dashboard',
-            'Sekretaris' => 'dashboard',
-            'Bendahara Umum' => 'dashboard',
-            'Bendahara Kegiatan' => 'dashboard',
-            'Bendahara Toko' => 'dashboard',
-            'Koordinator Toko' => 'dashboard',
-            'Koordinator PSDA' => 'dashboard',
-            'Koordinator Humsar' => 'dashboard',
-            'Koordinator Produksi' => 'dashboard',
-            'Koordinator IT' => 'dashboard',
-            'Koordinator Desain' => 'dashboard',
-            'Anggota' => 'dashboard',
-            default => 'dashboard',
-        };
-    }
 
     /**
      * Check if user is a coordinator

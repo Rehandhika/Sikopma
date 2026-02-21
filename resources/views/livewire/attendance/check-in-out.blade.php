@@ -77,7 +77,7 @@
                     </x-ui.alert>
                 </div>
             @endif
-        @elseif(config('siwirus.attendance.override_mode', false))
+        @elseif(config('app-settings.attendance.override_mode', false))
             <div class="mb-6">
                 <x-ui.alert variant="info">
                     <div class="flex items-center">
@@ -88,7 +88,7 @@
             </div>
         @endif
 
-        @if($currentSchedule || config('siwirus.attendance.override_mode', false))
+        @if($currentSchedule || config('app-settings.attendance.override_mode', false))
             {{-- Check-in/Check-out Section --}}
             <x-layout.grid cols="2" gap="6" class="mb-6">
                 {{-- Check-in Card --}}

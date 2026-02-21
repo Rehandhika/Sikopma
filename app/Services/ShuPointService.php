@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ShuTransactionType;
 use App\Models\Sale;
 use App\Models\Setting;
 use App\Models\ShuPointTransaction;
@@ -17,13 +18,11 @@ use Illuminate\Support\Facades\DB;
  *
  * IMPORTANT: Column Naming Convention
  * ================================
- * The `percentage_bps` column in sales and shu_point_transactions tables stores
- * the CONVERSION AMOUNT (rupiah per point), NOT a percentage value.
- *
- * This naming is retained to avoid migration overhead from the original design.
+ * The `conversion_rate` column in sales and shu_point_transactions tables stores
+ * the CONVERSION AMOUNT (rupiah per point).
  *
  * Example:
- * - percentage_bps = 10000 means Rp 10,000 purchase earns 1 point
+ * - conversion_rate = 10000 means Rp 10,000 purchase earns 1 point
  * - Formula: points = floor(purchase_amount / conversion_amount)
  *
  * The setting key is `shu_point_conversion_amount` (default: 10000).
@@ -56,79 +55,12 @@ class ShuPointService
 
     public function awardPointsForSale(Sale $sale, Student $student, ?int $conversionAmount = null): int
     {
-        $conversionAmount ??= $this->getConversionAmount();
-        $amount = (int) round((float) $sale->total_amount);
-        $points = $this->computeEarnedPoints($amount, $conversionAmount);
-
-        if ($points <= 0) {
-            $sale->update([
-                'student_id' => $student->id,
-                'shu_points_earned' => 0,
-                'shu_percentage_bps' => $conversionAmount, // Reusing column for conversion amount to avoid migration overhead
-            ]);
-
-            return 0;
-        }
-
-        return DB::transaction(function () use ($sale, $student, $amount, $conversionAmount, $points) {
-            $lockedStudent = Student::lockForUpdate()->findOrFail($student->id);
-
-            $existing = ShuPointTransaction::where('sale_id', $sale->id)->where('type', 'earn')->first();
-            if ($existing) {
-                return (int) $existing->points;
-            }
-
-            $lockedStudent->points_balance += $points;
-            $lockedStudent->save();
-
-            $sale->update([
-                'student_id' => $lockedStudent->id,
-                'shu_points_earned' => $points,
-                'shu_percentage_bps' => $conversionAmount, // Storing conversion amount here
-            ]);
-
-            ShuPointTransaction::create([
-                'student_id' => $lockedStudent->id,
-                'sale_id' => $sale->id,
-                'type' => 'earn',
-                'amount' => $amount,
-                'percentage_bps' => $conversionAmount, // Storing conversion amount here
-                'points' => $points,
-                'created_by' => Auth::id(),
-            ]);
-
-            return $points;
-        });
+        return app(\App\Actions\Shu\AwardPointsAction::class)->execute($sale, $student, $conversionAmount);
     }
 
     public function redeemPoints(Student $student, int $pointsToRedeem, ?int $cashAmount = null, ?string $notes = null): ShuPointTransaction
     {
-        if ($pointsToRedeem <= 0) {
-            throw new \InvalidArgumentException('Poin redeem harus lebih dari 0');
-        }
-
-        return DB::transaction(function () use ($student, $pointsToRedeem, $cashAmount, $notes) {
-            $lockedStudent = Student::lockForUpdate()->findOrFail($student->id);
-
-            if ($lockedStudent->points_balance < $pointsToRedeem) {
-                throw new \RuntimeException('Saldo poin tidak mencukupi');
-            }
-
-            $lockedStudent->points_balance -= $pointsToRedeem;
-            $lockedStudent->save();
-
-            return ShuPointTransaction::create([
-                'student_id' => $lockedStudent->id,
-                'sale_id' => null,
-                'type' => 'redeem',
-                'amount' => null,
-                'percentage_bps' => 0,
-                'points' => -$pointsToRedeem,
-                'cash_amount' => $cashAmount,
-                'notes' => $notes,
-                'created_by' => Auth::id(),
-            ]);
-        });
+        return app(\App\Actions\Shu\RedeemPointsAction::class)->execute($student, $pointsToRedeem, $cashAmount, $notes);
     }
 
     public function adjustPoints(Student $student, int $pointsDelta, ?string $notes = null): ShuPointTransaction
@@ -152,7 +84,7 @@ class ShuPointService
                 'sale_id' => null,
                 'type' => 'adjust',
                 'amount' => null,
-                'percentage_bps' => 0,
+                'conversion_rate' => 0,
                 'points' => $pointsDelta,
                 'notes' => $notes,
                 'created_by' => Auth::id(),
@@ -176,7 +108,7 @@ class ShuPointService
             $lockedStudent = Student::lockForUpdate()->findOrFail($lockedSale->student_id);
 
             $earnTrx = ShuPointTransaction::where('sale_id', $lockedSale->id)
-                ->where('type', 'earn')
+                ->where('type', ShuTransactionType::EARN->value)
                 ->first();
 
             if (! $earnTrx) {
@@ -224,7 +156,7 @@ class ShuPointService
                 return;
             }
 
-            $existingEarn = ShuPointTransaction::where('sale_id', $sale->id)->where('type', 'earn')->first();
+            $existingEarn = ShuPointTransaction::where('sale_id', $sale->id)->where('type', ShuTransactionType::EARN->value)->first();
             if (! $existingEarn) {
                 return;
             }
@@ -234,7 +166,7 @@ class ShuPointService
                 return;
             }
 
-            $existingReverse = ShuPointTransaction::where('sale_id', $sale->id)->where('type', 'adjust')->where('points', -$points)->first();
+            $existingReverse = ShuPointTransaction::where('sale_id', $sale->id)->where('type', ShuTransactionType::ADJUST->value)->where('points', -$points)->first();
             if ($existingReverse) {
                 return;
             }
@@ -251,7 +183,7 @@ class ShuPointService
                 'sale_id' => $sale->id,
                 'type' => 'adjust',
                 'amount' => null,
-                'percentage_bps' => 0,
+                'conversion_rate' => 0,
                 'points' => -$points,
                 'notes' => 'Reversal poin karena transaksi dihapus',
                 'created_by' => Auth::id(),

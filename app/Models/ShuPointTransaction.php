@@ -15,10 +15,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property int|null $sale_id
  * @property string $type Transaction type: 'earn', 'redeem', or 'adjust'
  * @property int $amount The purchase amount (in rupiah) that generated the points
- * @property int|null $percentage_bps CONVERSION AMOUNT (not percentage): The rupiah amount required to earn 1 point
+ * @property int|null $conversion_rate The rupiah amount required to earn 1 point (formerly percentage_bps)
  *                                    e.g., value of 10000 means 1 point per Rp 10,000 purchase
- *                                    This column was originally named for percentage basis points but
- *                                    now stores the conversion amount to avoid migration overhead.
  * @property int $points Number of points earned, redeemed, or adjusted
  * @property int|null $cash_amount Cash amount for redemption (in rupiah)
  * @property string|null $notes
@@ -36,7 +34,7 @@ class ShuPointTransaction extends Model
         'sale_id',
         'type',
         'amount',
-        'percentage_bps', // Stores conversion amount (rupiah per point)
+        'conversion_rate', // Stores conversion amount (rupiah per point)
         'points',
         'cash_amount',
         'notes',
@@ -46,7 +44,7 @@ class ShuPointTransaction extends Model
 
     protected $casts = [
         'amount' => 'integer',
-        'percentage_bps' => 'integer',
+        'conversion_rate' => 'integer',
         'points' => 'integer',
         'cash_amount' => 'integer',
         'created_at' => 'datetime',
