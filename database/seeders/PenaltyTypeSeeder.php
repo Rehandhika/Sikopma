@@ -1,15 +1,49 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use App\Models\PenaltyType;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class PenaltyTypeSeeder extends Seeder
 {
     public function run(): void
     {
-        $penaltyTypes = [
+        $penaltyTypes = $this->getPenaltyTypes();
+        $now = now();
+
+        // Prepare data for bulk upsert
+        $data = collect($penaltyTypes)->map(fn($type) => [
+            'code' => $type['code'],
+            'name' => $type['name'],
+            'description' => $type['description'],
+            'points' => $type['points'],
+            'is_active' => $type['is_active'],
+            'created_at' => $now,
+            'updated_at' => $now,
+        ])->toArray();
+
+        // Bulk upsert for performance
+        DB::table('penalty_types')->upsert(
+            $data,
+            ['code'], // Unique constraint
+            ['name', 'description', 'points', 'is_active', 'updated_at'] // Fields to update
+        );
+
+        $this->command->info('✅ ' . count($penaltyTypes) . ' penalty types berhasil di-seed!');
+    }
+
+    /**
+     * Get penalty types data.
+     *
+     * @return array<int, array{code: string, name: string, description: string, points: int, is_active: bool}>
+     */
+    private function getPenaltyTypes(): array
+    {
+        return [
             // New integrated penalty types
             [
                 'code' => 'LATE_MINOR',
@@ -104,12 +138,5 @@ class PenaltyTypeSeeder extends Seeder
                 'is_active' => true,
             ],
         ];
-
-        foreach ($penaltyTypes as $type) {
-            PenaltyType::firstOrCreate(
-                ['code' => $type['code']],
-                $type
-            );
-        }
     }
 }

@@ -29,6 +29,9 @@ class Schedule extends Model
         'week_end_date' => 'date',
         'generated_at' => 'datetime',
         'published_at' => 'datetime',
+        'total_slots' => 'integer',
+        'filled_slots' => 'integer',
+        'coverage_rate' => 'decimal:2',
     ];
 
     // Relationships

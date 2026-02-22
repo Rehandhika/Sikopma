@@ -96,7 +96,7 @@ return [
             'maps_to' => 'Pengurus',
             'priority' => 10,
         ],
-        'Koordinator Humas' => [
+        'Koordinator Humsar' => [
             'description' => 'Hubungan masyarakat',
             'maps_to' => 'Pengurus',
             'priority' => 11,

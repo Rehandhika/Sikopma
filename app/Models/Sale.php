@@ -96,6 +96,46 @@ class Sale extends Model
         return $query->where('cashier_id', $cashierId);
     }
 
+    /**
+     * Scope to filter by date range.
+     */
+    public function scopeDateRange($query, $startDate, $endDate)
+    {
+        return $query->whereBetween('date', [$startDate, $endDate]);
+    }
+
+    /**
+     * Scope to eager load student relationship.
+     */
+    public function scopeWithStudent($query)
+    {
+        return $query->with(['student']);
+    }
+
+    /**
+     * Scope to eager load items with product.
+     */
+    public function scopeWithItems($query)
+    {
+        return $query->with(['items' => fn($q) => $q->with('product')]);
+    }
+
+    /**
+     * Scope to filter by payment method.
+     */
+    public function scopePaymentMethod($query, string $method)
+    {
+        return $query->where('payment_method', $method);
+    }
+
+    /**
+     * Scope to order by date descending.
+     */
+    public function scopeLatest($query)
+    {
+        return $query->orderByDesc('date');
+    }
+
 
 
     public static function generateInvoiceNumber(?string $forDate = null): string

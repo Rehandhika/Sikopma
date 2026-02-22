@@ -170,6 +170,45 @@ class Product extends Model
         return $query->where('is_featured', true);
     }
 
+    /**
+     * Scope to search products by name, SKU, or description.
+     */
+    public function scopeSearch($query, string $search)
+    {
+        return $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('sku', 'like', "%{$search}%")
+              ->orWhere('description', 'like', "%{$search}%");
+        });
+    }
+
+    /**
+     * Scope to eager load active variants.
+     */
+    public function scopeWithActiveVariants($query)
+    {
+        return $query->with(['activeVariants']);
+    }
+
+    /**
+     * Scope to filter by category.
+     */
+    public function scopeCategory($query, string $category)
+    {
+        return $query->where('category', $category);
+    }
+
+    /**
+     * Scope to filter by price range.
+     */
+    public function scopePriceRange($query, float $min, float $max)
+    {
+        return $query->whereBetween('price', [$min, $max]);
+    }
+
+    /**
+     * Scope to order by display order and name.
+     */
     public function scopeOrdered($query)
     {
         return $query->orderBy('display_order')->orderBy('name');

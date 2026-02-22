@@ -29,6 +29,7 @@ class Penalty extends Model
         'date' => 'date',
         'appealed_at' => 'datetime',
         'reviewed_at' => 'datetime',
+        'points' => 'integer',
     ];
 
     public function user(): BelongsTo
@@ -87,6 +88,54 @@ class Penalty extends Model
     public function scopePendingAppeal($query)
     {
         return $query->where('appeal_status', 'pending');
+    }
+
+    /**
+     * Scope to filter by date range.
+     */
+    public function scopeDateRange($query, $startDate, $endDate)
+    {
+        return $query->whereBetween('date', [$startDate, $endDate]);
+    }
+
+    /**
+     * Scope to eager load user relationship.
+     */
+    public function scopeWithUser($query)
+    {
+        return $query->with(['user']);
+    }
+
+    /**
+     * Scope to eager load penalty type.
+     */
+    public function scopeWithType($query)
+    {
+        return $query->with(['penaltyType']);
+    }
+
+    /**
+     * Scope to filter by user ID.
+     */
+    public function scopeForUser($query, int $userId)
+    {
+        return $query->where('user_id', $userId);
+    }
+
+    /**
+     * Scope to order by date descending.
+     */
+    public function scopeLatest($query)
+    {
+        return $query->orderByDesc('date');
+    }
+
+    /**
+     * Scope to filter by high points (> 50).
+     */
+    public function scopeHighPoints($query)
+    {
+        return $query->where('points', '>', 50);
     }
 
     /**

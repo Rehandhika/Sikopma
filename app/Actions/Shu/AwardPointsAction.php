@@ -4,35 +4,21 @@ namespace App\Actions\Shu;
 
 use App\Enums\ShuTransactionType;
 use App\Models\Sale;
-use App\Models\Setting;
 use App\Models\ShuPointTransaction;
 use App\Models\Student;
+use App\Services\ShuPointService;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class AwardPointsAction
 {
-    public function getConversionAmount(): int
-    {
-        return (int) Cache::remember('shu_point_conversion_amount', 60, function () {
-            return (int) Setting::get('shu_point_conversion_amount', 10000);
-        });
-    }
-
-    public function computeEarnedPoints(int $amount, int $conversionAmount): int
-    {
-        if ($amount <= 0 || $conversionAmount <= 0) {
-            return 0;
-        }
-        return (int) floor($amount / $conversionAmount);
-    }
-
     public function execute(Sale $sale, Student $student, ?int $conversionAmount = null): int
     {
-        $conversionAmount ??= $this->getConversionAmount();
+        $shuService = app(ShuPointService::class);
+        $conversionAmount ??= $shuService->getConversionAmount();
+        
         $amount = (int) round((float) $sale->total_amount);
-        $points = $this->computeEarnedPoints($amount, $conversionAmount);
+        $points = $shuService->computeEarnedPoints($amount, $conversionAmount);
 
         if ($points <= 0) {
             $sale->update([

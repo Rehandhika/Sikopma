@@ -30,6 +30,9 @@ class ScheduleAssignment extends Model
         'date' => 'date',
         'edited_at' => 'datetime',
         'previous_values' => 'array',
+        'session' => 'integer',
+        'time_start' => 'string',
+        'time_end' => 'string',
     ];
 
     // Relationships
@@ -58,6 +61,11 @@ class ScheduleAssignment extends Model
         return $this->hasMany(SwapRequest::class, 'requester_assignment_id');
     }
 
+    public function targetSwapRequests()
+    {
+        return $this->hasMany(SwapRequest::class, 'target_assignment_id');
+    }
+
     public function editHistory()
     {
         return $this->hasMany(AssignmentEditHistory::class, 'assignment_id');
@@ -66,6 +74,43 @@ class ScheduleAssignment extends Model
     public function editor()
     {
         return $this->belongsTo(User::class, 'edited_by');
+    }
+
+    public function leaveAffectedSchedules()
+    {
+        return $this->hasMany(LeaveAffectedSchedule::class);
+    }
+
+    /**
+     * Get slotmates (other users assigned to the same slot).
+     */
+    public function slotmates()
+    {
+        return $this->hasMany(self::class)
+            ->where('date', $this->date)
+            ->where('session', $this->session)
+            ->where('id', '!=', $this->id);
+    }
+
+    /**
+     * Scope to eager load slotmates with user.
+     */
+    public function scopeWithSlotmates($query)
+    {
+        return $query->with(['slotmates' => fn($q) => $q->with('user')]);
+    }
+
+    /**
+     * Scope to eager load common relationships.
+     */
+    public function scopeWithCommonRelations($query)
+    {
+        return $query->with([
+            'schedule',
+            'user',
+            'attendance',
+            'slotmates',
+        ]);
     }
 
     // Scopes

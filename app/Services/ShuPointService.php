@@ -37,19 +37,24 @@ class ShuPointService
     public function getConversionAmount(): int
     {
         return (int) Cache::remember('shu_point_conversion_amount', 60, function () {
+            // Default: 10000 rupiah = 1 point
             return (int) Setting::get('shu_point_conversion_amount', 10000);
         });
     }
 
+    /**
+     * Compute earned points based on purchase amount.
+     * Formula: floor(amount / conversion_amount)
+     */
     public function computeEarnedPoints(int $amount, int $conversionAmount): int
     {
         if ($amount <= 0 || $conversionAmount <= 0) {
             return 0;
         }
 
-        // Rumus: floor(Nominal / Konversi)
-        // Contoh: Beli 16.000 dengan setting 10.000 per poin
-        // floor(16.000 / 10.000) = 1 poin
+        // 1 Point per 10000 logic:
+        // Example: 10000 / 10000 = 1 point
+        // Example: 25000 / 10000 = 2 points
         return (int) floor($amount / $conversionAmount);
     }
 

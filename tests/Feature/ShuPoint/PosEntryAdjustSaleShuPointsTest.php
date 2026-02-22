@@ -17,39 +17,50 @@ class PosEntryAdjustSaleShuPointsTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Clear permission cache to avoid conflicts
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+    }
+
     public function test_pos_entry_can_adjust_shu_points_for_a_sale(): void
     {
-        Permission::create(['name' => 'kelola_poin_shu']);
-        Role::create(['name' => 'Super Admin']);
+        $permission = Permission::firstOrCreate(['name' => 'kelola_poin_shu', 'guard_name' => 'web']);
+        $role = Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'web']);
 
         $user = User::factory()->create();
-        $user->assignRole('Super Admin');
-        $user->givePermissionTo('kelola_poin_shu');
+        $user->assignRole($role);
+        $user->givePermissionTo($permission);
         $this->actingAs($user);
 
         $student = Student::factory()->create(['points_balance' => 0]);
 
         $sale = Sale::create([
             'cashier_id' => $user->id,
-            'invoice_number' => 'INV-20260131-0001',
+            'student_id' => $student->id,
+            'invoice_number' => 'INV-TEST-ADJUST',
             'date' => now()->format('Y-m-d'),
             'total_amount' => 10000,
             'payment_method' => 'cash',
             'payment_amount' => 10000,
             'change_amount' => 0,
             'shu_points_earned' => 0,
-            'shu_percentage_bps' => 0,
+            'conversion_rate' => 0,
         ]);
 
-        $earned = app(ShuPointService::class)->awardPointsForSale($sale, $student, 100);
-        $this->assertSame(100, $earned);
+        // Award initial points: 100 points
+        app(ShuPointService::class)->awardPointsForSale($sale, $student, 100);
+        
+        $sale->refresh();
         $student->refresh();
-        $this->assertSame(100, $student->points_balance);
+        $this->assertEquals(100, $sale->shu_points_earned);
+        $this->assertEquals(100, $student->points_balance);
 
         Livewire::actingAs($user)
             ->test(PosEntry::class)
             ->call('openShuAdjustment', $sale->id)
-            ->set('shuAdjustNewPoints', 50)
+            ->set('shuAdjustNewPoints', 50) // Adjust to 50
             ->set('shuAdjustNotes', 'koreksi manual')
             ->call('saveShuAdjustment')
             ->assertDispatched('toast', type: 'success');
@@ -57,8 +68,8 @@ class PosEntryAdjustSaleShuPointsTest extends TestCase
         $sale->refresh();
         $student->refresh();
 
-        $this->assertSame(50, (int) $sale->shu_points_earned);
-        $this->assertSame(50, $student->points_balance);
+        $this->assertEquals(50, (int) $sale->shu_points_earned);
+        $this->assertEquals(50, $student->points_balance);
 
         $this->assertDatabaseHas('shu_point_transactions', [
             'sale_id' => $sale->id,

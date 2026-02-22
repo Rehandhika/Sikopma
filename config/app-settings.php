@@ -56,13 +56,14 @@ return [
 
     /**
      * Attendance settings
+     * Note: These are loaded from system_settings table. Defaults provided here.
      */
     'attendance' => [
-        'override_mode' => true, // Allow check-in without schedule
-        'auto_absent_after_hours' => 2,  // Mark as absent if no check-in after this many hours
-        'allow_early_checkin_minutes' => 30,  // Allow check-in this many minutes before session start
-        'require_photo' => true,  // Require photo for check-in
-        'max_photo_size_mb' => 5,  // Maximum photo size in MB
+        'override_mode' => env('ATTENDANCE_OVERRIDE_MODE', false), // Allow check-in without schedule
+        'auto_absent_after_hours' => env('ATTENDANCE_AUTO_ABSENT_HOURS', 2),
+        'allow_early_checkin_minutes' => env('ATTENDANCE_ALLOW_EARLY_CHECKIN_MINUTES', 30),
+        'require_photo' => env('ATTENDANCE_REQUIRE_PHOTO', true),
+        'max_photo_size_mb' => env('ATTENDANCE_MAX_PHOTO_SIZE_MB', 5),
     ],
 
     /**

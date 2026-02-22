@@ -14,10 +14,17 @@ class ShuPermissionBehaviorTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Clear permission cache
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+    }
+
     public function test_redeem_and_adjust_actions_show_toast_instead_of_403_when_not_allowed(): void
     {
-        Permission::create(['name' => 'lihat_poin_shu']);
-        Permission::create(['name' => 'kelola_poin_shu']);
+        Permission::firstOrCreate(['name' => 'lihat_poin_shu', 'guard_name' => 'web']);
+        Permission::firstOrCreate(['name' => 'kelola_poin_shu', 'guard_name' => 'web']);
 
         $user = User::factory()->create();
         $user->givePermissionTo(['lihat_poin_shu']);
@@ -35,4 +42,3 @@ class ShuPermissionBehaviorTest extends TestCase
             ->assertDispatched('toast', type: 'error');
     }
 }
-

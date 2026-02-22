@@ -92,6 +92,83 @@ class User extends Authenticatable
         return $this->hasMany(LoginHistory::class);
     }
 
+    public function students()
+    {
+        return $this->hasMany(Student::class, 'nim', 'nim');
+    }
+
+    public function createdBanners()
+    {
+        return $this->hasMany(Banner::class, 'created_by');
+    }
+
+    public function createdNews()
+    {
+        return $this->hasMany(News::class, 'created_by');
+    }
+
+    public function reviewedLeaveRequests()
+    {
+        return $this->hasMany(LeaveRequest::class, 'reviewed_by');
+    }
+
+    public function reviewedPenalties()
+    {
+        return $this->hasMany(Penalty::class, 'reviewed_by');
+    }
+
+    public function createdScheduleTemplates()
+    {
+        return $this->hasMany(ScheduleTemplate::class, 'created_by');
+    }
+
+    public function stockAdjustments()
+    {
+        return $this->hasMany(StockAdjustment::class);
+    }
+
+    public function reports()
+    {
+        return $this->hasMany(Report::class);
+    }
+
+    public function activityLogs()
+    {
+        return $this->hasMany(ActivityLog::class);
+    }
+
+    /**
+     * Scope to eager load common relationships.
+     */
+    public function scopeWithCommonRelations($query)
+    {
+        return $query->with([
+            'availabilities',
+            'scheduleAssignments',
+            'notifications' => fn($q) => $q->whereNull('read_at')->limit(10),
+        ]);
+    }
+
+    /**
+     * Scope to eager load all relationships for detailed view.
+     */
+    public function scopeWithAllRelations($query)
+    {
+        return $query->with([
+            'attendances',
+            'sales',
+            'availabilities',
+            'scheduleAssignments',
+            'leaveRequests',
+            'penalties',
+            'notifications',
+            'createdBanners',
+            'createdNews',
+            'reviewedLeaveRequests',
+            'reviewedPenalties',
+        ]);
+    }
+
     // Scopes
     public function scopeActive($query)
     {

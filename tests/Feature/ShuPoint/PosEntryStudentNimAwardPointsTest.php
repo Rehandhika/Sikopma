@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class PosEntryStudentNimAwardPointsTest extends TestCase
@@ -18,51 +19,56 @@ class PosEntryStudentNimAwardPointsTest extends TestCase
 
     public function test_submit_all_with_student_nim_assigns_student_and_awards_points(): void
     {
-        Role::create(['name' => 'Super Admin']);
-
+        $role = Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'web']);
         $user = User::factory()->create();
-        $user->assignRole('Super Admin');
+        $user->assignRole($role);
         $this->actingAs($user);
 
-        Setting::set('shu_point_percentage_bps', '100'); // 1%
+        // Set conversion: 100 rupiah = 1 point
+        // So 10000 rupiah = 100 points
+        Setting::set('shu_point_conversion_amount', '100');
+        Cache::forget('shu_point_conversion_amount');
 
         $student = Student::factory()->create(['nim' => '123456789', 'points_balance' => 0]);
 
-        $product = Product::create([
+        $product = Product::factory()->create([
             'name' => 'Produk Test',
             'sku' => 'SKU-TEST',
             'price' => 10000,
             'stock' => 100,
-            'min_stock' => 0,
-            'category' => 'Test',
-            'description' => null,
             'status' => 'active',
-            'has_variants' => false,
-            'is_featured' => false,
-            'is_public' => true,
         ]);
+
+        $rows = [
+            [
+                'product_id' => $product->id, 
+                'product_name' => $product->name,
+                'student_nim' => $student->nim, 
+                'qty' => 1, 
+                'price' => 10000,
+                'payment_method' => 'cash'
+            ]
+        ];
 
         Livewire::actingAs($user)
             ->test(PosEntry::class)
-            ->call('submitAll', [
-                ['product_id' => $product->id, 'student_nim' => $student->nim, 'qty' => 1, 'payment_method' => 'cash'],
-            ])
+            ->call('submitAll', $rows)
             ->assertDispatched('toast', type: 'success');
 
         $student->refresh();
-        $this->assertSame(100, $student->points_balance);
+        $this->assertEquals(100, $student->points_balance);
 
         $this->assertDatabaseHas('sales', [
             'student_id' => $student->id,
             'shu_points_earned' => 100,
-            'shu_percentage_bps' => 100,
+            'conversion_rate' => 100,
         ]);
 
         $this->assertDatabaseHas('shu_point_transactions', [
             'student_id' => $student->id,
             'type' => 'earn',
             'points' => 100,
-            'percentage_bps' => 100,
+            'conversion_rate' => 100,
         ]);
     }
 }

@@ -7,24 +7,29 @@ use PHPUnit\Framework\TestCase;
 
 class ShuPointServiceTest extends TestCase
 {
-    public function test_compute_earned_points_returns_zero_when_percentage_zero(): void
+    public function test_compute_earned_points_returns_zero_when_conversion_amount_zero(): void
     {
         $service = new ShuPointService();
         $this->assertSame(0, $service->computeEarnedPoints(10000, 0));
     }
 
-    public function test_compute_earned_points_uses_basis_points_and_floors(): void
+    public function test_compute_earned_points_uses_conversion_amount_and_floors(): void
     {
         $service = new ShuPointService();
-        $this->assertSame(100, $service->computeEarnedPoints(10000, 100));
-        $this->assertSame(2, $service->computeEarnedPoints(99, 250));
-        $this->assertSame(0, $service->computeEarnedPoints(1, 1));
+        
+        // 1 point per 10,000
+        $conversion = 10000;
+        
+        $this->assertSame(1, $service->computeEarnedPoints(10000, $conversion));
+        $this->assertSame(2, $service->computeEarnedPoints(25000, $conversion));
+        $this->assertSame(0, $service->computeEarnedPoints(9999, $conversion));
     }
 
-    public function test_compute_earned_points_caps_percentage_at_100_percent(): void
+    public function test_compute_earned_points_handles_large_amounts(): void
     {
         $service = new ShuPointService();
-        $this->assertSame(10000, $service->computeEarnedPoints(10000, 20000));
+        $conversion = 5000; // 1 point per 5,000
+
+        $this->assertSame(20, $service->computeEarnedPoints(100000, $conversion));
     }
 }
-

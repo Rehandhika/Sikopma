@@ -25,6 +25,7 @@ class RolePermissionSeeder extends Seeder
         $permissions = config('roles.permissions');
         $rolePermissions = config('roles.role_permissions');
         $systemRoles = config('roles.system_roles');
+        $orgRoles = config('roles.organization_roles', []);
 
         // Create all permissions from config
         foreach ($permissions as $permName => $permConfig) {
@@ -40,16 +41,21 @@ class RolePermissionSeeder extends Seeder
             );
         }
 
+        // Create organization roles if they don't exist
+        foreach (array_keys($orgRoles) as $roleName) {
+            Role::firstOrCreate(
+                ['name' => $roleName, 'guard_name' => 'web']
+            );
+        }
+
         // Clear cache again after creating roles and permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Assign permissions to roles based on config
+        // Assign permissions to system roles based on config
         foreach ($rolePermissions as $roleName => $perms) {
             $role = Role::where('name', $roleName)->where('guard_name', 'web')->first();
 
             if ($role) {
-                // Super Admin gets all permissions automatically via Gate::before()
-                // But we still sync them for explicit assignment
                 if ($roleName === config('roles.super_admin_role')) {
                     $allPermissions = array_keys($permissions);
                     $role->syncPermissions($allPermissions);
@@ -59,11 +65,22 @@ class RolePermissionSeeder extends Seeder
             }
         }
 
+        // Assign permissions to organization roles based on mapping
+        foreach ($orgRoles as $roleName => $config) {
+            $mappedTo = $config['maps_to'] ?? null;
+            if ($mappedTo && isset($rolePermissions[$mappedTo])) {
+                $role = Role::where('name', $roleName)->where('guard_name', 'web')->first();
+                if ($role) {
+                    $role->syncPermissions($rolePermissions[$mappedTo]);
+                }
+            }
+        }
+
         // Clear cache one final time
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         $this->command->info('Permissions and roles seeded successfully from config/roles.php');
         $this->command->info('- Created '.count($permissions).' permissions');
-        $this->command->info('- Created '.count($systemRoles).' system roles');
+        $this->command->info('- Created '.(count($systemRoles) + count($orgRoles)).' roles');
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
@@ -12,7 +14,37 @@ class ScheduleConfigurationSeeder extends Seeder
      */
     public function run(): void
     {
-        $configurations = [
+        $configurations = $this->getConfigurations();
+        $now = now();
+
+        // Prepare data for bulk upsert
+        $data = collect($configurations)->map(fn($config) => [
+            'key' => $config['key'],
+            'value' => $config['value'],
+            'type' => $config['type'],
+            'description' => $config['description'],
+            'created_at' => $now,
+            'updated_at' => $now,
+        ])->toArray();
+
+        // Bulk upsert for performance
+        DB::table('schedule_configurations')->upsert(
+            $data,
+            ['key'], // Unique constraint
+            ['value', 'type', 'description', 'updated_at'] // Fields to update
+        );
+
+        $this->command->info('✅ ' . count($configurations) . ' schedule configurations berhasil di-seed!');
+    }
+
+    /**
+     * Get schedule configurations data.
+     *
+     * @return array<int, array{key: string, value: string, type: string, description: string}>
+     */
+    private function getConfigurations(): array
+    {
+        return [
             // User workload limits
             [
                 'key' => 'max_assignments_per_user',
@@ -145,18 +177,5 @@ class ScheduleConfigurationSeeder extends Seeder
                 'description' => 'Enable backtracking in auto-assignment algorithm',
             ],
         ];
-
-        foreach ($configurations as $config) {
-            DB::table('schedule_configurations')->updateOrInsert(
-                ['key' => $config['key']],
-                [
-                    'value' => $config['value'],
-                    'type' => $config['type'],
-                    'description' => $config['description'],
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]
-            );
-        }
     }
 }

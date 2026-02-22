@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class UserSeeder extends Seeder
 {
@@ -23,10 +26,55 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Clear existing users (optional - uncomment if needed for fresh start)
-        // User::query()->delete();
+        $members = $this->getMembers();
 
-        $members = [
+        // Bulk upsert users for performance
+        $now = now();
+        $users = collect($members)->map(fn($member) => [
+            'name' => $member['name'],
+            'nim' => $member['nim'],
+            'email' => $member['email'],
+            'password' => Hash::make('password'), // Default password
+            'status' => 'active',
+            'email_verified_at' => $now,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ])->toArray();
+
+        // Upsert users - update existing or insert new
+        DB::table('users')->upsert(
+            $users,
+            ['nim'], // Unique constraint to match on
+            ['name', 'email', 'password', 'status', 'email_verified_at', 'updated_at'] // Fields to update
+        );
+
+        // Sync roles in batch
+        collect($members)->each(function ($member) {
+            $user = User::where('nim', $member['nim'])->first();
+            if ($user) {
+                $user->syncRoles([$member['role']]);
+            }
+        });
+
+        $this->command->info('✅ Wirus Angkatan 66 - ' . count($members) . ' anggota berhasil di-seed!');
+        $this->command->info('');
+        $this->command->info('📋 Struktur Organisasi:');
+        $this->command->info('   Ketua: Diva Afdholia R.');
+        $this->command->info('   Wakil Ketua: Fikri Adi Nugraha');
+        $this->command->info('   Super Admin (IT): Rehandhika Arya Pratama');
+        $this->command->info('');
+        $this->command->info('🔐 Default Password: password');
+        $this->command->info('📧 Login menggunakan NIM atau Email');
+    }
+
+    /**
+     * Get member data array.
+     *
+     * @return array<int, array{name: string, nim: string, jabatan: string, role: string, email: string}>
+     */
+    private function getMembers(): array
+    {
+        return [
             // =====================================================
             // PIMPINAN INTI
             // =====================================================
@@ -145,30 +193,5 @@ class UserSeeder extends Seeder
                 'email' => 'rahmat.budiyanto@siwirus.test',
             ],
         ];
-
-        foreach ($members as $member) {
-            $user = User::updateOrCreate(
-                ['nim' => $member['nim']],
-                [
-                    'name' => $member['name'],
-                    'email' => $member['email'],
-                    'password' => Hash::make('password'), // Default password
-                    'status' => 'active',
-                ]
-            );
-
-            // Remove existing roles and assign new one
-            $user->syncRoles([$member['role']]);
-        }
-
-        $this->command->info('✅ Wirus Angkatan 66 - '.count($members).' anggota berhasil di-seed!');
-        $this->command->info('');
-        $this->command->info('📋 Struktur Organisasi:');
-        $this->command->info('   Ketua: Diva Afdholia R.');
-        $this->command->info('   Wakil Ketua: Fikri Adi Nugraha');
-        $this->command->info('   Super Admin (IT): Rehandhika Arya Pratama');
-        $this->command->info('');
-        $this->command->info('🔐 Default Password: password');
-        $this->command->info('📧 Login menggunakan NIM atau Email');
     }
 }

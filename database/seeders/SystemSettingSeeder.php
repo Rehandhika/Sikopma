@@ -1,15 +1,49 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use App\Models\SystemSetting;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class SystemSettingSeeder extends Seeder
 {
     public function run(): void
     {
-        $settings = [
+        $settings = $this->getSettings();
+        $now = now();
+
+        // Prepare data for bulk upsert
+        $data = collect($settings)->map(fn($setting) => [
+            'key' => $setting['key'],
+            'value' => $setting['value'],
+            'type' => $setting['type'],
+            'description' => $setting['description'],
+            'group' => $setting['group'] ?? 'general',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ])->toArray();
+
+        // Bulk upsert for performance
+        DB::table('system_settings')->upsert(
+            $data,
+            ['key'], // Unique constraint
+            ['value', 'type', 'description', 'group', 'updated_at'] // Fields to update
+        );
+
+        $this->command->info('✅ ' . count($settings) . ' system settings berhasil di-seed!');
+    }
+
+    /**
+     * Get system settings data.
+     *
+     * @return array<int, array{key: string, value: string, type: string, description: string, group?: string}>
+     */
+    private function getSettings(): array
+    {
+        return [
             [
                 'key' => 'app_name',
                 'value' => 'SIWIRUS',
@@ -95,6 +129,41 @@ class SystemSettingSeeder extends Seeder
                 'description' => 'Waktu selesai sesi 3',
             ],
             [
+                'key' => 'attendance.override_mode',
+                'value' => 'false',
+                'type' => 'boolean',
+                'description' => 'Mode check-in bebas (tanpa jadwal)',
+                'group' => 'attendance',
+            ],
+            [
+                'key' => 'attendance.auto_absent_after_hours',
+                'value' => '2',
+                'type' => 'integer',
+                'description' => 'Otomatis mark absent setelah X jam',
+                'group' => 'attendance',
+            ],
+            [
+                'key' => 'attendance.require_photo',
+                'value' => 'true',
+                'type' => 'boolean',
+                'description' => 'Wajib foto saat check-in',
+                'group' => 'attendance',
+            ],
+            [
+                'key' => 'attendance.max_photo_size_mb',
+                'value' => '5',
+                'type' => 'integer',
+                'description' => 'Ukuran maksimal foto check-in (MB)',
+                'group' => 'attendance',
+            ],
+            [
+                'key' => 'attendance.allow_early_checkin_minutes',
+                'value' => '30',
+                'type' => 'integer',
+                'description' => 'Boleh check-in lebih awal X menit sebelum sesi',
+                'group' => 'attendance',
+            ],
+            [
                 'key' => 'attendance.grace_period_minutes',
                 'value' => '15',
                 'type' => 'integer',
@@ -131,12 +200,5 @@ class SystemSettingSeeder extends Seeder
                 'description' => 'Timezone aplikasi',
             ],
         ];
-
-        foreach ($settings as $setting) {
-            SystemSetting::firstOrCreate(
-                ['key' => $setting['key']],
-                $setting
-            );
-        }
     }
 }

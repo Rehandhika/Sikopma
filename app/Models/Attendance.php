@@ -86,4 +86,53 @@ class Attendance extends Model
     {
         return $query->where('status', 'absent');
     }
+
+    /**
+     * Scope to filter by date range.
+     */
+    public function scopeDateRange($query, $startDate, $endDate)
+    {
+        return $query->whereBetween('date', [$startDate, $endDate]);
+    }
+
+    /**
+     * Scope to eager load user relationship.
+     */
+    public function scopeWithUser($query)
+    {
+        return $query->with(['user']);
+    }
+
+    /**
+     * Scope to filter by today's date.
+     */
+    public function scopeToday($query)
+    {
+        return $query->where('date', today());
+    }
+
+    /**
+     * Scope to filter by this month.
+     */
+    public function scopeThisMonth($query)
+    {
+        return $query->whereMonth('date', now()->month)
+            ->whereYear('date', now()->year);
+    }
+
+    /**
+     * Scope to filter by user ID.
+     */
+    public function scopeForUser($query, int $userId)
+    {
+        return $query->where('user_id', $userId);
+    }
+
+    /**
+     * Scope to order by date descending.
+     */
+    public function scopeLatest($query)
+    {
+        return $query->orderByDesc('date');
+    }
 }
