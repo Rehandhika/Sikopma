@@ -63,15 +63,17 @@
                 <div class="flex-shrink-0 border-t border-gray-200 p-4 bg-gray-50">
                     @auth
                         <div class="flex items-center w-full">
-                            <x-ui.avatar 
-                                :name="auth()->user()->name" 
-                                size="sm" 
-                                class="flex-shrink-0"
-                            />
-                            <div class="ml-3 flex-1 min-w-0">
-                                <p class="text-sm font-medium text-gray-900 truncate">{{ auth()->user()->name }}</p>
-                                <p class="text-xs text-gray-500 truncate">{{ auth()->user()->nim }}</p>
-                            </div>
+                            <a href="{{ route('admin.profile.edit') }}" class="flex items-center flex-1 min-w-0 group hover:bg-gray-100 p-2 -ml-2 rounded-md transition-colors duration-200">
+                                <x-ui.avatar 
+                                    :name="auth()->user()->name" 
+                                    size="sm" 
+                                    class="flex-shrink-0"
+                                />
+                                <div class="ml-3 flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-gray-900 truncate">{{ auth()->user()->name }}</p>
+                                    <p class="text-xs text-gray-500 truncate">{{ auth()->user()->nim }}</p>
+                                </div>
+                            </a>
                             <form method="POST" action="{{ route('admin.logout') }}" class="ml-3">
                                 @csrf
                                 <button type="submit" 

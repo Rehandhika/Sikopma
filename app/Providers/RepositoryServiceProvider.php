@@ -46,7 +46,8 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(AttendanceService::class, function ($app) {
             return new AttendanceService(
                 $app->make(AttendanceRepository::class),
-                $app->make(\App\Services\PenaltyService::class)
+                $app->make(\App\Services\PenaltyService::class),
+                $app->make(\App\Services\StoreStatusService::class)
             );
         });
 

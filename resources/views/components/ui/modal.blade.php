@@ -23,12 +23,13 @@ $maxWidths = [
 @endphp
 
 <div
-    x-data="{ show: false, processing: false }"
-    x-on:open-modal-{{ $name }}.window="show = true; processing = false"
-    x-on:close-modal-{{ $name }}.window="show = false; processing = false"
-    @if($closeable && $closeOnEscape) x-on:keydown.escape.window="if (!processing || !{{ $persistent ? 'true' : 'false' }}) { show = false }" @endif
+    x-data="{ show: @entangle($attributes->wire('model')) }"
+    x-on:open-modal-{{ $name }}.window="show = true"
+    x-on:close-modal-{{ $name }}.window="show = false"
+    @if($closeable && $closeOnEscape) x-on:keydown.escape.window="if (!{{ $persistent ? 'true' : 'false' }}) { show = false }" @endif
     x-show="show"
     x-cloak
+    wire:ignore.self
     class="fixed inset-0 z-50 overflow-y-auto"
     style="display: none;"
     x-init="$watch('show', value => {
@@ -49,7 +50,7 @@ $maxWidths = [
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
         class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-80"
-        @if($closeable && $closeOnClickOutside) @click="if (!processing || !{{ $persistent ? 'true' : 'false' }}) { show = false }" @endif
+        @if($closeable && $closeOnClickOutside) @click="if (!{{ $persistent ? 'true' : 'false' }}) { show = false }" @endif
     ></div>
 
     <!-- Modal -->
@@ -62,7 +63,7 @@ $maxWidths = [
             x-transition:leave="transition ease-in duration-200"
             x-transition:leave-start="opacity-100 transform translate-y-0 sm:scale-100"
             x-transition:leave-end="opacity-0 transform translate-y-4 sm:translate-y-0 sm:scale-95"
-            {{ $attributes->merge(['class' => 'inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle w-full ' . $maxWidths[$maxWidth]]) }}
+            {{ $attributes->except('wire:model')->merge(['class' => 'inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle w-full ' . $maxWidths[$maxWidth]]) }}
         >
             <!-- Header -->
             @if($title)
@@ -75,11 +76,11 @@ $maxWidths = [
                 </div>
                 @if($closeable)
                 <button 
-                    @click="if (!processing || !{{ $persistent ? 'true' : 'false' }}) { show = false }"
+                    @click="if (!{{ $persistent ? 'true' : 'false' }}) { show = false }"
                     type="button"
                     class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-lg p-1"
-                    :disabled="processing && {{ $persistent ? 'true' : 'false' }}"
-                    :class="{ 'opacity-50 cursor-not-allowed': processing && {{ $persistent ? 'true' : 'false' }} }"
+                    :disabled="{{ $persistent ? 'true' : 'false' }}"
+                    :class="{ 'opacity-50 cursor-not-allowed': {{ $persistent ? 'true' : 'false' }} }"
                 >
                     <x-ui.icon name="x" class="w-5 h-5" />
                 </button>

@@ -8,6 +8,7 @@ use App\Models\SaleItem;
 use App\Models\ShuPointTransaction;
 use App\Models\Student;
 use App\Services\ActivityLogService;
+use App\Services\PaymentConfigurationService;
 use App\Services\ShuPointService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -83,6 +84,12 @@ class PosEntry extends Component
                 ->get()
                 ->toArray();
         });
+    }
+
+    #[Computed]
+    public function paymentMethods(): array
+    {
+        return app(PaymentConfigurationService::class)->getEnabledMethods();
     }
 
     #[Computed]
@@ -312,13 +319,18 @@ class PosEntry extends Component
                 'student_id' => $studentId,
                 'qty' => $qty,
                 'price' => (float) $product->price,
-                'payment_method' => in_array($row['payment_method'] ?? '', ['cash', 'transfer', 'qris'])
-                    ? $row['payment_method']
-                    : 'cash',
+                'payment_method' => $this->validatePaymentMethod($row['payment_method'] ?? ''),
             ];
         }
 
         return ['errors' => $errors, 'validRows' => $validRows];
+    }
+
+    private function validatePaymentMethod(string $method): string
+    {
+        $enabledMethods = array_map(fn($m) => $m['id'], $this->paymentMethods);
+        
+        return in_array($method, $enabledMethods) ? $method : ($enabledMethods[0] ?? 'cash');
     }
 
     /**

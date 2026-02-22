@@ -356,11 +356,17 @@
                             
                             <div class="grid grid-cols-4 gap-1.5">
                                 @foreach($quickAmounts as $amount)
-                                    <button wire:click="setQuickAmount({{ $amount }})" class="py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-lg">{{ number_format($amount / 1000) }}rb</button>
+                                    <button wire:click="setQuickAmount({{ $amount }})" 
+                                        class="py-2 text-sm font-semibold rounded-lg transition-colors {{ (int)$paymentAmount === (int)$amount ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
+                                        {{ number_format($amount / 1000) }}rb
+                                    </button>
                                 @endforeach
                             </div>
                             
-                            <button wire:click="setExactAmount" class="w-full py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-lg">Uang Pas</button>
+                            <button wire:click="setExactAmount" 
+                                class="w-full py-2 text-sm font-semibold rounded-lg transition-colors {{ (int)$paymentAmount === (int)$this->cartTotal ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
+                                Uang Pas
+                            </button>
 
                             @if($paymentAmount >= $this->cartTotal && $paymentAmount > 0)
                                 <div class="p-3 bg-green-50 dark:bg-green-900/20 rounded-xl flex justify-between items-center">

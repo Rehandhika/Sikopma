@@ -77,7 +77,7 @@
                     </x-ui.alert>
                 </div>
             @endif
-        @elseif(config('app-settings.attendance.override_mode', false))
+        @elseif($isOverrideActive)
             <div class="mb-6">
                 <x-ui.alert variant="info">
                     <div class="flex items-center">
@@ -88,7 +88,7 @@
             </div>
         @endif
 
-        @if($currentSchedule || config('app-settings.attendance.override_mode', false))
+        @if($currentSchedule || $isOverrideActive)
             {{-- Check-in/Check-out Section --}}
             <x-layout.grid cols="2" gap="6" class="mb-6">
                 {{-- Check-in Card --}}

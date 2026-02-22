@@ -7,10 +7,10 @@ use App\Data\BaseData;
 class CartItemData extends BaseData
 {
     public int $product_id;
-    public ?int $variant_id;
+    public ?int $variant_id = null;
     public string $name;
     public int $price;
     public int $quantity;
     public int $stock;
-    public ?string $image;
+    public ?string $image = null;
 }

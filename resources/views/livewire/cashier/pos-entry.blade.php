@@ -125,9 +125,9 @@
                         <td class="px-4 py-3 w-28">
                             <select x-model="row.payment_method" @change="saveDraft()"
                                 class="w-full px-2 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
-                                <option value="cash">Cash</option>
-                                <option value="transfer">Transfer</option>
-                                <option value="qris">QRIS</option>
+                                @foreach($this->paymentMethods as $method)
+                                    <option value="{{ $method['id'] }}">{{ $method['name'] }}</option>
+                                @endforeach
                             </select>
                         </td>
                         <td class="px-4 py-3 text-center w-10">
@@ -374,7 +374,7 @@ Alpine.data('posEntry', (students) => ({
             student_nim: '',
             qty: 1,
             price: 0,
-            payment_method: 'cash',
+            payment_method: '{{ $this->paymentMethods[0]['id'] ?? "cash" }}',
             showDropdown: false,
             showStudentDropdown: false
         });

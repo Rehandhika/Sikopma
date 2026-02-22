@@ -11,7 +11,7 @@
             <x-ui.button 
                 variant="primary" 
                 icon="plus"
-                wire:click="create"
+                href="{{ route('admin.products.create') }}"
             >
                 Tambah Produk
             </x-ui.button>
@@ -197,7 +197,8 @@
                         <x-ui.button 
                             variant="ghost" 
                             size="sm"
-                            wire:click="edit({{ $product->id }})"
+                            icon="pencil"
+                            href="{{ route('admin.products.edit', $product->id) }}"
                         >
                             Edit
                         </x-ui.button>
@@ -224,7 +225,7 @@
                             <x-ui.button 
                                 variant="primary"
                                 icon="plus"
-                                wire:click="create"
+                                href="{{ route('admin.products.create') }}"
                             >
                                 Tambah Produk
                             </x-ui.button>
@@ -237,117 +238,5 @@
 
     <div class="mt-4">
         {{ $products->links() }}
-    </div>
-
-    @if($showModal)
-        <x-ui.modal 
-            name="product-form"
-            :title="$editingId ? 'Edit Produk' : 'Tambah Produk Baru'"
-            max-width="2xl"
-            x-data="{ show: @entangle('showModal') }"
-            x-show="show"
-        >
-            <form wire:submit.prevent="save">
-                <x-layout.grid cols="2">
-                    <div class="md:col-span-2">
-                        <x-ui.input 
-                            label="Nama Produk"
-                            type="text"
-                            wire:model="name"
-                            required
-                            :error="$errors->first('name')"
-                        />
-                    </div>
-
-                    <x-ui.input 
-                        label="SKU"
-                        type="text"
-                        wire:model="sku"
-                        placeholder="Opsional"
-                        :error="$errors->first('sku')"
-                    />
-
-                    <x-ui.input 
-                        label="Kategori"
-                        type="text"
-                        wire:model="category"
-                        placeholder="Opsional"
-                        :error="$errors->first('category')"
-                    />
-
-                    <x-ui.input 
-                        label="Harga"
-                        type="number"
-                        wire:model="price"
-                        required
-                        help="Masukkan harga dalam Rupiah"
-                        :error="$errors->first('price')"
-                    />
-
-                    <x-ui.input 
-                        label="Stok Awal"
-                        type="number"
-                        wire:model="stock"
-                        required
-                        :error="$errors->first('stock')"
-                    />
-
-                    <x-ui.input 
-                        label="Stok Minimum"
-                        type="number"
-                        wire:model="min_stock"
-                        required
-                        :error="$errors->first('min_stock')"
-                    />
-
-                    <x-ui.select 
-                        label="Status"
-                        wire:model="status"
-                        :options="[
-                            'active' => 'Aktif',
-                            'inactive' => 'Nonaktif'
-                        ]"
-                        required
-                        :error="$errors->first('status')"
-                    />
-
-                    <div class="md:col-span-2">
-                        <x-ui.textarea 
-                            label="Deskripsi"
-                            wire:model="description"
-                            rows="3"
-                            placeholder="Opsional"
-                            :error="$errors->first('description')"
-                        />
-                    </div>
-                </x-layout.grid>
-
-                <x-slot:footer>
-                    <x-ui.button 
-                        variant="white"
-                        type="button"
-                        wire:click="$set('showModal', false)"
-                    >
-                        Batal
-                    </x-ui.button>
-                    <x-ui.button 
-                        variant="primary"
-                        type="submit"
-                        :loading="$wire->loading('save')"
-                    >
-                        {{ $editingId ? 'Update' : 'Simpan' }}
-                    </x-ui.button>
-                </x-slot:footer>
-            </form>
-        </x-ui.modal>
-    @endif
-
-    <div wire:loading class="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-40">
-        <x-ui.card class="p-6">
-            <div class="text-center">
-                <x-ui.spinner size="lg" class="mx-auto mb-4" />
-                <p class="text-gray-700 font-medium">Memuat...</p>
-            </div>
-        </x-ui.card>
     </div>
 </div>

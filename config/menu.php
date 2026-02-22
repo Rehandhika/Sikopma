@@ -84,14 +84,6 @@ return [
                 ['key' => 'penalties.manage', 'label' => 'Kelola Penalti', 'route' => 'admin.penalties.manage', 'permissions' => ['kelola_penalti']],
             ],
         ],
-        [
-            'key' => 'profile',
-            'label' => 'Profil Saya',
-            'icon' => 'user',
-            'route' => 'admin.profile.edit',
-            'active_routes' => ['admin.profile.*'],
-            'permissions' => [], // All authenticated users
-        ],
         
         // ============================================================
         // MANAGEMENT MENU (Requires specific permissions)

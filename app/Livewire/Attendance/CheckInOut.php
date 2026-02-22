@@ -36,6 +36,7 @@ class CheckInOut extends Component
 
     protected FileStorageServiceInterface $fileStorageService;
     protected AttendanceService $attendanceService;
+    protected \App\Services\StoreStatusService $storeStatusService;
 
     protected $rules = [
         'checkInPhoto' => 'required|image|max:5120', // 5MB max
@@ -49,10 +50,12 @@ class CheckInOut extends Component
 
     public function boot(
         FileStorageServiceInterface $fileStorageService,
-        AttendanceService $attendanceService
+        AttendanceService $attendanceService,
+        \App\Services\StoreStatusService $storeStatusService
     ) {
         $this->fileStorageService = $fileStorageService;
         $this->attendanceService = $attendanceService;
+        $this->storeStatusService = $storeStatusService;
     }
 
     public function mount()
@@ -163,7 +166,7 @@ class CheckInOut extends Component
 
             // Validate schedule exists or override is allowed
             if (! $this->currentSchedule) {
-                if (config('app-settings.attendance.override_mode', false)) {
+                if ($this->storeStatusService->isOverrideActive()) {
                     $isOverride = true;
                 } else {
                     throw new \Exception('Tidak ada jadwal aktif saat ini.');
@@ -383,7 +386,7 @@ class CheckInOut extends Component
 
         if (! $this->currentSchedule) {
             // Allow check-in if override mode is enabled
-            return config('app-settings.attendance.override_mode', false);
+            return $this->storeStatusService->isOverrideActive();
         }
 
         // Allow check-in with tolerance
@@ -437,6 +440,7 @@ class CheckInOut extends Component
             'canCheckIn' => $this->canCheckInNow(),
             'timeUntilCheckIn' => $this->getTimeUntilCheckIn(),
             'checkInPhotoUrl' => $this->getCheckInPhotoUrl(),
+            'isOverrideActive' => $this->storeStatusService->isOverrideActive(),
         ])->layout('layouts.app');
     }
 }

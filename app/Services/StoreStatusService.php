@@ -266,8 +266,19 @@ class StoreStatusService
                 'next_open_mode' => $setting->next_open_mode ?? 'default',
                 'academic_holiday' => $academicHoliday,
                 'custom_message' => $this->getClosedMessage($setting),
+                'manual_open_override' => $setting->manual_open_override,
             ];
         });
+    }
+
+    /**
+     * Check if manual override is active
+     */
+    public function isOverrideActive(): bool
+    {
+        $status = $this->getStatus();
+        
+        return $status['manual_open_override'] ?? false;
     }
 
     /**

@@ -21,52 +21,13 @@ class ProductList extends Component
 
     public $stockFilter = 'all';
 
-    // Form properties
-    public $showModal = false;
+    // Form properties (moved to ProductForm component)
+    
+    protected $listeners = ['product-saved' => '$refresh'];
 
-    public $editingId = null;
-
-    public $name = '';
-
-    public $sku = '';
-
-    public $price = 0;
-
-    public $stock = 0;
-
-    public $min_stock = 5;
-
-    public $category = '';
-
-    public $description = '';
-
-    public $status = 'active';
-
-    protected $rules = [
-        'name' => 'required|string|max:255',
-        'sku' => 'nullable|string|max:50|unique:products,sku',
-        'price' => 'required|numeric|min:0',
-        'stock' => 'required|integer|min:0',
-        'min_stock' => 'required|integer|min:0',
-        'category' => 'nullable|string|max:100',
-        'description' => 'nullable|string',
-        'status' => 'required|in:active,inactive',
-    ];
-
-    /**
-     * Handle route-based modal opening for create/edit
-     */
     public function mount($id = null)
     {
-        // If visiting products.create, open create modal immediately
-        if (request()->routeIs('products.create')) {
-            $this->create();
-        }
-
-        // If visiting products.edit with ID, load product and open edit modal
-        if ($id && request()->routeIs('products.edit')) {
-            $this->edit($id);
-        }
+        // Route-based logic removed as we are using separate pages for create/edit
     }
 
     public function updatingSearch()
@@ -74,69 +35,8 @@ class ProductList extends Component
         $this->resetPage();
     }
 
-    /**
-     * Open create modal
-     *
-     * @return void
-     */
-    public function create()
-    {
-        $this->resetForm();
-        $this->showModal = true;
-        $this->dispatch('modal-opened');
-    }
+    // Methods create, edit, save, resetForm removed as they are moved to ProductForm
 
-    public function edit($id)
-    {
-        $product = Product::findOrFail($id);
-        $this->editingId = $id;
-        $this->name = $product->name;
-        $this->sku = $product->sku;
-        $this->price = $product->price;
-        $this->stock = $product->stock;
-        $this->min_stock = $product->min_stock;
-        $this->category = $product->category;
-        $this->description = $product->description;
-        $this->status = $product->status;
-        $this->showModal = true;
-    }
-
-    /**
-     * Save product (create or update)
-     *
-     * @return void
-     */
-    public function save()
-    {
-        if ($this->editingId) {
-            $this->rules['sku'] = 'nullable|string|max:50|unique:products,sku,'.$this->editingId;
-        }
-
-        $validated = $this->validate();
-        $productService = app(ProductService::class);
-
-        try {
-            if ($this->editingId) {
-                $productService->update($this->editingId, $validated);
-                $this->dispatch('toast', message: 'Produk berhasil diperbarui', type: 'success');
-            } else {
-                // Generate SKU if not provided
-                if (empty($validated['sku'])) {
-                    $validated['sku'] = $productService->generateSKU($validated['name'], $validated['category'] ?? null);
-                }
-                $productService->create($validated);
-                $this->dispatch('toast', message: 'Produk berhasil ditambahkan', type: 'success');
-            }
-            $this->resetForm();
-
-            // If this component is accessed via create/edit routes, navigate back to list
-            if (request()->routeIs('admin.products.create') || request()->routeIs('admin.products.edit')) {
-                return $this->redirectRoute('admin.products.list', navigate: true);
-            }
-        } catch (\Exception $e) {
-            $this->dispatch('toast', message: $e->getMessage(), type: 'error');
-        }
-    }
 
     /**
      * Delete product
@@ -173,22 +73,8 @@ class ProductList extends Component
         $this->dispatch('toast', message: 'Status produk berhasil diubah', type: 'success');
     }
 
-    private function resetForm()
-    {
-        $this->reset([
-            'editingId', 'name', 'sku', 'price', 'stock',
-            'min_stock', 'category', 'description', 'status',
-        ]);
+    // resetForm moved to ProductForm
 
-        // Set sensible defaults for create form
-        $this->price = 0;
-        $this->stock = 0;
-        $this->min_stock = 5;
-        $this->status = 'active';
-        $this->showModal = false;
-
-        $this->resetValidation();
-    }
 
     public function getCategoriesProperty()
     {

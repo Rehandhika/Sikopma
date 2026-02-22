@@ -9,6 +9,7 @@ use App\Models\LeaveRequest;
 use App\Models\Penalty;
 use App\Models\ScheduleAssignment;
 use App\Repositories\AttendanceRepository;
+use App\Services\StoreStatusService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -19,10 +20,16 @@ class AttendanceService
 
     protected PenaltyService $penaltyService;
 
-    public function __construct(AttendanceRepository $repository, PenaltyService $penaltyService)
-    {
+    protected StoreStatusService $storeStatusService;
+
+    public function __construct(
+        AttendanceRepository $repository,
+        PenaltyService $penaltyService,
+        StoreStatusService $storeStatusService
+    ) {
         $this->repository = $repository;
         $this->penaltyService = $penaltyService;
+        $this->storeStatusService = $storeStatusService;
     }
 
     /**
@@ -65,9 +72,9 @@ class AttendanceService
                 }
             } else {
                 // Override Mode Check-in (No Schedule)
-                if (! config('app-settings.attendance.override_mode', false)) {
-                    throw new BusinessException('Check-in tanpa jadwal tidak diizinkan.', 'OVERRIDE_DISABLED');
-                }
+            if (! $this->storeStatusService->isOverrideActive()) {
+                throw new BusinessException('Check-in tanpa jadwal tidak diizinkan.', 'OVERRIDE_DISABLED');
+            }
 
                 // Check for duplicate unscheduled check-in today?
                 // Optional: Prevent multiple unscheduled check-ins?
