@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Storage;
 
 class Banner extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Traits\Auditable;
 
     protected $fillable = [
         'title',

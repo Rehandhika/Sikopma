@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Penalty extends Model
 {
+    use \Illuminate\Database\Eloquent\Factories\HasFactory, \App\Traits\Auditable;
+
     protected $fillable = [
         'user_id',
         'penalty_type_id',

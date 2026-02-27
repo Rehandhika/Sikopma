@@ -9,16 +9,20 @@ use Illuminate\Support\Facades\Log;
 class ActivityLogService
 {
     /**
-     * Log an activity with detailed description
+     * Log an activity with detailed description and optional metadata
      *
      * @param  string  $activity  The activity description
+     * @param  array|null  $metadata  Optional structured data
      */
-    public static function log(string $activity): ?ActivityLog
+    public static function log(string $activity, ?array $metadata = null): ?ActivityLog
     {
         try {
             return ActivityLog::create([
                 'user_id' => Auth::id(),
                 'activity' => $activity,
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+                'metadata' => $metadata,
             ]);
         } catch (\Exception $e) {
             // Log error but don't interrupt user action
@@ -119,10 +123,20 @@ class ActivityLogService
     /**
      * Log sale creation
      */
-    public static function logSaleCreated(string $invoiceNumber, float $totalAmount): void
+    public static function logSaleCreated(string $invoiceNumber, float $totalAmount, ?string $studentNim = null): void
     {
         $formattedAmount = number_format($totalAmount, 0, ',', '.');
-        self::log("Membuat transaksi #{$invoiceNumber} senilai Rp {$formattedAmount}");
+        $activity = "Membuat transaksi #{$invoiceNumber} senilai Rp {$formattedAmount}";
+        
+        if ($studentNim) {
+            $activity .= " (Mahasiswa: {$studentNim})";
+        }
+
+        self::log($activity, [
+            'invoice' => $invoiceNumber,
+            'amount' => $totalAmount,
+            'student_nim' => $studentNim,
+        ]);
     }
 
     /**

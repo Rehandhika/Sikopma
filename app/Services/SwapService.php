@@ -36,7 +36,7 @@ class SwapService
             'Permintaan Tukar Jadwal',
             "{$requesterAssignment->user->name} ingin menukar jadwal dengan Anda. {$requesterAssignment->day_label} {$requesterAssignment->date->format('d M')} Sesi {$requesterAssignment->session} ↔ {$targetAssignment->day_label} {$targetAssignment->date->format('d M')} Sesi {$targetAssignment->session}",
             ['swap_request_id' => $swapRequest->id],
-            route('swap.my-requests')
+            route('admin.swap.my-requests')
         );
 
         return $swapRequest;
@@ -103,7 +103,7 @@ class SwapService
                     'Persetujuan Tukar Jadwal',
                     "Permintaan tukar jadwal antara {$swapRequest->requester->name} dan {$swapRequest->target->name} telah disetujui target. Menunggu approval admin.",
                     ['swap_request_id' => $swapRequest->id],
-                    route('swap.approvals')
+                    route('admin.swap.approvals')
                 );
             }
         } else {

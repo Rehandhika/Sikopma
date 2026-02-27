@@ -1,4 +1,14 @@
-<div class="space-y-6">
+<div class="space-y-6"
+    x-data="{ 
+        lockBody: @entangle('showForm') || @entangle('viewingId') || @entangle('reviewingId')
+    }" 
+    x-init="$watch('lockBody', value => {
+        if (value) {
+            document.body.classList.add('overflow-hidden');
+        } else {
+            document.body.classList.remove('overflow-hidden');
+        }
+    })">
     {{-- Header --}}
     <div class="flex items-center justify-between">
         <div>
@@ -107,7 +117,7 @@
 
     {{-- Create Form Modal --}}
     @if($showForm)
-    <div class="fixed inset-0 z-50 overflow-y-auto" x-data x-init="document.body.classList.add('overflow-hidden')" x-on:remove="document.body.classList.remove('overflow-hidden')">
+    <div class="fixed inset-0 z-50 overflow-y-auto">
         <div class="fixed inset-0 bg-black/50" wire:click="closeForm"></div>
         <div class="relative min-h-screen flex items-center justify-center p-4">
             <div class="relative bg-white rounded-xl shadow-xl w-full max-w-md" @click.stop>
@@ -192,7 +202,7 @@
     <div class="fixed inset-0 z-50 overflow-y-auto">
         <div class="fixed inset-0 bg-black/50" wire:click="closeView"></div>
         <div class="relative min-h-screen flex items-center justify-center p-4">
-            <div class="relative bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div class="relative bg-white rounded-xl shadow-xl w-full max-w-md" @click.stop>
                 <div class="p-6">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-semibold">Detail Pengajuan</h3>

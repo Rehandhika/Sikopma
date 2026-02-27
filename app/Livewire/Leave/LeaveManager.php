@@ -43,6 +43,8 @@ class LeaveManager extends Component
 
     public $attachment;
 
+    public array $affectedSchedules = [];
+
     // Modal state
     public ?int $viewingId = null;
 
@@ -81,6 +83,51 @@ class LeaveManager extends Component
     {
         $this->start_date = now()->format('Y-m-d');
         $this->end_date = now()->format('Y-m-d');
+        $this->updateAffectedSchedules();
+    }
+
+    public function updatedStartDate()
+    {
+        if ($this->end_date < $this->start_date) {
+            $this->end_date = $this->start_date;
+        }
+        $this->updateAffectedSchedules();
+    }
+
+    public function updatedEndDate()
+    {
+        $this->updateAffectedSchedules();
+    }
+
+    public function updateAffectedSchedules()
+    {
+        $this->affectedSchedules = [];
+
+        if ($this->start_date && $this->end_date) {
+            try {
+                $start = Carbon::parse($this->start_date);
+                $end = Carbon::parse($this->end_date);
+
+                $assignments = \App\Models\ScheduleAssignment::where('user_id', Auth::id())
+                    ->whereBetween('date', [$start, $end])
+                    ->whereIn('status', ['scheduled', 'excused'])
+                    ->orderBy('date')
+                    ->orderBy('session')
+                    ->get();
+
+                $this->affectedSchedules = $assignments->map(function ($a) {
+                    return [
+                        'id' => $a->id,
+                        'date' => $a->date->format('d M Y'),
+                        'session' => $a->session,
+                        'time' => $a->session_label,
+                        'status' => $a->status,
+                    ];
+                })->toArray();
+            } catch (\Exception $e) {
+                // Ignore parsing errors
+            }
+        }
     }
 
     // Placeholder for lazy loading
@@ -104,9 +151,10 @@ class LeaveManager extends Component
 
     public function openForm(): void
     {
-        $this->reset(['leave_type', 'reason', 'attachment']);
+        $this->reset(['leave_type', 'reason', 'attachment', 'affectedSchedules']);
         $this->start_date = now()->format('Y-m-d');
         $this->end_date = now()->format('Y-m-d');
+        $this->updateAffectedSchedules();
         $this->showForm = true;
     }
 
@@ -223,6 +271,13 @@ class LeaveManager extends Component
         $userId = Auth::id();
         $isAdmin = Auth::user()->hasAnyRole(['Super Admin', 'Ketua', 'Wakil Ketua', 'BPH']);
 
+        $totalDays = 0;
+        if ($this->start_date && $this->end_date) {
+            try {
+                $totalDays = Carbon::parse($this->start_date)->diffInDays(Carbon::parse($this->end_date)) + 1;
+            } catch (\Exception $e) {}
+        }
+
         // Simple stats - cached
         $stats = Cache::remember("leave_stats_{$userId}_{$this->activeTab}", 60, function () use ($userId) {
             if ($this->activeTab === 'my-requests') {
@@ -261,6 +316,7 @@ class LeaveManager extends Component
             'stats' => $stats,
             'isAdmin' => $isAdmin,
             'viewingRequest' => $viewingRequest,
+            'totalDays' => $totalDays,
         ]);
     }
 }

@@ -130,7 +130,7 @@ class ProcessTransactionAction
             }
 
             // 9. Log Activity
-            ActivityLogService::logSaleCreated($sale->invoice_number, $total);
+            ActivityLogService::logSaleCreated($sale->invoice_number, $total, $student?->nim);
 
             return [
                 'sale' => $sale,

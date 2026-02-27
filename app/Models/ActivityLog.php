@@ -15,9 +15,13 @@ class ActivityLog extends Model
     protected $fillable = [
         'user_id',
         'activity',
+        'ip_address',
+        'user_agent',
+        'metadata',
     ];
 
     protected $casts = [
+        'metadata' => 'array',
         'created_at' => 'datetime',
     ];
 

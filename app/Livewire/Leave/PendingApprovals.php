@@ -38,27 +38,15 @@ class PendingApprovals extends Component
             'review_notes' => 'nullable|string|max:500',
         ]);
 
-        DB::beginTransaction();
         try {
-            $request = LeaveRequest::with('user')->findOrFail($this->reviewId);
+            $request = LeaveRequest::findOrFail($this->reviewId);
+            $service = app(\App\Services\LeaveService::class);
 
-            $request->update([
-                'status' => $this->reviewAction,
-                'reviewed_by' => auth()->id(),
-                'reviewed_at' => now(),
-                'review_notes' => $this->review_notes,
-            ]);
-
-            // Log activity
-            $userName = $request->user->name;
-            $startDate = $request->start_date->format('d/m/Y');
             if ($this->reviewAction === 'approved') {
-                ActivityLogService::logLeaveApproved($userName, $startDate);
+                $service->approve($request, auth()->id(), $this->review_notes);
             } else {
-                ActivityLogService::logLeaveRejected($userName, $startDate);
+                $service->reject($request, auth()->id(), $this->review_notes);
             }
-
-            DB::commit();
 
             $message = $this->reviewAction === 'approved' ? 'Pengajuan disetujui' : 'Pengajuan ditolak';
             $this->dispatch('toast', message: $message, type: 'success');
@@ -66,7 +54,6 @@ class PendingApprovals extends Component
             $this->reviewModal = false;
             $this->reset(['reviewId', 'reviewAction', 'review_notes']);
         } catch (\Exception $e) {
-            DB::rollBack();
             $this->dispatch('toast', message: 'Terjadi kesalahan: '.$e->getMessage(), type: 'error');
         }
     }

@@ -167,7 +167,7 @@ class CreateLeaveRequest extends Component
 
         $this->dispatch('toast', message: 'Pengajuan cuti/izin berhasil dibuat dan menunggu persetujuan', type: 'success');
 
-        return $this->redirect(route('leave.my-requests'), navigate: true);
+        return $this->redirect(route('admin.leave.my-requests'), navigate: true);
     }
 
     /**
@@ -235,15 +235,9 @@ class CreateLeaveRequest extends Component
             // Try FileStorageService first (handles signed URLs for private files)
             return $this->fileStorageService->getUrl($path);
         } catch (\Exception $e) {
-            // Fallback to direct URL for legacy files
+            // Fallback to public URL for legacy files
             if (Storage::disk('public')->exists($path)) {
                 return Storage::disk('public')->url($path);
-            }
-
-            // Try local disk for private files
-            if (Storage::disk('local')->exists($path)) {
-                // For private files, we need to generate a temporary URL or route
-                return route('leave.attachment.download', ['path' => base64_encode($path)]);
             }
 
             return null;

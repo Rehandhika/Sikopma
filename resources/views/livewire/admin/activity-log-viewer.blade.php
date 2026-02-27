@@ -2,12 +2,24 @@
     {{-- Page Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Log Aktivitas</h1>
+            <h1 class="text-2xl font-bold text-gray-900">Log Sistem</h1>
             <p class="text-sm text-gray-500 mt-1">
                 {{ Carbon\Carbon::parse($dateFrom)->format('d M Y') }}
                 @if($dateFrom !== $dateTo) - {{ Carbon\Carbon::parse($dateTo)->format('d M Y') }} @endif
             </p>
         </div>
+    </div>
+
+    {{-- Tabs --}}
+    <div class="flex border-b border-gray-200">
+        <button wire:click="setLogType('activity')" 
+            class="px-4 py-2 text-sm font-medium border-b-2 transition-colors {{ $logType === 'activity' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+            Aktivitas User
+        </button>
+        <button wire:click="setLogType('audit')" 
+            class="px-4 py-2 text-sm font-medium border-b-2 transition-colors {{ $logType === 'audit' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+            Audit Perubahan (Teknis)
+        </button>
     </div>
 
     {{-- Quick Date Presets --}}
@@ -99,38 +111,99 @@
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Waktu</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">User</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Aktivitas</th>
+                        @if($logType === 'activity')
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Aktivitas</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Info Tambahan</th>
+                        @else
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Aksi & Model</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Perubahan</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
-                    @forelse($activities as $activity)
+                    @forelse($activities as $log)
                         <tr class="hover:bg-gray-50 transition">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900">
-                                    {{ $activity->created_at->format('d/m/Y') }}
+                                    {{ $log->created_at->format('d/m/Y') }}
                                 </div>
                                 <div class="text-xs text-gray-500">
-                                    {{ $activity->created_at->format('H:i:s') }}
+                                    {{ $log->created_at->format('H:i:s') }}
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                @if($activity->user)
+                                @if($log->user)
                                     <div class="flex items-center gap-3">
                                         <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold text-xs shrink-0">
-                                            {{ strtoupper(substr($activity->user->name, 0, 2)) }}
+                                            {{ strtoupper(substr($log->user->name, 0, 2)) }}
                                         </div>
                                         <div class="min-w-0">
-                                            <p class="text-sm font-medium text-gray-900 truncate">{{ $activity->user->name }}</p>
-                                            <p class="text-xs text-gray-500">{{ $activity->user->nim ?? '-' }}</p>
+                                            <p class="text-sm font-medium text-gray-900 truncate">{{ $log->user->name }}</p>
+                                            <p class="text-xs text-gray-500">{{ $log->user->nim ?? '-' }}</p>
                                         </div>
                                     </div>
                                 @else
                                     <span class="text-sm text-gray-400 italic">User Dihapus</span>
                                 @endif
                             </td>
-                            <td class="px-6 py-4">
-                                <p class="text-sm text-gray-900">{{ $activity->activity }}</p>
-                            </td>
+                            @if($logType === 'activity')
+                                <td class="px-6 py-4">
+                                    <p class="text-sm text-gray-900">{{ $log->activity }}</p>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="text-xs text-gray-500 space-y-1">
+                                        @if($log->ip_address)
+                                            <div class="flex items-center gap-1">
+                                                <x-ui.icon name="globe-alt" class="w-3.5 h-3.5" />
+                                                {{ $log->ip_address }}
+                                            </div>
+                                        @endif
+                                        @if($log->metadata)
+                                            <div class="mt-2 bg-gray-50 p-2 rounded text-[10px] font-mono overflow-hidden">
+                                                @foreach($log->metadata as $key => $value)
+                                                    <div><span class="text-primary-600">{{ $key }}:</span> {{ is_array($value) ? json_encode($value) : $value }}</div>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    </div>
+                                </td>
+                            @else
+                                <td class="px-6 py-4">
+                                    <div class="flex flex-col">
+                                        <span class="px-2 py-0.5 text-[10px] font-bold uppercase rounded-full w-fit {{ 
+                                            match($log->action) {
+                                                'create' => 'bg-success-100 text-success-700',
+                                                'update' => 'bg-blue-100 text-blue-700',
+                                                'delete' => 'bg-danger-100 text-danger-700',
+                                                default => 'bg-gray-100 text-gray-700'
+                                            }
+                                        }}">
+                                            {{ $log->action }}
+                                        </span>
+                                        <span class="text-xs font-mono text-gray-600 mt-1">{{ class_basename($log->model) }} #{{ $log->model_id }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    @if($log->action === 'update')
+                                        <div class="text-[10px] space-y-1 max-w-xs overflow-hidden">
+                                            @foreach($log->new_values ?? [] as $key => $val)
+                                                @if($key !== 'updated_at')
+                                                    <div class="truncate">
+                                                        <span class="font-semibold text-gray-700">{{ $key }}:</span>
+                                                        <span class="text-danger-600 line-through">{{ is_array($log->old_values[$key] ?? '') ? 'json' : ($log->old_values[$key] ?? 'null') }}</span>
+                                                        <span class="mx-1 text-gray-400">→</span>
+                                                        <span class="text-success-600">{{ is_array($val) ? 'json' : $val }}</span>
+                                                    </div>
+                                                @endif
+                                            @endforeach
+                                        </div>
+                                    @elseif($log->action === 'create')
+                                        <span class="text-xs text-gray-500 italic">Data Baru Dibuat</span>
+                                    @elseif($log->action === 'delete')
+                                        <span class="text-xs text-danger-500 italic">Data Dihapus</span>
+                                    @endif
+                                </td>
+                            @endif
                         </tr>
                     @empty
                         <tr>

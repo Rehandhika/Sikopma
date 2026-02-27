@@ -19,6 +19,9 @@ class ActivityLogViewer extends Component
 {
     use WithPagination;
 
+    #[Url(as: 'type')]
+    public string $logType = 'activity';
+
     #[Url(as: 'from')]
     public string $dateFrom = '';
 
@@ -75,6 +78,12 @@ class ActivityLogViewer extends Component
         $this->resetPage();
     }
 
+    public function setLogType(string $type): void
+    {
+        $this->logType = $type;
+        $this->resetPage();
+    }
+
     public function updatedSearch(): void
     {
         $this->resetPage();
@@ -116,10 +125,12 @@ class ActivityLogViewer extends Component
     #[Computed]
     public function stats(): array
     {
-        $cacheKey = "activity_stats_{$this->dateFrom}_{$this->dateTo}_{$this->userId}";
+        $cacheKey = "activity_stats_{$this->dateFrom}_{$this->dateTo}_{$this->userId}_{$this->logType}";
 
         return Cache::remember($cacheKey, 60, function () {
-            $query = ActivityLog::query()
+            $model = $this->logType === 'audit' ? \App\Models\AuditLog::class : ActivityLog::class;
+
+            $query = $model::query()
                 ->when($this->dateFrom, fn ($q) => $q->where('created_at', '>=', Carbon::parse($this->dateFrom)->startOfDay()))
                 ->when($this->dateTo, fn ($q) => $q->where('created_at', '<=', Carbon::parse($this->dateTo)->endOfDay()))
                 ->when($this->userId, fn ($q) => $q->byUser((int) $this->userId));
@@ -136,22 +147,32 @@ class ActivityLogViewer extends Component
      */
     private function buildBaseQuery()
     {
-        return ActivityLog::query()
+        $model = $this->logType === 'audit' ? \App\Models\AuditLog::class : ActivityLog::class;
+
+        return $model::query()
             ->when($this->dateFrom, fn ($q) => $q->where('created_at', '>=', Carbon::parse($this->dateFrom)->startOfDay()))
             ->when($this->dateTo, fn ($q) => $q->where('created_at', '<=', Carbon::parse($this->dateTo)->endOfDay()))
             ->when($this->userId, fn ($q) => $q->byUser((int) $this->userId))
-            ->when($this->search, fn ($q) => $q->search($this->search));
+            ->when($this->search, function ($q) {
+                if ($this->logType === 'audit') {
+                    $q->where(fn ($sub) => $sub->where('action', 'like', "%{$this->search}%")
+                        ->orWhere('model', 'like', "%{$this->search}%")
+                    );
+                } else {
+                    $q->search($this->search);
+                }
+            });
     }
 
     public function render()
     {
-        $activities = $this->buildBaseQuery()
+        $logs = $this->buildBaseQuery()
             ->with(['user:id,name,nim'])
             ->orderByDesc('created_at')
             ->paginate($this->perPage);
 
         return view('livewire.admin.activity-log-viewer', [
-            'activities' => $activities,
+            'activities' => $logs,
         ])->layout('layouts.app');
     }
 }

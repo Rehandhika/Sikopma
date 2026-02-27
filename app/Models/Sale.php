@@ -31,7 +31,7 @@ use Illuminate\Support\Facades\DB;
  */
 class Sale extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, \App\Traits\Auditable;
 
     protected $fillable = [
         'cashier_id',

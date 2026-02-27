@@ -70,14 +70,16 @@ Route::middleware(['auth', 'active'])->prefix('admin')->name('admin.')->group(fu
 
     // Leave Requests Self-Service (ajukan_cuti)
     Route::prefix('cuti')->name('leave.')->group(function () {
-        // Self-service - submit and view own leave requests
-        Route::get('/', \App\Livewire\Leave\LeaveRequestList::class)->name('index');
+        // Unified interface for users and admins
+        Route::get('/', \App\Livewire\Leave\LeaveManager::class)->name('index');
+        
+        // Direct links/Backward compatibility
         Route::get('/pengajuan-baru', \App\Livewire\Leave\CreateLeaveRequest::class)->name('create');
-        Route::get('/pengajuan-saya', \App\Livewire\Leave\UserLeaveRequests::class)->name('my-requests');
+        Route::get('/pengajuan-saya', \App\Livewire\Leave\LeaveManager::class)->name('my-requests'); // Redirect to unified
         
         // Approval routes - requires setujui_cuti permission
         Route::middleware('can:setujui_cuti')->group(function () {
-            Route::get('/persetujuan', \App\Livewire\Leave\PendingApprovals::class)->name('approvals');
+            Route::get('/persetujuan', \App\Livewire\Leave\LeaveManager::class)->name('approvals'); // Redirect to unified
         });
         
         // Management - requires kelola_cuti permission
