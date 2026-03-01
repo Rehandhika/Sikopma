@@ -11,7 +11,8 @@
       </div>
 
       <!-- Form -->
-      <form wire:submit="login" class="px-8 pb-8 space-y-4">
+      <form wire:submit.prevent="login" method="POST" class="px-8 pb-8 space-y-4">
+        @csrf
         <!-- Username -->
         <x-ui.input
           label="Username"

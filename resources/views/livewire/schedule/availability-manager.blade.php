@@ -55,14 +55,10 @@
     </div>
 
     {{-- Stats --}}
-    <div class="grid grid-cols-3 gap-4">
+    <div class="grid grid-cols-2 gap-4">
         <div class="bg-white rounded-xl border border-gray-200 p-4 text-center">
             <span class="text-2xl font-bold text-blue-600">{{ $this->totalSelected }}</span>
             <p class="text-sm text-gray-500 mt-1">Sesi Dipilih</p>
-        </div>
-        <div class="bg-white rounded-xl border border-gray-200 p-4 text-center">
-            <span class="text-2xl font-bold text-green-600">{{ $this->totalSelected * 3 }}</span>
-            <p class="text-sm text-gray-500 mt-1">Jam</p>
         </div>
         <div class="bg-white rounded-xl border border-gray-200 p-4 text-center">
             <span class="text-2xl font-bold text-blue-600">{{ $this->totalSelected }}/12</span>

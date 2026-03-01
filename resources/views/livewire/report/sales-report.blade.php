@@ -33,51 +33,51 @@
     </div>
 
     {{-- Stats Cards --}}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Pendapatan</p>
-                    <p class="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{{ format_currency($this->reportData->revenue) }}</p>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
+            <div class="flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">Pendapatan</p>
+                    <p class="text-lg sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 truncate">{{ format_currency($this->reportData->revenue) }}</p>
                 </div>
-                <div class="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center">
-                    <x-ui.icon name="banknotes" class="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                </div>
-            </div>
-        </div>
-        
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Rata-rata</p>
-                    <p class="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">{{ format_currency($this->reportData->avg_amount) }}</p>
-                </div>
-                <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                    <x-ui.icon name="calculator" class="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <x-ui.icon name="banknotes" class="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
             </div>
         </div>
         
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Terbesar</p>
-                    <p class="text-xl sm:text-2xl font-bold text-violet-600 dark:text-violet-400 mt-1">{{ format_currency($this->reportData->max_amount) }}</p>
+        <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
+            <div class="flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">Rata-rata</p>
+                    <p class="text-lg sm:text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1 truncate">{{ format_currency($this->reportData->avg_amount) }}</p>
                 </div>
-                <div class="w-10 h-10 bg-violet-100 dark:bg-violet-900/30 rounded-lg flex items-center justify-center">
-                    <x-ui.icon name="arrow-trending-up" class="w-5 h-5 text-violet-600 dark:text-violet-400" />
+                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <x-ui.icon name="calculator" class="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
                 </div>
             </div>
         </div>
         
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Transaksi</p>
-                    <p class="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">{{ number_format($this->reportData->total) }}</p>
+        <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
+            <div class="flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">Terbesar</p>
+                    <p class="text-lg sm:text-2xl font-bold text-violet-600 dark:text-violet-400 mt-1 truncate">{{ format_currency($this->reportData->max_amount) }}</p>
                 </div>
-                <div class="w-10 h-10 bg-amber-100 dark:bg-amber-900/30 rounded-lg flex items-center justify-center">
-                    <x-ui.icon name="shopping-bag" class="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-violet-100 dark:bg-violet-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <x-ui.icon name="arrow-trending-up" class="w-4 h-4 sm:w-5 sm:h-5 text-violet-600 dark:text-violet-400" />
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
+            <div class="flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">Transaksi</p>
+                    <p class="text-lg sm:text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1 truncate">{{ number_format($this->reportData->total) }}</p>
+                </div>
+                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-amber-100 dark:bg-amber-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <x-ui.icon name="shopping-bag" class="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 dark:text-amber-400" />
                 </div>
             </div>
         </div>
@@ -92,66 +92,49 @@
     </x-ui.card>
 
     {{-- Charts & Payment --}}
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4" x-data="salesCharts()" wire:ignore>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4" x-data="salesCharts()" wire:ignore>
         
         {{-- Revenue Chart --}}
-        <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-            <h3 class="font-semibold text-sm text-gray-900 dark:text-white mb-3">Grafik Penjualan</h3>
-            <div x-ref="revenueChart"></div>
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
+            <h3 class="font-semibold text-xs sm:text-sm text-gray-900 dark:text-white mb-3">Grafik Penjualan</h3>
+            <div x-ref="revenueChart" class="min-h-[250px] sm:min-h-[300px]"></div>
         </div>
 
         {{-- Payment Methods --}}
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-            <h3 class="font-semibold text-sm text-gray-900 dark:text-white mb-3">Metode Pembayaran</h3>
-            <div class="h-64 flex items-center justify-center">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
+            <h3 class="font-semibold text-xs sm:text-sm text-gray-900 dark:text-white mb-3">Metode Pembayaran</h3>
+            <div class="h-56 sm:h-64 flex items-center justify-center">
                 <div x-ref="paymentChart" class="w-full"></div>
             </div>
         </div>
     </div>
 
-    {{-- Top Products & Hourly --}}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    {{-- Top Products --}}
+    <div class="grid grid-cols-1 gap-4">
         {{-- Top Products --}}
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-            <h3 class="font-semibold text-sm text-gray-900 dark:text-white mb-3">Produk Terlaris</h3>
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
+            <h3 class="font-semibold text-xs sm:text-sm text-gray-900 dark:text-white mb-3">Produk Terlaris</h3>
             @if(count($this->topProducts) > 0)
-                <div class="space-y-2">
+                <div class="space-y-1 sm:space-y-2">
                     @foreach($this->topProducts as $i => $product)
                         <div class="flex items-center gap-2 p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50">
                             <span @class([
-                                'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold',
+                                'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0',
                                 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400' => $i < 3,
                                 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400' => $i >= 3,
                             ])>{{ $i + 1 }}</span>
                             <div class="flex-1 min-w-0">
-                                <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ $product->name }}</p>
+                                <p class="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">{{ $product->name }}</p>
                                 <p class="text-xs text-gray-500">{{ number_format($product->total_qty) }} terjual</p>
                             </div>
-                            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex-shrink-0">
                                 {{ format_currency($product->total_revenue) }}
                             </span>
                         </div>
                     @endforeach
                 </div>
             @else
-                <p class="text-sm text-gray-400 text-center py-8">Belum ada data</p>
-            @endif
-        </div>
-
-        {{-- Hourly Distribution --}}
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-            <h3 class="font-semibold text-sm text-gray-900 dark:text-white mb-3">Distribusi Jam</h3>
-            <div x-ref="hourlyChart"></div>
-            @if($this->peakHour)
-                <div class="mt-3 p-2 bg-primary-50 dark:bg-primary-900/20 rounded text-center">
-                    <p class="text-xs text-gray-600 dark:text-gray-400">
-                        Jam Tersibuk: 
-                        <span class="font-bold text-primary-600 dark:text-primary-400">
-                            {{ str_pad($this->peakHour['hour'], 2, '0', STR_PAD_LEFT) }}:00
-                        </span>
-                        ({{ $this->peakHour['count'] }} tx)
-                    </p>
-                </div>
+                <p class="text-xs sm:text-sm text-gray-400 text-center py-8">Belum ada data</p>
             @endif
         </div>
     </div>
@@ -427,30 +410,86 @@
 
 </div>
 
-@assets
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-@endassets
-
 @script
 <script>
     Alpine.data('salesCharts', () => ({
         revenueChart: null,
-        hourlyChart: null,
         paymentChart: null,
 
         init() {
             this.initRevenueChart();
-            this.initHourlyChart();
             this.initPaymentChart();
 
             // Listen for chart updates from Livewire
             this.$wire.on('update-charts', (event) => {
                 this.updateCharts(event.data, event.hourly, event.payment);
             });
+
+            // Handle window resize for responsive charts
+            let resizeTimer;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    this.handleResize();
+                }, 250);
+            });
+        },
+
+        handleResize() {
+            const isMobile = window.innerWidth < 768;
+            
+            if (this.revenueChart) {
+                this.revenueChart.updateOptions({
+                    chart: {
+                        height: isMobile ? 250 : 300
+                    },
+                    stroke: { width: isMobile ? 1.5 : 2 },
+                    xaxis: {
+                        labels: {
+                            style: { fontSize: isMobile ? '8px' : '10px' },
+                            rotate: isMobile ? -90 : -45,
+                            rotateAlways: isMobile
+                        }
+                    },
+                    yaxis: {
+                        labels: {
+                            style: { fontSize: isMobile ? '8px' : '10px' }
+                        }
+                    },
+                    grid: {
+                        padding: { left: isMobile ? 5 : 10, right: isMobile ? 5 : 0 }
+                    }
+                });
+            }
+
+            if (this.paymentChart) {
+                this.paymentChart.updateOptions({
+                    chart: {
+                        height: isMobile ? 220 : 280
+                    },
+                    plotOptions: {
+                        pie: {
+                            donut: {
+                                size: isMobile ? '60%' : '65%',
+                                labels: {
+                                    value: { fontSize: isMobile ? '10px' : '12px' },
+                                    total: { fontSize: isMobile ? '10px' : '12px' }
+                                }
+                            }
+                        }
+                    },
+                    legend: {
+                        fontSize: isMobile ? '10px' : '12px',
+                        markers: { radius: isMobile ? 8 : 12 },
+                        itemMargin: { horizontal: isMobile ? 5 : 10, vertical: isMobile ? 3 : 5 }
+                    }
+                });
+            }
         },
 
         initRevenueChart() {
             const initialData = @json($this->chartData);
+            const isMobile = window.innerWidth < 768;
             
             const options = {
                 series: [{
@@ -459,13 +498,14 @@
                 }],
                 chart: {
                     type: 'area',
-                    height: 300,
+                    height: isMobile ? 250 : 300,
                     fontFamily: 'inherit',
                     toolbar: { show: false },
-                    zoom: { enabled: false }
+                    zoom: { enabled: false },
+                    sparkline: { enabled: false }
                 },
                 dataLabels: { enabled: false },
-                stroke: { curve: 'smooth', width: 2 },
+                stroke: { curve: 'smooth', width: isMobile ? 1.5 : 2 },
                 fill: {
                     type: 'gradient',
                     gradient: {
@@ -480,9 +520,10 @@
                     categories: initialData.labels,
                     labels: { 
                         show: true,
-                        style: { colors: '#9ca3af', fontSize: '10px' },
-                        rotate: -45,
-                        rotateAlways: false
+                        style: { colors: '#9ca3af', fontSize: isMobile ? '8px' : '10px' },
+                        rotate: isMobile ? -90 : -45,
+                        rotateAlways: isMobile,
+                        hideOverlappingLabels: true
                     },
                     axisBorder: { show: false },
                     axisTicks: { show: false },
@@ -491,16 +532,24 @@
                 yaxis: {
                     labels: {
                         formatter: function (value) {
+                            if (isMobile) {
+                                return new Intl.NumberFormat('id-ID', { 
+                                    style: 'currency', 
+                                    currency: 'IDR', 
+                                    minimumFractionDigits: 0,
+                                    notation: 'compact'
+                                }).format(value);
+                            }
                             return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
                         },
-                        style: { colors: '#9ca3af', fontSize: '10px' }
+                        style: { colors: '#9ca3af', fontSize: isMobile ? '8px' : '10px' }
                     }
                 },
                 grid: {
                     show: true,
                     borderColor: '#f3f4f6',
                     strokeDashArray: 4,
-                    padding: { left: 10, right: 0 }
+                    padding: { left: isMobile ? 5 : 10, right: isMobile ? 5 : 0 }
                 },
                 tooltip: {
                     theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
@@ -516,64 +565,9 @@
             this.revenueChart.render();
         },
 
-        initHourlyChart() {
-            const initialData = @json(array_values($this->hourlySales));
-            
-            const options = {
-                series: [{
-                    name: 'Transaksi',
-                    data: initialData
-                }],
-                chart: {
-                    type: 'bar',
-                    height: 250,
-                    fontFamily: 'inherit',
-                    toolbar: { show: false }
-                },
-                plotOptions: {
-                    bar: {
-                        borderRadius: 4,
-                        columnWidth: '60%',
-                        distributed: false
-                    }
-                },
-                dataLabels: { enabled: false },
-                colors: ['#3b82f6'],
-                xaxis: {
-                    categories: Array.from({length: 24}, (_, i) => i.toString().padStart(2, '0') + ':00'),
-                    labels: {
-                        show: true,
-                        style: { colors: '#9ca3af', fontSize: '9px' },
-                        rotate: -45,
-                        hideOverlappingLabels: true
-                    },
-                    axisBorder: { show: false },
-                    axisTicks: { show: false }
-                },
-                yaxis: { 
-                    show: true,
-                    labels: {
-                        style: { colors: '#9ca3af', fontSize: '10px' },
-                        formatter: (val) => Math.floor(val)
-                    }
-                },
-                grid: { 
-                    show: true,
-                    borderColor: '#f3f4f6',
-                    strokeDashArray: 4,
-                    padding: { left: 10, right: 0 }
-                },
-                tooltip: {
-                    theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light'
-                }
-            };
-
-            this.hourlyChart = new ApexCharts(this.$refs.hourlyChart, options);
-            this.hourlyChart.render();
-        },
-
         initPaymentChart() {
             const paymentData = @json($this->paymentSummary);
+            const isMobile = window.innerWidth < 768;
             
             // Map colors from Tailwind names to Hex
             const colorMap = {
@@ -595,17 +589,26 @@
                 colors: colors,
                 chart: {
                     type: 'donut',
-                    height: 280,
+                    height: isMobile ? 220 : 280,
                     fontFamily: 'inherit',
                 },
                 plotOptions: {
                     pie: {
                         donut: {
-                            size: '65%',
+                            size: isMobile ? '60%' : '65%',
                             labels: {
                                 show: true,
                                 value: {
+                                    fontSize: isMobile ? '10px' : '12px',
                                     formatter: function (val) {
+                                        if (isMobile) {
+                                            return new Intl.NumberFormat('id-ID', { 
+                                                style: 'currency', 
+                                                currency: 'IDR',
+                                                maximumFractionDigits: 0,
+                                                notation: 'compact'
+                                            }).format(val);
+                                        }
                                         return new Intl.NumberFormat('id-ID', { 
                                             style: 'currency', 
                                             currency: 'IDR',
@@ -615,9 +618,18 @@
                                 },
                                 total: {
                                     show: true,
-                                    label: 'Total',
+                                    label: isMobile ? 'Total' : 'Total',
+                                    fontSize: isMobile ? '10px' : '12px',
                                     formatter: function (w) {
                                         const total = w.globals.seriesTotals.reduce((a, b) => a + b, 0);
+                                        if (isMobile) {
+                                            return new Intl.NumberFormat('id-ID', { 
+                                                style: 'currency', 
+                                                currency: 'IDR',
+                                                maximumFractionDigits: 0,
+                                                notation: 'compact'
+                                            }).format(total);
+                                        }
                                         return new Intl.NumberFormat('id-ID', { 
                                             style: 'currency', 
                                             currency: 'IDR',
@@ -631,10 +643,10 @@
                 },
                 dataLabels: { enabled: false },
                 legend: {
-                    position: 'bottom',
-                    fontSize: '12px',
-                    markers: { radius: 12 },
-                    itemMargin: { horizontal: 10, vertical: 5 }
+                    position: isMobile ? 'bottom' : 'bottom',
+                    fontSize: isMobile ? '10px' : '12px',
+                    markers: { radius: isMobile ? 8 : 12 },
+                    itemMargin: { horizontal: isMobile ? 5 : 10, vertical: isMobile ? 3 : 5 }
                 },
                 tooltip: {
                     theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
@@ -656,7 +668,7 @@
                 this.paymentChart = new ApexCharts(this.$refs.paymentChart, options);
                 this.paymentChart.render();
             } else {
-                this.$refs.paymentChart.innerHTML = '<div class="flex items-center justify-center h-full text-gray-400 text-sm">Tidak ada data pembayaran</div>';
+                this.$refs.paymentChart.innerHTML = '<div class="flex items-center justify-center h-full text-gray-400 text-xs sm:text-sm">Tidak ada data pembayaran</div>';
             }
         },
 
@@ -671,13 +683,6 @@
                 }]);
             }
 
-            if (this.hourlyChart) {
-                this.hourlyChart.updateSeries([{
-                    name: 'Transaksi',
-                    data: Object.values(hourlyData)
-                }]);
-            }
-            
             if (this.paymentChart && paymentData) {
                 const colorMap = {
                     'emerald': '#10b981',

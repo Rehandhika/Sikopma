@@ -1,3 +1,4 @@
+import ApexCharts from 'apexcharts';
 import {
     Chart,
     LineController,
@@ -14,6 +15,9 @@ import {
     Legend,
     Filler
 } from 'chart.js';
+
+// Make ApexCharts available globally
+window.ApexCharts = ApexCharts;
 
 Chart.register(
     LineController,
