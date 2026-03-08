@@ -44,12 +44,12 @@ class SchedulePolicy
 
     /**
      * Determine if the user can edit a published schedule
-     * Admins and Super Admins can edit published schedules
+     * Users with 'kelola_jadwal' permission can edit published schedules
      */
     public function edit(User $user, Schedule $schedule): bool
     {
-        // Check if user has Admin or Super Admin role
-        if (! $user->hasRole(['Super Admin', 'Admin'])) {
+        // Check if user has permission to manage schedules
+        if (! $user->can('kelola_jadwal')) {
             return false;
         }
 
