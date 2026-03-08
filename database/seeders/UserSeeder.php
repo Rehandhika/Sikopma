@@ -43,7 +43,7 @@ class UserSeeder extends Seeder
             // Cari role dari data statis lama atau default ke 'Anggota'
             $oldMembers = collect($this->getMembers());
             $oldMember = $oldMembers->where('nim', $data['nim'])->first();
-            $role = $oldMember['role'] ?? 'Anggota';
+            $role = $oldMember['role'] ?? 'anggota';
 
             // Create or Update User
             $nim = trim((string) $data['nim']);
@@ -98,15 +98,15 @@ class UserSeeder extends Seeder
                 'name' => 'Diva Afdholia R.',
                 'nim' => '222413550',
                 'jabatan' => 'Ketua',
-                'role' => 'Ketua',
-                'email' => 'diva.afdholia@siwirus.test',
+                'role' => 'ketua',
+                'email' => '222413550@stis.ac.id',
             ],
             [
                 'name' => 'Fikri Adi Nugraha',
-                'nim' => '222413577',
+                'nim' => '212413577',
                 'jabatan' => 'Wakil Ketua',
-                'role' => 'Wakil Ketua',
-                'email' => 'fikri.adi@siwirus.test',
+                'role' => 'wakil-ketua',
+                'email' => '212413577@stis.ac.id',
             ],
 
             // =====================================================
@@ -116,15 +116,15 @@ class UserSeeder extends Seeder
                 'name' => 'Defila Cahyati',
                 'nim' => '222413540',
                 'jabatan' => 'Sekretaris I',
-                'role' => 'Sekretaris',
-                'email' => 'defila.cahyati@siwirus.test',
+                'role' => 'sekretaris',
+                'email' => '222413540@stis.ac.id',
             ],
             [
                 'name' => 'Raziq Alzam Fadlullah',
                 'nim' => '112413751',
                 'jabatan' => 'Sekretaris II',
-                'role' => 'Sekretaris',
-                'email' => 'raziq.alzam@siwirus.test',
+                'role' => 'sekretaris',
+                'email' => '112413751@stis.ac.id',
             ],
 
             // =====================================================
@@ -134,22 +134,22 @@ class UserSeeder extends Seeder
                 'name' => 'Siti Rahmadhani Zaskya Mantika',
                 'nim' => '222413785',
                 'jabatan' => 'Bendahara Umum',
-                'role' => 'Bendahara Umum',
-                'email' => 'siti.rahmadhani@siwirus.test',
+                'role' => 'bendahara',
+                'email' => '222413785@stis.ac.id',
             ],
             [
                 'name' => 'Mei Indriyanti Syamsi',
-                'nim' => '222413652',
+                'nim' => '212413652',
                 'jabatan' => 'Bendahara Kegiatan',
-                'role' => 'Bendahara Kegiatan',
-                'email' => 'mei.indriyanti@siwirus.test',
+                'role' => 'bendahara',
+                'email' => '212413652@stis.ac.id',
             ],
             [
                 'name' => 'Putra Irvan Kala\'padang',
-                'nim' => '222413736',
+                'nim' => '212413736',
                 'jabatan' => 'Bendahara Toko',
-                'role' => 'Bendahara Toko',
-                'email' => 'putra.irvan@siwirus.test',
+                'role' => 'bendahara',
+                'email' => '212413736@stis.ac.id',
             ],
 
             // =====================================================
@@ -157,45 +157,45 @@ class UserSeeder extends Seeder
             // =====================================================
             [
                 'name' => 'Diah Puji Pramesti',
-                'nim' => '222413547',
+                'nim' => '212413547',
                 'jabatan' => 'Koordinator Toko',
-                'role' => 'Koordinator Toko',
-                'email' => 'diah.puji@siwirus.test',
+                'role' => 'koordinator-toko',
+                'email' => '212413547@stis.ac.id',
             ],
             [
                 'name' => 'Ego Stiven Rafliza',
-                'nim' => '222413552',
+                'nim' => '212413552',
                 'jabatan' => 'Koordinator PSDA',
-                'role' => 'Koordinator PSDA',
-                'email' => 'ego.stiven@siwirus.test',
+                'role' => 'koordinator-psda',
+                'email' => '212413552@stis.ac.id',
             ],
             [
                 'name' => 'Desvita Prabawaningrum',
-                'nim' => '222413544',
+                'nim' => '212413544',
                 'jabatan' => 'Koordinator Humsar',
-                'role' => 'Koordinator Humsar',
-                'email' => 'desvita.prabawaningrum@siwirus.test',
+                'role' => 'koordinator-humsar',
+                'email' => '212413544@stis.ac.id',
             ],
             [
                 'name' => 'Fatimah Az Zahra',
                 'nim' => '222413569',
                 'jabatan' => 'Koordinator Produksi dan Pengadaan',
-                'role' => 'Koordinator Produksi',
-                'email' => 'fatimah.azzahra@siwirus.test',
+                'role' => 'koordinator-produksi',
+                'email' => '222413569@stis.ac.id',
             ],
             [
                 'name' => 'Rehandhika Arya Pratama',
                 'nim' => '222413752',
                 'jabatan' => 'Koordinator IT',
-                'role' => 'Super Admin', // Super Admin karena IT
-                'email' => 'rehandhika.arya@siwirus.test',
+                'role' => 'Super Admin',
+                'email' => '222413752@stis.ac.id',
             ],
             [
                 'name' => 'Risyda Azifatil Maghfira',
                 'nim' => '222413763',
                 'jabatan' => 'Koordinator Desain',
-                'role' => 'Koordinator Desain',
-                'email' => 'risyda.azifatil@siwirus.test',
+                'role' => 'koordinator-desain',
+                'email' => '222413763@stis.ac.id',
             ],
 
             // =====================================================
@@ -205,8 +205,8 @@ class UserSeeder extends Seeder
                 'name' => 'Rahmat Budiyanto',
                 'nim' => '222413742',
                 'jabatan' => 'Anggota Produksi dan Pengadaan',
-                'role' => 'Anggota',
-                'email' => 'rahmat.budiyanto@siwirus.test',
+                'role' => 'anggota',
+                'email' => '222413742@stis.ac.id',
             ],
         ];
     }

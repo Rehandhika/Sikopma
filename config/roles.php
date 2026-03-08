@@ -46,62 +46,52 @@ return [
     |--------------------------------------------------------------------------
     */
     'organization_roles' => [
-        'Ketua' => [
+        'ketua' => [
             'description' => 'Pimpinan tertinggi organisasi',
             'maps_to' => 'Admin',
             'priority' => 1,
         ],
-        'Wakil Ketua' => [
+        'wakil-ketua' => [
             'description' => 'Pendamping Ketua',
             'maps_to' => 'Admin',
             'priority' => 2,
         ],
-        'Sekretaris' => [
+        'sekretaris' => [
             'description' => 'Administrasi organisasi',
             'maps_to' => 'Pengurus',
             'priority' => 3,
         ],
-        'Bendahara Umum' => [
-            'description' => 'Keuangan utama',
+        'bendahara' => [
+            'description' => 'Keuangan',
             'maps_to' => 'Pengurus',
             'priority' => 4,
         ],
-        'Bendahara Kegiatan' => [
-            'description' => 'Keuangan kegiatan',
-            'maps_to' => 'Pengurus',
+        'koordinator-toko' => [
+            'description' => 'Pengelola toko',
+            'maps_to' => 'Admin',
             'priority' => 5,
         ],
-        'Bendahara Toko' => [
-            'description' => 'Keuangan toko',
+        'koordinator-psda' => [
+            'description' => 'Pengembangan SDM',
             'maps_to' => 'Pengurus',
             'priority' => 6,
         ],
-        'Koordinator Toko' => [
-            'description' => 'Pengelola toko',
+        'koordinator-produksi' => [
+            'description' => 'Produksi dan Pengadaan',
             'maps_to' => 'Pengurus',
             'priority' => 7,
         ],
-        'Koordinator PSDA' => [
-            'description' => 'Pengembangan SDM',
+        'koordinator-desain' => [
+            'description' => 'Desain dan kreativitas',
             'maps_to' => 'Pengurus',
             'priority' => 8,
         ],
-        'Koordinator Produksi' => [
-            'description' => 'Produksi dan Pengadaan',
+        'koordinator-humsar' => [
+            'description' => 'Hubungan masyarakat',
             'maps_to' => 'Pengurus',
             'priority' => 9,
         ],
-        'Koordinator Desain' => [
-            'description' => 'Desain dan kreativitas',
-            'maps_to' => 'Pengurus',
-            'priority' => 10,
-        ],
-        'Koordinator Humsar' => [
-            'description' => 'Hubungan masyarakat',
-            'maps_to' => 'Pengurus',
-            'priority' => 11,
-        ],
-        'Anggota' => [
+        'anggota' => [
             'description' => 'Anggota biasa',
             'maps_to' => 'Anggota',
             'priority' => 99,
@@ -318,60 +308,98 @@ return [
     | MANAGEMENT permissions diberikan sesuai tingkat akses
     |
     */
-    'role_permissions' => [
-        'Super Admin' => [
-            // All permissions - handled by Gate::before()
-        ],
-        
-        'Admin' => [
-            // Self-service (semua user punya)
-            'check_in_out', 'lihat_absensi_sendiri', 'lihat_jadwal_sendiri', 'input_ketersediaan',
-            'akses_kasir', 'lihat_penalti_sendiri', 'ajukan_cuti', 'ajukan_tukar_jadwal', 'ubah_profil',
-            
-            // Management - Full access
-            'kelola_absensi',
-            'kelola_jadwal', 'lihat_semua_jadwal',
-            'setujui_cuti', 'kelola_cuti',
-            'setujui_tukar_jadwal', 'kelola_tukar_jadwal',
-            'kelola_penalti', 'lihat_semua_penalti',
-            'kelola_pengguna', 'lihat_pengguna',
-            'kelola_peran', 'lihat_peran',
-            'kelola_produk', 'lihat_produk',
-            'kelola_stok', 'lihat_stok',
-            'kelola_pembelian', 'lihat_pembelian',
-            'kelola_penjualan', 'lihat_semua_penjualan',
-            'lihat_laporan', 'ekspor_data',
-            'kelola_poin_shu', 'lihat_poin_shu',
-            'kelola_pengaturan', 'lihat_log_aktivitas',
-        ],
-        
-        'Pengurus' => [
-            // Self-service (semua user punya)
-            'check_in_out', 'lihat_absensi_sendiri', 'lihat_jadwal_sendiri', 'input_ketersediaan',
-            'akses_kasir', 'lihat_penalti_sendiri', 'ajukan_cuti', 'ajukan_tukar_jadwal', 'ubah_profil',
-            
-            // Management - Operational access
-            'lihat_semua_jadwal',
-            'setujui_cuti',
-            'setujui_tukar_jadwal',
-            'lihat_semua_penalti',
-            'lihat_pengguna',
-            'lihat_produk',
-            'lihat_stok',
-            'lihat_pembelian',
-            'lihat_semua_penjualan',
-            'lihat_laporan',
-            'lihat_poin_shu',
-        ],
-        
-        'Anggota' => [
-            // Self-service ONLY - semua user punya hak dasar ini
-            'check_in_out', 'lihat_absensi_sendiri', 'lihat_jadwal_sendiri', 'input_ketersediaan',
-            'akses_kasir', 'lihat_penalti_sendiri', 'ajukan_cuti', 'ajukan_tukar_jadwal', 'ubah_profil',
-        ],
-    ],
-
-    /*
+            'role_permissions' => [
+                'Super Admin' => [
+                    // All permissions - handled by Gate::before()
+                ],
+                'anggota' => [
+                    'check_in_out', 'lihat_absensi_sendiri', 'lihat_jadwal_sendiri', 'input_ketersediaan',
+                    'akses_kasir', 'lihat_penalti_sendiri', 'ajukan_cuti', 'ajukan_tukar_jadwal',
+                    'ubah_profil',
+                ],
+                'ketua' => [
+                    'check_in_out', 'lihat_absensi_sendiri', 'lihat_jadwal_sendiri', 'input_ketersediaan',
+                    'akses_kasir', 'lihat_penalti_sendiri', 'ajukan_cuti', 'ajukan_tukar_jadwal',
+                    'ubah_profil', 'kelola_absensi', 'kelola_jadwal', 'lihat_semua_jadwal',
+                    'setujui_cuti', 'kelola_cuti', 'setujui_tukar_jadwal', 'kelola_tukar_jadwal',
+                    'kelola_penalti', 'lihat_semua_penalti', 'kelola_pengguna', 'lihat_pengguna',
+                    'kelola_peran', 'lihat_peran', 'kelola_produk', 'lihat_produk',
+                    'kelola_stok', 'lihat_stok', 'kelola_pembelian', 'lihat_pembelian',
+                    'kelola_penjualan', 'lihat_semua_penjualan', 'lihat_laporan', 'ekspor_data',
+                    'kelola_poin_shu', 'lihat_poin_shu', 'kelola_pengaturan', 'lihat_log_aktivitas',
+                ],
+                'wakil-ketua' => [
+                    'check_in_out', 'lihat_absensi_sendiri', 'lihat_jadwal_sendiri', 'input_ketersediaan',
+                    'akses_kasir', 'lihat_penalti_sendiri', 'ajukan_cuti', 'ajukan_tukar_jadwal',
+                    'ubah_profil', 'kelola_absensi', 'kelola_jadwal', 'lihat_semua_jadwal',
+                    'setujui_cuti', 'kelola_cuti', 'setujui_tukar_jadwal', 'kelola_tukar_jadwal',
+                    'kelola_penalti', 'lihat_semua_penalti', 'kelola_pengguna', 'lihat_pengguna',
+                    'kelola_peran', 'lihat_peran', 'kelola_produk', 'lihat_produk',
+                    'kelola_stok', 'lihat_stok', 'kelola_pembelian', 'lihat_pembelian',
+                    'kelola_penjualan', 'lihat_semua_penjualan', 'lihat_laporan', 'ekspor_data',
+                    'kelola_poin_shu', 'lihat_poin_shu', 'kelola_pengaturan', 'lihat_log_aktivitas',
+                ],
+                'sekretaris' => [
+                    'check_in_out', 'lihat_absensi_sendiri', 'lihat_jadwal_sendiri', 'input_ketersediaan',
+                    'akses_kasir', 'lihat_penalti_sendiri', 'ajukan_cuti', 'ajukan_tukar_jadwal',
+                    'ubah_profil', 'lihat_semua_jadwal', 'setujui_cuti', 'setujui_tukar_jadwal',
+                    'lihat_semua_penalti', 'lihat_pengguna', 'kelola_produk', 'lihat_produk',
+                    'kelola_stok', 'lihat_stok', 'kelola_pembelian', 'lihat_pembelian',
+                    'kelola_penjualan', 'lihat_semua_penjualan', 'lihat_laporan', 'ekspor_data',
+                    'kelola_poin_shu', 'lihat_poin_shu',
+                ],
+                'bendahara' => [
+                    'check_in_out', 'lihat_absensi_sendiri', 'lihat_jadwal_sendiri', 'input_ketersediaan',
+                    'akses_kasir', 'lihat_penalti_sendiri', 'ajukan_cuti', 'ajukan_tukar_jadwal',
+                    'ubah_profil', 'lihat_semua_jadwal', 'lihat_semua_penalti', 'lihat_pengguna',
+                    'kelola_produk', 'lihat_produk', 'kelola_stok', 'lihat_stok',
+                    'kelola_pembelian', 'lihat_pembelian', 'kelola_penjualan', 'lihat_semua_penjualan',
+                    'lihat_laporan', 'ekspor_data', 'kelola_poin_shu', 'lihat_poin_shu',
+                ],
+                'koordinator-toko' => [
+                    'check_in_out', 'lihat_absensi_sendiri', 'lihat_jadwal_sendiri', 'input_ketersediaan',
+                    'akses_kasir', 'lihat_penalti_sendiri', 'ajukan_cuti', 'ajukan_tukar_jadwal',
+                    'ubah_profil', 'kelola_absensi', 'kelola_jadwal', 'lihat_semua_jadwal',
+                    'setujui_cuti', 'kelola_cuti', 'setujui_tukar_jadwal', 'kelola_tukar_jadwal',
+                    'kelola_penalti', 'lihat_semua_penalti', 'kelola_pengguna', 'lihat_pengguna',
+                    'kelola_peran', 'lihat_peran', 'kelola_produk', 'lihat_produk',
+                    'kelola_stok', 'lihat_stok', 'kelola_pembelian', 'lihat_pembelian',
+                    'kelola_penjualan', 'lihat_semua_penjualan', 'lihat_laporan', 'ekspor_data',
+                    'kelola_poin_shu', 'lihat_poin_shu',
+                ],
+                'koordinator-psda' => [
+                    'check_in_out', 'lihat_absensi_sendiri', 'lihat_jadwal_sendiri', 'input_ketersediaan',
+                    'akses_kasir', 'lihat_penalti_sendiri', 'ajukan_cuti', 'ajukan_tukar_jadwal',
+                    'ubah_profil', 'lihat_semua_jadwal', 'setujui_cuti', 'setujui_tukar_jadwal',
+                    'lihat_semua_penalti', 'lihat_pengguna', 'lihat_produk', 'lihat_stok',
+                    'lihat_pembelian', 'lihat_semua_penjualan', 'lihat_laporan', 'ekspor_data',
+                    'lihat_poin_shu',
+                ],
+                'koordinator-produksi' => [
+                    'check_in_out', 'lihat_absensi_sendiri', 'lihat_jadwal_sendiri', 'input_ketersediaan',
+                    'akses_kasir', 'lihat_penalti_sendiri', 'ajukan_cuti', 'ajukan_tukar_jadwal',
+                    'ubah_profil', 'lihat_semua_jadwal', 'setujui_cuti', 'setujui_tukar_jadwal',
+                    'lihat_semua_penalti', 'lihat_pengguna', 'kelola_produk', 'lihat_produk',
+                    'kelola_stok', 'lihat_stok', 'kelola_pembelian', 'lihat_pembelian',
+                    'kelola_penjualan', 'lihat_semua_penjualan', 'lihat_laporan', 'ekspor_data',
+                    'kelola_poin_shu', 'lihat_poin_shu',
+                ],
+                'koordinator-desain' => [
+                    'check_in_out', 'lihat_absensi_sendiri', 'lihat_jadwal_sendiri', 'input_ketersediaan',
+                    'akses_kasir', 'lihat_penalti_sendiri', 'ajukan_cuti', 'ajukan_tukar_jadwal',
+                    'ubah_profil', 'lihat_semua_jadwal', 'setujui_cuti', 'setujui_tukar_jadwal',
+                    'lihat_semua_penalti', 'lihat_pengguna', 'lihat_produk', 'lihat_stok',
+                    'lihat_pembelian', 'lihat_semua_penjualan', 'lihat_laporan', 'lihat_poin_shu',
+                ],
+                'koordinator-humsar' => [
+                    'check_in_out', 'lihat_absensi_sendiri', 'lihat_jadwal_sendiri', 'input_ketersediaan',
+                    'akses_kasir', 'lihat_penalti_sendiri', 'ajukan_cuti', 'ajukan_tukar_jadwal',
+                    'ubah_profil', 'lihat_semua_jadwal', 'setujui_cuti', 'setujui_tukar_jadwal',
+                    'lihat_semua_penalti', 'lihat_produk', 'lihat_stok', 'lihat_pembelian',
+                    'lihat_semua_penjualan', 'lihat_laporan', 'ekspor_data', 'kelola_poin_shu',
+                    'lihat_poin_shu',
+                ],
+            ],    /*
     |--------------------------------------------------------------------------
     | Role Descriptions
     |--------------------------------------------------------------------------
