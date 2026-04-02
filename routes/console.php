@@ -42,13 +42,9 @@ Schedule::call(function () {
 // Monitor Queue
 Schedule::command('queue:monitor default:100')->everyFiveMinutes();
 
-// Auto Checkout Attendance (3 hours buffer after session ends)
-// Sesi 1 ends 10:00 -> Check at 13:05
-// Sesi 2 ends 12:50 -> Check at 15:55
-// Sesi 3 ends 16:00 -> Check at 19:05
-Schedule::command('attendance:auto-checkout')->dailyAt('13:05');
-Schedule::command('attendance:auto-checkout')->dailyAt('15:55');
-Schedule::command('attendance:auto-checkout')->dailyAt('19:05');
+// Auto Checkout Attendance (runs every 5 minutes to check for ended sessions)
+// Processes attendances immediately when session time_end is reached
+Schedule::command('attendance:auto-checkout')->everyFiveMinutes();
 
 // ============================================================
 // ABSENCE & PENALTY PROCESSING

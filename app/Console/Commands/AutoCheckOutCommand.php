@@ -18,7 +18,7 @@ class AutoCheckOutCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Otomatis check-out absensi yang lupa di-checkout setelah 3 jam sesi berakhir';
+    protected $description = 'Otomatis check-out absensi ketika waktu sesi berakhir';
 
     /**
      * Execute the console command.
@@ -31,8 +31,10 @@ class AutoCheckOutCommand extends Command
 
         if ($count > 0) {
             $this->info("Berhasil memproses {$count} auto-checkout.");
+            \Log::info("Auto-checkout: Memproses {$count} attendance(s)");
         } else {
             $this->info("Tidak ada absensi yang perlu di-auto-checkout.");
+            \Log::info("Auto-checkout: Tidak ada attendance yang perlu diproses");
         }
     }
 }

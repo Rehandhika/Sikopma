@@ -37,13 +37,6 @@ class AttendanceManagement extends Component
 
     public string $datePreset = 'today';
 
-    // Photo Modal
-    public bool $showPhotoModal = false;
-
-    public ?string $selectedPhoto = null;
-
-    public ?string $selectedUserName = null;
-
     // Detail Modal
     public bool $showDetailModal = false;
 
@@ -263,26 +256,11 @@ class AttendanceManagement extends Component
         return "admin_attendance_stats_{$this->dateFrom}_{$this->dateTo}_{$this->filterStatus}";
     }
 
-    // === Photo Modal ===
-    public function viewPhoto(string $photoUrl, string $userName): void
-    {
-        $this->selectedPhoto = $photoUrl;
-        $this->selectedUserName = $userName;
-        $this->showPhotoModal = true;
-    }
-
-    public function closePhotoModal(): void
-    {
-        $this->showPhotoModal = false;
-        $this->selectedPhoto = null;
-        $this->selectedUserName = null;
-    }
-
     // === Detail Modal ===
     public function showDetail(int $id): void
     {
         $attendance = Attendance::with(['user:id,name,nim,email,photo', 'scheduleAssignment.schedule'])
-            ->select(['id', 'user_id', 'schedule_assignment_id', 'date', 'check_in', 'check_in_photo', 'check_out', 'work_hours', 'status', 'notes', 'created_at'])
+            ->select(['id', 'user_id', 'schedule_assignment_id', 'date', 'check_in', 'check_out', 'work_hours', 'status', 'notes', 'created_at'])
             ->find($id);
 
         if (! $attendance) {
@@ -301,7 +279,6 @@ class AttendanceManagement extends Component
             'day' => $attendance->date->locale('id')->dayName,
             'check_in' => $attendance->check_in?->format('H:i:s'),
             'check_out' => $attendance->check_out?->format('H:i:s'),
-            'check_in_photo' => $attendance->check_in_photo_url,
             'work_hours' => $attendance->work_hours ? number_format($attendance->work_hours, 2) : null,
             'status' => $attendance->status,
             'late_minutes' => $attendance->late_minutes,
@@ -524,7 +501,7 @@ class AttendanceManagement extends Component
         // 1. Get Actual Attendance Records
         $attendances = $this->buildBaseQuery()
             ->with(['user:id,name,nim,photo'])
-            ->select(['id', 'user_id', 'date', 'check_in', 'check_in_photo', 'check_out', 'status', 'late_minutes', 'late_category', 'schedule_assignment_id'])
+            ->select(['id', 'user_id', 'date', 'check_in', 'check_out', 'status', 'late_minutes', 'late_category', 'schedule_assignment_id'])
             ->orderByDesc('date')
             ->orderByDesc('check_in')
             ->get();

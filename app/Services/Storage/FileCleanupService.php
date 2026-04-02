@@ -39,11 +39,7 @@ class FileCleanupService implements FileCleanupServiceInterface
             'column' => 'image_path',
             'include_deleted' => false,
         ],
-        'attendance' => [
-            'model' => Attendance::class,
-            'column' => 'check_in_photo',
-            'include_deleted' => false,
-        ],
+        // 'attendance' mapping removed - check_in_photo column no longer exists
         'profile' => [
             'model' => User::class,
             'column' => 'photo',

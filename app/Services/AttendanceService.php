@@ -80,8 +80,8 @@ class AttendanceService
                     throw new BusinessException('Anda sudah check-in untuk jadwal ini.', 'ALREADY_CHECKED_IN');
                 }
 
-                // FIX: Check other sessions within same transaction with lock
-                $todayCheckedIn = Attendance::where('user_id', $userId)
+                // Check for active sessions with consecutive session support
+                $activeAttendance = Attendance::where('user_id', $userId)
                     ->whereDate('date', today())
                     ->whereNotNull('check_in')
                     ->whereNull('check_out')
@@ -89,8 +89,28 @@ class AttendanceService
                     ->lockForUpdate()
                     ->first();
 
-                if ($todayCheckedIn) {
-                    throw new BusinessException('Anda masih memiliki sesi check-in aktif. Silakan checkout terlebih dahulu.', 'ACTIVE_SESSION_EXISTS');
+                if ($activeAttendance && $activeAttendance->schedule_assignment_id) {
+                    // Lock the active assignment to prevent race conditions
+                    $activeAssignment = ScheduleAssignment::where('id', $activeAttendance->schedule_assignment_id)
+                        ->lockForUpdate()
+                        ->first();
+                    
+                    if ($activeAssignment) {
+                        // Check if target session is consecutive to active session
+                        // Allow check-in only if sessions are consecutive
+                        if (!$this->isConsecutiveSession($activeAssignment, $schedule)) {
+                            throw new BusinessException(
+                                'Anda masih memiliki sesi aktif: Sesi ' . $activeAssignment->session . 
+                                ' (' . $activeAssignment->time_start . '-' . $activeAssignment->time_end . '). ' .
+                                'Silakan checkout terlebih dahulu.',
+                                'ACTIVE_SESSION_EXISTS'
+                            );
+                        }
+                        // If consecutive, allow check-in to proceed
+                    } else {
+                        // If we can't find the assignment, block the check-in for safety
+                        throw new BusinessException('Anda masih memiliki sesi check-in aktif. Silakan checkout terlebih dahulu.', 'ACTIVE_SESSION_EXISTS');
+                    }
                 }
             } else {
                 // Override Mode Check-in (No Schedule)
@@ -209,7 +229,36 @@ class AttendanceService
     }
 
     /**
+     * Check if target session is consecutive to current active session
+     * 
+     * Validates:
+     * - Same date
+     * - Same user
+     * - Target session number is exactly current session + 1
+     * 
+     * @param ScheduleAssignment $currentSession The currently active session
+     * @param ScheduleAssignment $targetSession The session user wants to check-in to
+     * @return bool True if sessions are consecutive, false otherwise
+     */
+    protected function isConsecutiveSession(ScheduleAssignment $currentSession, ScheduleAssignment $targetSession): bool
+    {
+        // Must be same date
+        if (!$currentSession->date->isSameDay($targetSession->date)) {
+            return false;
+        }
+        
+        // Must be same user
+        if ($currentSession->user_id !== $targetSession->user_id) {
+            return false;
+        }
+        
+        // Target session must be next session number (consecutive)
+        return $targetSession->session === ($currentSession->session + 1);
+    }
+
+    /**
      * Check if user has active session that should block new check-in
+     * Integrates consecutive session detection to allow seamless transitions
      * Returns: ['has_active' => bool, 'blocking_session' => ?ScheduleAssignment, 'message' => ?string]
      */
     public function getActiveSessionBlockingInfo(int $userId, ?int $targetAssignmentId = null): array
@@ -229,6 +278,16 @@ class AttendanceService
         // If targeting the same assignment, don't block
         if ($targetAssignmentId && $targetAssignmentId === $assignment->id) {
             return ['has_active' => false, 'blocking_session' => null, 'message' => null];
+        }
+
+        // If target assignment is provided, check if it's consecutive
+        if ($targetAssignmentId) {
+            $targetAssignment = ScheduleAssignment::find($targetAssignmentId);
+            
+            if ($targetAssignment && $this->isConsecutiveSession($assignment, $targetAssignment)) {
+                // Consecutive session detected - don't block
+                return ['has_active' => false, 'blocking_session' => null, 'message' => null];
+            }
         }
 
         // Check if within valid time window
@@ -411,24 +470,22 @@ class AttendanceService
     }
 
     /**
-     * Process auto check-outs for users who forgot to check out
-     * OPTIMIZED: Uses query-based approach instead of heavy eager loading
+     * Process auto check-outs for sessions that have ended
+     * UPDATED: No 3-hour buffer, process immediately when session ends
      * 
      * @return int Number of processed attendances
      */
     public function processAutoCheckOuts(): int
     {
         $now = now();
-        $bufferHours = 3;
         $count = 0;
 
-        // OPTIMIZED: Use query with join instead of eager loading entire relations
-        // This avoids loading unnecessary data and reduces memory usage
+        // Query attendances where session has ended (no buffer)
         $pendingAttendances = Attendance::whereNull('attendances.check_out')
             ->whereNotNull('attendances.schedule_assignment_id')
             ->join('schedule_assignments', 'attendances.schedule_assignment_id', '=', 'schedule_assignments.id')
             ->select('attendances.*', 'schedule_assignments.time_end', 'schedule_assignments.status as assignment_status', 'schedule_assignments.session')
-            ->whereRaw("CONCAT(attendances.date, ' ', schedule_assignments.time_end) < ?", [$now->copy()->subHours($bufferHours)->format('Y-m-d H:i:s')])
+            ->whereRaw("CONCAT(attendances.date, ' ', schedule_assignments.time_end) < ?", [$now->format('Y-m-d H:i:s')])
             ->cursor();
 
         foreach ($pendingAttendances as $attendance) {
@@ -445,7 +502,7 @@ class AttendanceService
                 $attendance->update([
                     'check_out' => $endTime,
                     'work_hours' => $workHours,
-                    'notes' => ($attendance->notes ? $attendance->notes . "\n" : "") . "[Sistem: Auto-checkout (Lupa checkout)]",
+                    'notes' => ($attendance->notes ? $attendance->notes . "\n" : "") . "[Sistem: Auto-checkout (Sesi berakhir)]",
                 ]);
 
                 // Update assignment if needed
@@ -529,39 +586,4 @@ class AttendanceService
         ];
     }
 
-    /**
-     * Validate photo proof
-     */
-    public function validatePhotoProof(string $photoPath): bool
-    {
-        try {
-            if (! \Storage::disk('public')->exists($photoPath)) {
-                return false;
-            }
-
-            $fileInfo = pathinfo($photoPath);
-            $allowedExtensions = ['jpg', 'jpeg', 'png'];
-
-            if (! in_array(strtolower($fileInfo['extension']), $allowedExtensions)) {
-                return false;
-            }
-
-            $fileSize = \Storage::disk('public')->size($photoPath);
-            $maxSize = 2 * 1024 * 1024; // 2MB
-
-            if ($fileSize > $maxSize) {
-                return false;
-            }
-
-            return true;
-
-        } catch (\Exception $e) {
-            Log::error('Failed to validate photo proof', [
-                'photo_path' => $photoPath,
-                'error' => $e->getMessage(),
-            ]);
-
-            return false;
-        }
-    }
 }

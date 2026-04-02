@@ -192,7 +192,6 @@
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Check-in</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Check-out</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Foto</th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Aksi</th>
                     </tr>
                 </thead>
@@ -237,15 +236,6 @@
                                     @endif
                                 </div>
                             </td>
-                            <td class="px-4 py-3 whitespace-nowrap">
-                                @if(!isset($attendance->is_virtual) && $attendance->check_in_photo)
-                                    <button wire:click="viewPhoto('{{ $attendance->check_in_photo_url }}', '{{ $attendance->user?->name }}')" class="group relative">
-                                        <img src="{{ $attendance->check_in_photo_url }}" alt="" class="w-10 h-10 rounded-lg object-cover border border-gray-200 group-hover:ring-2 group-hover:ring-primary-500 transition-all" loading="lazy">
-                                    </button>
-                                @else
-                                    <span class="text-xs text-gray-400">-</span>
-                                @endif
-                            </td>
                             <td class="px-4 py-3 whitespace-nowrap text-center">
                                 <div class="flex items-center justify-center gap-1">
                                     @if(!isset($attendance->is_virtual))
@@ -263,7 +253,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-4 py-12 text-center">
+                            <td colspan="6" class="px-4 py-12 text-center">
                                 <x-layout.empty-state icon="clipboard-document-list" title="Tidak ada data absensi" description="Belum ada data absensi untuk periode yang dipilih" />
                             </td>
                         </tr>
@@ -275,24 +265,6 @@
 
     @if($attendances->hasPages())
         <div class="mt-4">{{ $attendances->links() }}</div>
-    @endif
-
-    {{-- Photo Modal --}}
-    @if($showPhotoModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto" x-data x-on:keydown.escape.window="$wire.closePhotoModal()">
-            <div class="fixed inset-0 bg-black/70" wire:click="closePhotoModal"></div>
-            <div class="flex min-h-full items-center justify-center p-4">
-                <div class="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full overflow-hidden">
-                    <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-                        <h3 class="text-sm font-medium text-gray-900">Foto Check-in: {{ $selectedUserName }}</h3>
-                        <button wire:click="closePhotoModal" class="text-gray-400 hover:text-gray-600"><x-ui.icon name="x" class="w-5 h-5" /></button>
-                    </div>
-                    <div class="p-4">
-                        <img src="{{ $selectedPhoto }}" alt="" class="w-full h-auto rounded-lg">
-                    </div>
-                </div>
-            </div>
-        </div>
     @endif
 
     {{-- Detail Modal --}}
@@ -356,14 +328,6 @@
                             </div>
                             @endif
                         </div>
-
-                        {{-- Photo --}}
-                        @if($detailData['check_in_photo'])
-                        <div>
-                            <p class="text-xs text-gray-500 mb-2">Foto Check-in</p>
-                            <img src="{{ $detailData['check_in_photo'] }}" alt="" class="w-full h-48 object-cover rounded-lg border border-gray-200">
-                        </div>
-                        @endif
                     </div>
                     <div class="px-4 py-3 border-t border-gray-200 bg-gray-50">
                         <x-ui.button variant="white" wire:click="closeDetailModal" class="w-full">Tutup</x-ui.button>

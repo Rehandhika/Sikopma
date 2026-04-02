@@ -10,21 +10,14 @@ use App\Services\StoreStatusService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
-use Livewire\WithFileUploads;
 
 class CheckInOut extends Component
 {
-    use WithFileUploads;
-
     public $currentSchedule;
     public $currentAttendance;
     public $checkInTime;
     public $checkOutTime;
-    public $checkInPhoto;
-    public $scheduleStatus; 
-
-    // Upload state management — driven by Alpine via events
-    public bool $photoReady = false;
+    public $scheduleStatus;
 
     public function mount()
     {
@@ -153,69 +146,27 @@ class CheckInOut extends Component
         }
     }
 
-    /**
-     * Called by Alpine after Livewire temp upload finishes successfully.
-     * This sets the flag that enables the check-in button.
-     */
-    public function markPhotoReady()
-    {
-        if ($this->checkInPhoto) {
-            $this->photoReady = true;
-        }
-    }
-
-    /**
-     * Called when user wants to remove selected photo and retry.
-     */
-    public function removePhoto()
-    {
-        $this->reset(['checkInPhoto', 'photoReady']);
-    }
-
     public function checkIn()
     {
         try {
-            // REMOVED: Duplicated validation - AttendanceService is the SINGLE SOURCE OF TRUTH
-            // All business validation is now handled by AttendanceService::checkIn()
-            // The UI layer only handles photo upload and delegates to service
-
             $storeStatus = app(StoreStatusService::class);
             if (!$this->currentSchedule && !$storeStatus->isOverrideActive()) {
                 throw new \Exception('Tidak ada jadwal aktif.');
             }
-
-            // REMOVED: Duplicate check-in check - service handles this
-
-            // Strict backend validation (only for photo upload)
-            $this->validate([
-                'checkInPhoto' => 'required|image|max:10240', // max 10MB
-            ], [
-                'checkInPhoto.required' => 'Foto check-in wajib diunggah.',
-                'checkInPhoto.image' => 'File harus berupa gambar.',
-                'checkInPhoto.max' => 'Ukuran foto maksimal 10MB.',
-            ]);
-
-            $photoPath = $this->checkInPhoto->store('attendance/check-in', 'public');
 
             $attendanceService = app(AttendanceService::class);
             $this->currentAttendance = $attendanceService->checkIn(
                 userId: auth()->id(),
                 scheduleAssignmentId: $this->currentSchedule?->id
             );
-            
-            $this->currentAttendance->update(['check_in_photo' => $photoPath]);
 
             ActivityLogService::logCheckIn(
                 $this->currentSchedule ? ($this->currentSchedule->session_label ?? 'Sesi '.$this->currentSchedule->session) : 'Luar Jadwal',
                 now()->format('H:i')
             );
 
-            $this->reset(['checkInPhoto', 'photoReady']);
             $this->loadCurrentSchedule();
             $this->dispatch('toast', message: 'Check-in berhasil!', type: 'success');
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            // Re-throw so Livewire shows @error messages
-            throw $e;
         } catch (\Exception $e) {
             Log::error('CheckIn Error: ' . $e->getMessage());
             $this->dispatch('toast', message: $e->getMessage(), type: 'error');
