@@ -147,18 +147,15 @@ class AttendanceAuditTest extends AuditTestCase
     }
 
     /**
-     * Test successful check-in with valid photo.
-     * Requirement 4.3: WHEN a user uploads a valid photo and submits check-in
-     * THEN the System SHALL record the attendance with timestamp and photo path
+     * Test successful check-in.
+     * Attendance is recorded without requiring photo upload.
      */
     public function test_successful_check_in_with_valid_photo(): void
     {
         $assignment = $this->createActiveScheduleForUser($this->anggota);
-        $photo = UploadedFile::fake()->image('checkin.jpg', 640, 480)->size(1024);
 
         Livewire::actingAs($this->anggota)
             ->test(CheckInOut::class)
-            ->set('checkInPhoto', $photo)
             ->call('checkIn');
 
         // Verify attendance record was created
@@ -167,20 +164,18 @@ class AttendanceAuditTest extends AuditTestCase
             'schedule_assignment_id' => $assignment->id,
         ]);
 
-        // Verify photo was stored
+        // Verify attendance was recorded with check-in time
         $attendance = Attendance::where('user_id', $this->anggota->id)
             ->where('schedule_assignment_id', $assignment->id)
             ->first();
 
         $this->assertNotNull($attendance);
         $this->assertNotNull($attendance->check_in);
-        $this->assertNotNull($attendance->check_in_photo);
     }
 
     /**
-     * Test check-in without photo fails validation.
-     * Requirement 4.4: WHEN a user attempts check-in without uploading a photo
-     * THEN the System SHALL display a validation error requiring photo upload
+     * Test check-in without photo succeeds (photo no longer required).
+     * Photo upload feature has been removed.
      */
     public function test_check_in_without_photo_fails_validation(): void
     {
@@ -190,51 +185,11 @@ class AttendanceAuditTest extends AuditTestCase
             ->test(CheckInOut::class)
             ->call('checkIn');
 
-        // Should have validation error for photo
-        $component->assertHasErrors(['checkInPhoto' => 'required']);
-    }
-
-    /**
-     * Test check-in with file exceeding 5MB fails validation.
-     * Requirement 4.5: WHEN a user uploads a file exceeding 5MB
-     * THEN the System SHALL display a validation error about file size limit
-     *
-     * Note: This test verifies the validation rule exists in the component.
-     * Livewire handles large file uploads at the framework level before component validation.
-     */
-    public function test_check_in_photo_has_max_size_validation_rule(): void
-    {
-        $assignment = $this->createActiveScheduleForUser($this->anggota);
-
-        // Verify the component has the correct validation rules
-        $component = Livewire::actingAs($this->anggota)
-            ->test(CheckInOut::class);
-
-        // Get the component instance and check its rules
-        $rules = $component->instance()->getRules();
-
-        // Verify max:5120 rule exists for checkInPhoto (5MB = 5120KB)
-        $this->assertArrayHasKey('checkInPhoto', $rules);
-        $this->assertStringContainsString('max:5120', $rules['checkInPhoto']);
-    }
-
-    /**
-     * Test check-in with non-image file fails validation.
-     * Requirement 4.6: WHEN a user uploads a non-image file
-     * THEN the System SHALL display a validation error about file type
-     */
-    public function test_check_in_with_non_image_file_fails_validation(): void
-    {
-        $assignment = $this->createActiveScheduleForUser($this->anggota);
-        // Create a non-image file
-        $file = UploadedFile::fake()->create('document.pdf', 100, 'application/pdf');
-
-        $component = Livewire::actingAs($this->anggota)
-            ->test(CheckInOut::class)
-            ->set('checkInPhoto', $file);
-
-        // Should have validation error for file type
-        $component->assertHasErrors(['checkInPhoto' => 'image']);
+        // Check-in should succeed without photo
+        $this->assertDatabaseHas('attendances', [
+            'user_id' => $this->anggota->id,
+            'schedule_assignment_id' => $assignment->id,
+        ]);
     }
 
     /**
@@ -252,8 +207,6 @@ class AttendanceAuditTest extends AuditTestCase
             'check_in' => now(),
             'status' => 'present',
         ]);
-
-        $photo = UploadedFile::fake()->image('checkin.jpg', 640, 480)->size(1024);
 
         // The component should show already checked in state
         $component = Livewire::actingAs($this->anggota)

@@ -539,11 +539,13 @@ class AttendanceServiceTest extends TestCase
     }
 
     // ==========================================
-    // 7. PHOTO VALIDATION (LIVEWIRE)
+    // 7. PHOTO VALIDATION (LIVEWIRE) - REMOVED
     // ==========================================
+    // Photo upload feature has been removed. 
+    // These tests are updated to reflect check-in without photo.
 
     /**
-     * PV-001: Photo validation tests - valid photo
+     * PV-001: Check-in works without photo upload
      */
     public function test_check_in_with_valid_photo(): void
     {
@@ -552,11 +554,8 @@ class AttendanceServiceTest extends TestCase
         // Travel to schedule date
         $this->travelTo(today()->setTimeFromTimeString('07:30'));
         
-        $photo = UploadedFile::fake()->image('checkin.jpg', 640, 480)->size(1024);
-        
         Livewire::actingAs($this->user)
             ->test(CheckInOut::class)
-            ->set('checkInPhoto', $photo)
             ->call('checkIn');
         
         $this->assertDatabaseHas('attendances', [
@@ -565,11 +564,12 @@ class AttendanceServiceTest extends TestCase
         ]);
         
         $attendance = Attendance::where('user_id', $this->user->id)->first();
-        $this->assertNotNull($attendance->check_in_photo);
+        $this->assertNotNull($attendance->check_in);
     }
 
     /**
-     * PV-004: Upload non-image file
+     * PV-004: Non-image file upload no longer applicable
+     * Test removed since photo feature is removed
      */
     public function test_check_in_with_non_image_file_fails(): void
     {
@@ -577,18 +577,21 @@ class AttendanceServiceTest extends TestCase
         
         $this->travelTo(today()->setTimeFromTimeString('07:30'));
         
-        $file = UploadedFile::fake()->create('document.pdf', 100, 'application/pdf');
-        
+        // Photo feature removed, check-in should work without any file
         $component = Livewire::actingAs($this->user)
             ->test(CheckInOut::class)
-            ->set('checkInPhoto', $file)
             ->call('checkIn');
         
-        $component->assertHasErrors(['checkInPhoto' => 'image']);
+        // Check-in should succeed without photo
+        $this->assertDatabaseHas('attendances', [
+            'user_id' => $this->user->id,
+            'schedule_assignment_id' => $this->assignment->id,
+        ]);
     }
 
     /**
-     * PV-005: Upload image > 5MB
+     * PV-005: Oversized photo upload no longer applicable
+     * Test removed since photo feature is removed
      */
     public function test_check_in_with_oversized_photo_fails(): void
     {
@@ -596,19 +599,20 @@ class AttendanceServiceTest extends TestCase
         
         $this->travelTo(today()->setTimeFromTimeString('07:30'));
         
-        // Create 6MB file
-        $photo = UploadedFile::fake()->image('checkin.jpg', 640, 480)->size(6144);
-        
+        // Photo feature removed, check-in should work normally
         $component = Livewire::actingAs($this->user)
             ->test(CheckInOut::class)
-            ->set('checkInPhoto', $photo)
             ->call('checkIn');
         
-        $component->assertHasErrors(['checkInPhoto' => 'max']);
+        // Check-in should succeed
+        $this->assertDatabaseHas('attendances', [
+            'user_id' => $this->user->id,
+            'schedule_assignment_id' => $this->assignment->id,
+        ]);
     }
 
     /**
-     * PV-006: No photo uploaded
+     * PV-006: No photo uploaded - check-in succeeds without photo
      */
     public function test_check_in_without_photo_fails(): void
     {
@@ -620,7 +624,11 @@ class AttendanceServiceTest extends TestCase
             ->test(CheckInOut::class)
             ->call('checkIn');
         
-        $component->assertHasErrors(['checkInPhoto' => 'required']);
+        // Check-in should succeed without photo
+        $this->assertDatabaseHas('attendances', [
+            'user_id' => $this->user->id,
+            'schedule_assignment_id' => $this->assignment->id,
+        ]);
     }
 
     // ==========================================
@@ -687,11 +695,8 @@ class AttendanceServiceTest extends TestCase
         
         $this->travelTo(today()->setTimeFromTimeString('07:30'));
         
-        $photo = UploadedFile::fake()->image('checkin.jpg');
-        
         Livewire::actingAs($this->user)
             ->test(CheckInOut::class)
-            ->set('checkInPhoto', $photo)
             ->set('notes', 'Feeling great today!')
             ->call('checkIn');
         
@@ -725,22 +730,76 @@ class AttendanceServiceTest extends TestCase
     }
 
     // ==========================================
-    // 10. LIVEWIRE COMPONENT TESTS
+    // 7. PHOTO VALIDATION (LIVEWIRE) - REMOVED
     // ==========================================
+    // Photo upload feature has been removed. 
+    // These tests are updated to reflect check-in without photo.
 
     /**
-     * Test check-in page displays schedule info
+     * PV-001: Check-in works without photo upload
      */
-    public function test_check_in_page_displays_schedule_info(): void
+    public function test_check_in_with_valid_photo(): void
     {
-        $assignment = $this->createScheduleAndAssignmentForToday($this->user);
+        $this->assignment = $this->createScheduleAndAssignmentForToday($this->user);
         
-        // Travel to the schedule date
-        $this->travelTo(today()->setTimeFromTimeString('07:00'));
+        // Travel to schedule date
+        $this->travelTo(today()->setTimeFromTimeString('07:30'));
         
         Livewire::actingAs($this->user)
             ->test(CheckInOut::class)
-            ->assertSee('Sesi 1');
+            ->call('checkIn');
+        
+        $this->assertDatabaseHas('attendances', [
+            'user_id' => $this->user->id,
+            'schedule_assignment_id' => $this->assignment->id,
+        ]);
+        
+        $attendance = Attendance::where('user_id', $this->user->id)->first();
+        $this->assertNotNull($attendance->check_in);
+    }
+
+    /**
+     * PV-004: Non-image file upload no longer applicable
+     * Test removed since photo feature is removed
+     */
+    public function test_check_in_with_non_image_file_fails(): void
+    {
+        $this->assignment = $this->createScheduleAndAssignmentForToday($this->user);
+        
+        $this->travelTo(today()->setTimeFromTimeString('07:30'));
+        
+        // Photo feature removed, check-in should work without any file
+        $component = Livewire::actingAs($this->user)
+            ->test(CheckInOut::class)
+            ->call('checkIn');
+        
+        // Check-in should succeed without photo
+        $this->assertDatabaseHas('attendances', [
+            'user_id' => $this->user->id,
+            'schedule_assignment_id' => $this->assignment->id,
+        ]);
+    }
+
+    /**
+     * PV-005: Oversized photo upload no longer applicable
+     * Test removed since photo feature is removed
+     */
+    public function test_check_in_with_oversized_photo_fails(): void
+    {
+        $this->assignment = $this->createScheduleAndAssignmentForToday($this->user);
+        
+        $this->travelTo(today()->setTimeFromTimeString('07:30'));
+        
+        // Photo feature removed, check-in should work normally
+        $component = Livewire::actingAs($this->user)
+            ->test(CheckInOut::class)
+            ->call('checkIn');
+        
+        // Check-in should succeed
+        $this->assertDatabaseHas('attendances', [
+            'user_id' => $this->user->id,
+            'schedule_assignment_id' => $this->assignment->id,
+        ]);
     }
 
     /**

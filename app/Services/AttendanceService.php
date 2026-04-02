@@ -512,7 +512,7 @@ class AttendanceService
                 }
 
                 ActivityLogService::logCheckOut(
-                    'Sesi '.$attendance->session ?? 'Unknown',
+                    'Sesi '.($attendance->session ?? 'Unknown'),
                     $endTime->format('H:i'),
                     number_format($workHours, 2),
                     $attendance->user_id
