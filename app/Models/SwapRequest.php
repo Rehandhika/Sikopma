@@ -4,26 +4,33 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * @deprecated Use ScheduleChangeRequest instead
- * This model is kept for backward compatibility with existing code
+ * SwapRequest Model
+ * Handles swap requests between two users to exchange their schedule assignments
  */
 class SwapRequest extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
-    protected $table = 'schedule_change_requests';
+    protected $table = 'swap_requests';
 
+    /**
+     * The attributes that are mass assignable.
+     */
     protected $fillable = [
-        'user_id',
+        'requester_id',
         'target_id',
-        'original_assignment_id',
+        'requester_assignment_id',
         'target_assignment_id',
-        'requested_date',
-        'requested_session',
-        'change_type',
         'reason',
+    ];
+
+    /**
+     * The attributes that should be guarded from mass assignment.
+     */
+    protected $guarded = [
         'status',
         'target_response',
         'target_responded_at',
@@ -34,41 +41,33 @@ class SwapRequest extends Model
     ];
 
     protected $casts = [
-        'requested_date' => 'date',
+        'target_responded_at' => 'datetime',
         'admin_responded_at' => 'datetime',
         'completed_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
+
+    // Relationships
+    public function requester()
+    {
+        return $this->belongsTo(User::class, 'requester_id');
+    }
 
     public function target()
     {
         return $this->belongsTo(User::class, 'target_id');
     }
 
+    public function requesterAssignment()
+    {
+        return $this->belongsTo(ScheduleAssignment::class, 'requester_assignment_id');
+    }
+
     public function targetAssignment()
     {
         return $this->belongsTo(ScheduleAssignment::class, 'target_assignment_id');
-    }
-
-    public function requester()
-    {
-        return $this->belongsTo(User::class, 'user_id');
-    }
-
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'user_id');
-    }
-
-    public function requesterAssignment()
-    {
-        return $this->belongsTo(ScheduleAssignment::class, 'original_assignment_id');
-    }
-
-    public function originalAssignment()
-    {
-        return $this->belongsTo(ScheduleAssignment::class, 'original_assignment_id');
     }
 
     public function adminResponder()
@@ -82,14 +81,35 @@ class SwapRequest extends Model
         return $query->where('status', 'pending');
     }
 
-    public function scopeApproved($query)
+    public function scopeTargetApproved($query)
     {
-        return $query->where('status', 'approved');
+        return $query->where('status', 'target_approved');
+    }
+
+    public function scopeAdminApproved($query)
+    {
+        return $query->where('status', 'admin_approved');
     }
 
     public function scopeRejected($query)
     {
-        return $query->whereIn('status', ['rejected', 'cancelled']);
+        return $query->whereIn('status', ['target_rejected', 'admin_rejected']);
+    }
+
+    public function scopeCancelled($query)
+    {
+        return $query->where('status', 'cancelled');
+    }
+
+    public function scopeCompleted($query)
+    {
+        return $query->where('status', 'admin_approved');
+    }
+
+    public function scopeThisMonth($query)
+    {
+        return $query->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year);
     }
 
     // Helpers
@@ -98,34 +118,88 @@ class SwapRequest extends Model
         return $this->status === 'pending';
     }
 
-    public function isApproved(): bool
+    public function isTargetApproved(): bool
     {
-        return $this->status === 'approved';
+        return $this->status === 'target_approved';
+    }
+
+    public function isAdminApproved(): bool
+    {
+        return $this->status === 'admin_approved';
     }
 
     public function isRejected(): bool
     {
-        return in_array($this->status, ['rejected', 'cancelled']);
+        return in_array($this->status, ['target_rejected', 'admin_rejected', 'cancelled']);
     }
 
-    public function getChangeTypeLabel(): string
+    public function isCancelled(): bool
     {
-        return match ($this->change_type) {
-            'swap' => 'Tukar Shift',
-            'reschedule' => 'Pindah Jadwal',
-            'cancel' => 'Batalkan Jadwal',
-            default => $this->change_type ?? '-',
-        };
+        return $this->status === 'cancelled';
+    }
+
+    public function canCancel(): bool
+    {
+        return $this->status === 'pending';
+    }
+
+    public function canTargetRespond(): bool
+    {
+        return $this->status === 'pending';
+    }
+
+    public function canAdminApprove(): bool
+    {
+        return $this->status === 'target_approved';
+    }
+
+    public function canAdminReject(): bool
+    {
+        return in_array($this->status, ['pending', 'target_approved']);
     }
 
     public function getStatusLabel(): string
     {
         return match ($this->status) {
-            'pending' => 'Menunggu',
-            'approved' => 'Disetujui',
-            'rejected' => 'Ditolak',
+            'pending' => 'Menunggu Persetujuan Target',
+            'target_approved' => 'Disetujui Target, Menunggu Admin',
+            'target_rejected' => 'Ditolak Target',
+            'admin_approved' => 'Disetujui Admin',
+            'admin_rejected' => 'Ditolak Admin',
             'cancelled' => 'Dibatalkan',
-            default => $this->status,
+            default => ucfirst($this->status),
         };
+    }
+
+    public function getStatusColor(): string
+    {
+        return match ($this->status) {
+            'pending' => 'warning',
+            'target_approved' => 'info',
+            'admin_approved' => 'success',
+            'target_rejected', 'admin_rejected' => 'danger',
+            'cancelled' => 'secondary',
+            default => 'secondary',
+        };
+    }
+
+    /**
+     * Check if this swap request is within the allowed time window
+     */
+    public function isWithinTimeWindow(): bool
+    {
+        if (!$this->requesterAssignment) {
+            return false;
+        }
+
+        $minNoticeHours = config('schedule-change.swap.min_notice_hours', 24);
+        
+        $assignmentDateTime = $this->requesterAssignment->date
+            ->copy()
+            ->setTimeFromTimeString($this->requesterAssignment->time_start);
+
+        $deadline = $assignmentDateTime->subHours($minNoticeHours);
+
+        return now()->lte($deadline);
     }
 }

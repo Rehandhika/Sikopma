@@ -47,9 +47,8 @@ class DashboardIndex extends Component
             return false;
         }
 
-        return method_exists($user, 'hasAnyRole')
-            ? $user->hasAnyRole(['Super Admin', 'Ketua', 'Wakil Ketua', 'BPH'])
-            : false;
+        // Check if user has admin-level permissions instead of hardcoded roles
+        return $user->can('lihat_semua_jadwal') || $user->can('kelola_pengguna');
     }
 
     #[Computed]

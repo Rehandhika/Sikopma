@@ -28,6 +28,12 @@ class SwapApprovals extends Component
 
     protected $queryString = ['filter', 'search'];
 
+    public function mount()
+    {
+        // Check permission
+        abort_unless(auth()->user()->can('ajukan_tukar_jadwal'), 403, 'Unauthorized.');
+    }
+
     public function getStatsProperty()
     {
         return [
@@ -40,6 +46,9 @@ class SwapApprovals extends Component
 
     public function approveRequest($id)
     {
+        // Check permission
+        abort_unless(auth()->user()->can('ajukan_tukar_jadwal'), 403, 'Unauthorized.');
+
         $request = SwapRequest::where('id', $id)
             ->where('target_id', auth()->id())
             ->where('status', 'pending')
@@ -69,6 +78,9 @@ class SwapApprovals extends Component
 
     public function rejectRequest($id)
     {
+        // Check permission
+        abort_unless(auth()->user()->can('ajukan_tukar_jadwal'), 403, 'Unauthorized.');
+
         $request = SwapRequest::where('id', $id)
             ->where('target_id', auth()->id())
             ->where('status', 'pending')
@@ -132,7 +144,7 @@ class SwapApprovals extends Component
                     // Mark as completed since target approval for peer-to-peer swap
                     // might be the final step depending on your business rules, 
                     // or keep it for admin. Here we'll mark as completed if admin.
-                    if (auth()->user()->hasAnyRole(['Super Admin', 'Ketua', 'Wakil Ketua', 'BPH'])) {
+                    if (auth()->user()->can('setujui_tukar_jadwal')) {
                         $this->selectedRequest->update([
                             'status' => 'admin_approved',
                             'completed_at' => now(),

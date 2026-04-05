@@ -38,7 +38,7 @@ class PosEntry extends Component
 
     public function mount(): void
     {
-        if (! auth()->user()->hasAnyRole(['Super Admin', 'Ketua', 'Wakil Ketua'])) {
+        if (! auth()->user()->can('akses_kasir')) {
             $this->dispatch('toast', message: 'Akses ditolak.', type: 'error');
             $this->redirect(route('admin.dashboard'));
 

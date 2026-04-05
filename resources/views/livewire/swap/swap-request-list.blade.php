@@ -70,8 +70,8 @@
                                     </div>
                                     <div>
                                         <div class="text-xs font-medium text-gray-500 uppercase mb-1">Ke</div>
-                                        <div class="font-semibold text-gray-900">{{ $swap->target->name }}</div>
-                                        <div class="text-sm text-gray-500">{{ $swap->target->nim }}</div>
+                                        <div class="font-semibold text-gray-900">{{ $swap->target?->name ?? 'N/A' }}</div>
+                                        <div class="text-sm text-gray-500">{{ $swap->target?->nim ?? '-' }}</div>
                                         @if($swap->targetAssignment)
                                             <div class="text-sm text-gray-600 mt-1">
                                                 {{ $swap->targetAssignment->date->format('d/m/Y') }} - 

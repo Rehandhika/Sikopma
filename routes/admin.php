@@ -99,10 +99,6 @@ Route::middleware(['auth', 'active'])->prefix('admin')->name('admin.')->group(fu
         // Approval routes - requires setujui_tukar_jadwal permission
         Route::middleware('can:setujui_tukar_jadwal')->group(function () {
             Route::get('/persetujuan', \App\Livewire\Swap\SwapApprovals::class)->name('approvals');
-        });
-        
-        // Management - requires kelola_tukar_jadwal permission
-        Route::middleware('can:kelola_tukar_jadwal')->group(function () {
             Route::get('/manajemen', \App\Livewire\Swap\SwapManager::class)->name('manager');
         });
     });

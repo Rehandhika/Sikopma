@@ -75,10 +75,8 @@ class BannerNewsManagement extends Component
 
     public function mount()
     {
-        // Check authorization - only Super Admin or Ketua can access
-        if (! auth()->user()->hasAnyRole(['Super Admin', 'Ketua'])) {
-            abort(403, 'Anda tidak memiliki akses ke halaman ini.');
-        }
+        // Check authorization
+        abort_unless(auth()->user()->can('kelola_pengaturan'), 403, 'Anda tidak memiliki akses ke halaman ini.');
     }
 
     /**

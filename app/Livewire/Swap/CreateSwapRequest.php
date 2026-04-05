@@ -54,6 +54,9 @@ class CreateSwapRequest extends Component
 
     public function mount()
     {
+        // Check permission
+        abort_unless(auth()->user()->can('ajukan_tukar_jadwal'), 403, 'Unauthorized.');
+        
         $this->sessionOptions = [
             1 => 'Sesi 1 (Pagi)',
             2 => 'Sesi 2 (Siang)',

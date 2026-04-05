@@ -68,7 +68,7 @@ return [
             'permissions' => [], // All authenticated users
             'children' => [
                 ['key' => 'cashier.pos', 'label' => 'POS Kasir', 'route' => 'admin.cashier.pos', 'permissions' => []],
-                ['key' => 'cashier.entry', 'label' => 'Entry Transaksi', 'route' => 'admin.cashier.pos-entry', 'permissions' => [], 'roles' => ['Super Admin', 'Ketua', 'Wakil Ketua']],
+                ['key' => 'cashier.entry', 'label' => 'Entry Transaksi', 'route' => 'admin.cashier.pos-entry', 'permissions' => ['akses_kasir']],
             ],
         ],
         [
@@ -125,7 +125,6 @@ return [
             'icon' => 'clipboard-document-list',
             'route' => 'admin.activity-log',
             'permissions' => ['lihat_log_aktivitas'],
-            'roles' => ['Super Admin', 'Ketua'],
         ],
         [
             'key' => 'users',
@@ -151,9 +150,9 @@ return [
             'permissions' => ['kelola_pengaturan'],
             'children' => [
                 ['key' => 'settings.system', 'label' => 'Pengaturan Sistem', 'route' => 'admin.settings.system', 'permissions' => ['kelola_pengaturan']],
-                ['key' => 'settings.store', 'label' => 'Pengaturan Toko', 'route' => 'admin.settings.store', 'permissions' => ['kelola_pengaturan'], 'roles' => ['Super Admin', 'Ketua', 'Wakil Ketua']],
-                ['key' => 'settings.banners', 'label' => 'Banner & Berita', 'route' => 'admin.settings.banners', 'permissions' => ['kelola_pengaturan'], 'roles' => ['Super Admin', 'Ketua']],
-                ['key' => 'settings.payment', 'label' => 'Pengaturan Pembayaran', 'route' => 'admin.settings.payment', 'permissions' => ['kelola_pengaturan'], 'roles' => ['Super Admin', 'Ketua', 'Wakil Ketua']],
+                ['key' => 'settings.store', 'label' => 'Pengaturan Toko', 'route' => 'admin.settings.store', 'permissions' => ['kelola_pengaturan']],
+                ['key' => 'settings.banners', 'label' => 'Banner & Berita', 'route' => 'admin.settings.banners', 'permissions' => ['kelola_pengaturan']],
+                ['key' => 'settings.payment', 'label' => 'Pengaturan Pembayaran', 'route' => 'admin.settings.payment', 'permissions' => ['kelola_pengaturan']],
             ],
         ],
     ],

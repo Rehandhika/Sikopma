@@ -15,11 +15,20 @@ class SwapRequestList extends Component
 
     public $tab = 'my-requests'; // my-requests, received, all
 
+    public function mount()
+    {
+        // Check permission
+        abort_unless(auth()->user()->can('ajukan_tukar_jadwal'), 403, 'Unauthorized.');
+    }
+
     public function cancelRequest($id)
     {
+        // Check permission
+        abort_unless(auth()->user()->can('ajukan_tukar_jadwal'), 403, 'Unauthorized.');
+
         $swap = SwapRequest::with(['requesterAssignment', 'targetAssignment'])->find($id);
 
-        if ($swap && $swap->user_id === auth()->id() && $swap->status === 'pending') {
+        if ($swap && $swap->requester_id === auth()->id() && $swap->status === 'pending') {
             $swap->update(['status' => 'cancelled']);
 
             // Log activity
@@ -32,6 +41,9 @@ class SwapRequestList extends Component
 
     public function acceptRequest($id)
     {
+        // Check permission
+        abort_unless(auth()->user()->can('ajukan_tukar_jadwal'), 403, 'Unauthorized.');
+
         $swap = SwapRequest::with(['requester', 'requesterAssignment'])->find($id);
 
         if ($swap && $swap->target_id === auth()->id() && $swap->status === 'pending') {
@@ -75,7 +87,7 @@ class SwapRequestList extends Component
                 ActivityLogService::logSwapApproved($swap->requester->name, $date);
 
                 // Create notification for requester
-                $this->createNotification($swap->user_id, 'swap_accepted', [
+                $this->createNotification($swap->requester_id, 'swap_accepted', [
                     'title' => 'Permintaan Tukar Shift Disetujui',
                     'message' => auth()->user()->name.' menyetujui permintaan tukar shift Anda.',
                     'swap_request_id' => $swap->id,
@@ -95,6 +107,9 @@ class SwapRequestList extends Component
 
     public function rejectRequest($id)
     {
+        // Check permission
+        abort_unless(auth()->user()->can('ajukan_tukar_jadwal'), 403, 'Unauthorized.');
+
         $swap = SwapRequest::with(['requester', 'requesterAssignment'])->find($id);
 
         if ($swap && $swap->target_id === auth()->id() && $swap->status === 'pending') {
@@ -109,7 +124,7 @@ class SwapRequestList extends Component
             ActivityLogService::logSwapRejected($swap->requester->name, $date);
 
             // Create notification for requester
-            $this->createNotification($swap->user_id, 'swap_rejected', [
+            $this->createNotification($swap->requester_id, 'swap_rejected', [
                 'title' => 'Permintaan Tukar Shift Ditolak',
                 'message' => auth()->user()->name.' menolak permintaan tukar shift Anda.',
                 'swap_request_id' => $swap->id,
@@ -122,7 +137,7 @@ class SwapRequestList extends Component
     public function render()
     {
         $query = SwapRequest::query()
-            ->when($this->tab === 'my-requests', fn ($q) => $q->where('user_id', auth()->id()))
+            ->when($this->tab === 'my-requests', fn ($q) => $q->where('requester_id', auth()->id()))
             ->when($this->tab === 'received', fn ($q) => $q->where('target_id', auth()->id()))
             ->with([
                 'requester:id,name,nim',
@@ -148,7 +163,7 @@ class SwapRequestList extends Component
         $query = SwapRequest::query();
 
         if ($this->tab === 'my-requests') {
-            $query->where('user_id', auth()->id());
+            $query->where('requester_id', auth()->id());
         } elseif ($this->tab === 'received') {
             $query->where('target_id', auth()->id());
         }
@@ -177,10 +192,8 @@ class SwapRequestList extends Component
 
     private function notifyAdminsForApproval($swapRequest)
     {
-        // Get users with admin roles
-        $adminUsers = User::whereHas('roles', function ($query) {
-            $query->whereIn('name', ['Super Admin', 'Ketua', 'Wakil Ketua', 'BPH']);
-        })->get();
+        // Get users with permission to approve swap requests
+        $adminUsers = User::permission('setujui_tukar_jadwal')->get();
 
         foreach ($adminUsers as $admin) {
             $this->createNotification($admin->id, 'swap_admin_approval', [

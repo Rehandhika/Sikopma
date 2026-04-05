@@ -28,6 +28,12 @@ class UserSwapRequests extends Component
 
     protected $listeners = ['swap-request-created' => '$refresh'];
 
+    public function mount()
+    {
+        // Check permission
+        abort_unless(auth()->user()->can('ajukan_tukar_jadwal'), 403, 'Unauthorized.');
+    }
+
     public function getStatsProperty()
     {
         return SwapRequest::where('user_id', auth()->id())

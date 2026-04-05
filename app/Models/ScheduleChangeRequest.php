@@ -11,6 +11,9 @@ class ScheduleChangeRequest extends Model
 
     protected $table = 'schedule_change_requests';
 
+    /**
+     * The attributes that are mass assignable.
+     */
     protected $fillable = [
         'user_id',
         'original_assignment_id',
@@ -18,6 +21,12 @@ class ScheduleChangeRequest extends Model
         'requested_session',
         'change_type',
         'reason',
+    ];
+
+    /**
+     * The attributes that should be guarded from mass assignment.
+     */
+    protected $guarded = [
         'status',
         'admin_response',
         'admin_responded_by',
@@ -39,7 +48,7 @@ class ScheduleChangeRequest extends Model
 
     public function originalAssignment()
     {
-        return $this->belongsTo(ScheduleAssignment::class, 'original_assignment_id');
+        return $this->belongsTo(ScheduleAssignment::class, 'original_assignment_id')->withTrashed();
     }
 
     public function adminResponder()
@@ -63,6 +72,22 @@ class ScheduleChangeRequest extends Model
         return $query->where('status', 'rejected');
     }
 
+    public function scopeCancelled($query)
+    {
+        return $query->where('status', 'cancelled');
+    }
+
+    public function scopeByType($query, string $type)
+    {
+        return $query->where('change_type', $type);
+    }
+
+    public function scopeThisMonth($query)
+    {
+        return $query->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year);
+    }
+
     // Helpers
     public function isPending(): bool
     {
@@ -79,15 +104,39 @@ class ScheduleChangeRequest extends Model
         return $this->status === 'rejected';
     }
 
+    public function isCancelled(): bool
+    {
+        return $this->status === 'cancelled';
+    }
+
     public function canCancel(): bool
     {
         return $this->status === 'pending';
     }
 
+    public function canApprove(): bool
+    {
+        return $this->status === 'pending';
+    }
+
+    public function canReject(): bool
+    {
+        return $this->status === 'pending';
+    }
+
+    public function isReschedule(): bool
+    {
+        return $this->change_type === 'reschedule';
+    }
+
+    public function isCancelType(): bool
+    {
+        return $this->change_type === 'cancel';
+    }
+
     public function getChangeTypeLabel(): string
     {
         return match ($this->change_type) {
-            'swap' => 'Tukar Shift',
             'reschedule' => 'Pindah Jadwal',
             'cancel' => 'Batalkan Jadwal',
             default => $this->change_type,
@@ -97,11 +146,22 @@ class ScheduleChangeRequest extends Model
     public function getStatusLabel(): string
     {
         return match ($this->status) {
-            'pending' => 'Menunggu',
+            'pending' => 'Menunggu Persetujuan',
             'approved' => 'Disetujui',
             'rejected' => 'Ditolak',
             'cancelled' => 'Dibatalkan',
-            default => $this->status,
+            default => ucfirst($this->status),
+        };
+    }
+
+    public function getStatusColor(): string
+    {
+        return match ($this->status) {
+            'pending' => 'warning',
+            'approved' => 'success',
+            'rejected' => 'danger',
+            'cancelled' => 'secondary',
+            default => 'secondary',
         };
     }
 
@@ -115,5 +175,35 @@ class ScheduleChangeRequest extends Model
             3 => 'Sesi 3 (13:30-16:00)',
             default => '-',
         };
+    }
+
+    /**
+     * Get the minimum notice hours required for this change type
+     */
+    public function getMinNoticeHours(): int
+    {
+        return match ($this->change_type) {
+            'reschedule' => config('schedule-change.reschedule.min_notice_hours', 3),
+            'cancel' => config('schedule-change.cancel.min_notice_hours', 24),
+            default => 24,
+        };
+    }
+
+    /**
+     * Check if this request is within the allowed time window
+     */
+    public function isWithinTimeWindow(): bool
+    {
+        if (! $this->originalAssignment) {
+            return false;
+        }
+
+        $assignmentDateTime = $this->originalAssignment->date
+            ->copy()
+            ->setTimeFromTimeString($this->originalAssignment->time_start);
+
+        $deadline = $assignmentDateTime->subHours($this->getMinNoticeHours());
+
+        return now()->lte($deadline);
     }
 }

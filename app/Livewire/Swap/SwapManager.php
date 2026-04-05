@@ -5,9 +5,11 @@ namespace App\Livewire\Swap;
 use App\Models\ScheduleAssignment;
 use App\Models\SwapRequest;
 use App\Models\User;
+use App\Services\SwapService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Lazy;
 use Livewire\Attributes\Title;
@@ -52,6 +54,9 @@ class SwapManager extends Component
 
     public function mount(): void
     {
+        // Check permission
+        abort_unless(auth()->user()->can('ajukan_tukar_jadwal'), 403, 'Unauthorized.');
+        
         $this->targetDate = now()->addDay()->format('Y-m-d');
     }
 
@@ -87,6 +92,9 @@ class SwapManager extends Component
 
     public function submitForm(): void
     {
+        // Check permission
+        abort_unless(auth()->user()->can('ajukan_tukar_jadwal'), 403, 'Unauthorized.');
+
         $this->validate([
             'selectedAssignment' => 'required|exists:schedule_assignments,id',
             'targetDate' => 'required|date|after_or_equal:today',
@@ -100,52 +108,49 @@ class SwapManager extends Component
             'reason.min' => 'Alasan minimal 10 karakter',
         ]);
 
-        // Validate business rules
-        $myAssignment = ScheduleAssignment::find($this->selectedAssignment);
+        try {
+            // Get assignments
+            $myAssignment = ScheduleAssignment::find($this->selectedAssignment);
+            $targetAssignment = ScheduleAssignment::where('date', $this->targetDate)
+                ->where('session', $this->targetSession)
+                ->where('user_id', $this->selectedTarget)
+                ->first();
 
-        // Check 24h deadline
-        $deadline = $myAssignment->date->copy()->setTimeFromTimeString($myAssignment->time_start)->subHours(24);
-        if (now()->gt($deadline)) {
-            $this->addError('selectedAssignment', 'Minimal 24 jam sebelum shift');
+            if (! $targetAssignment) {
+                $this->addError('selectedTarget', 'Target tidak memiliki jadwal di waktu tersebut');
+                return;
+            }
 
-            return;
+            // Use service layer for validation and creation
+            $service = app(SwapService::class);
+            $swapRequest = $service->createSwapRequest(
+                $myAssignment,
+                $targetAssignment,
+                $this->reason
+            );
+
+            $this->closeForm();
+            $this->clearCache();
+            $this->dispatch('toast', message: 'Permintaan tukar jadwal dikirim', type: 'success');
+
+        } catch (ValidationException $e) {
+            // Handle validation errors from service
+            foreach ($e->errors() as $field => $messages) {
+                $formField = match ($field) {
+                    'assignment' => 'myAssignment', // Or targetAssignment
+                    default => $field,
+                };
+                
+                $this->addError($formField, $messages[0]);
+                
+                // Show toast for errors that don't match UI fields perfectly
+                if (!in_array($formField, ['myAssignment', 'targetAssignment', 'reason'])) {
+                    $this->dispatch('toast', message: $messages[0], type: 'error');
+                }
+            }
+        } catch (\Exception $e) {
+            $this->dispatch('toast', message: 'Gagal mengirim permintaan: ' . $e->getMessage(), type: 'error');
         }
-
-        // Check existing pending request
-        $exists = SwapRequest::where('user_id', Auth::id())
-            ->where('original_assignment_id', $this->selectedAssignment)
-            ->whereIn('status', ['pending', 'target_approved'])
-            ->exists();
-        if ($exists) {
-            $this->addError('selectedAssignment', 'Sudah ada permintaan untuk jadwal ini');
-
-            return;
-        }
-
-        // Get target assignment
-        $targetAssignment = ScheduleAssignment::where('date', $this->targetDate)
-            ->where('session', $this->targetSession)
-            ->where('user_id', $this->selectedTarget)
-            ->first();
-
-        if (! $targetAssignment) {
-            $this->addError('selectedTarget', 'Target tidak memiliki jadwal di waktu tersebut');
-
-            return;
-        }
-
-        SwapRequest::create([
-            'user_id' => Auth::id(),
-            'target_id' => $this->selectedTarget,
-            'original_assignment_id' => $this->selectedAssignment,
-            'target_assignment_id' => $targetAssignment->id,
-            'reason' => $this->reason,
-            'status' => 'pending',
-        ]);
-
-        $this->closeForm();
-        $this->clearCache();
-        $this->dispatch('toast', message: 'Permintaan tukar jadwal dikirim', type: 'success');
     }
 
     // === VIEW & ACTIONS ===
@@ -162,44 +167,77 @@ class SwapManager extends Component
     public function cancelRequest(int $id): void
     {
         SwapRequest::where('id', $id)
-            ->where('user_id', Auth::id())
+            ->where('requester_id', Auth::id())
             ->where('status', 'pending')
             ->update(['status' => 'cancelled']);
 
         $this->viewingId = null;
         $this->clearCache();
         $this->dispatch('toast', message: 'Permintaan dibatalkan', type: 'success');
+        
+        // Trigger re-render
+        $this->resetPage();
     }
 
     // Target user approve/reject
     public function targetApprove(int $id): void
     {
-        SwapRequest::where('id', $id)
-            ->where('target_id', Auth::id())
-            ->where('status', 'pending')
-            ->update([
-                'status' => 'target_approved',
-                'target_responded_at' => now(),
-            ]);
+        // Check permission
+        abort_unless(auth()->user()->can('ajukan_tukar_jadwal'), 403, 'Unauthorized.');
 
-        $this->viewingId = null;
-        $this->clearCache();
-        $this->dispatch('toast', message: 'Permintaan disetujui, menunggu admin', type: 'success');
+        try {
+            $swap = SwapRequest::find($id);
+            if (!$swap || $swap->target_id !== Auth::id()) {
+                $this->dispatch('toast', message: 'Permintaan tidak ditemukan', type: 'error');
+                return;
+            }
+
+            $service = app(SwapService::class);
+            $service->targetRespond($swap, true, 'Disetujui');
+
+            $this->viewingId = null;
+            $this->clearCache();
+            $this->dispatch('toast', message: 'Permintaan disetujui, menunggu admin', type: 'success');
+            
+            // Trigger re-render
+            $this->resetPage();
+
+        } catch (ValidationException $e) {
+            $errorMsg = collect($e->errors())->flatten()->first() ?? 'Validasi gagal';
+            $this->dispatch('toast', message: $errorMsg, type: 'error');
+        } catch (\Exception $e) {
+            $this->dispatch('toast', message: 'Gagal memproses: ' . $e->getMessage(), type: 'error');
+        }
     }
 
     public function targetReject(int $id): void
     {
-        SwapRequest::where('id', $id)
-            ->where('target_id', Auth::id())
-            ->where('status', 'pending')
-            ->update([
-                'status' => 'target_rejected',
-                'target_responded_at' => now(),
-            ]);
+        // Check permission
+        abort_unless(auth()->user()->can('ajukan_tukar_jadwal'), 403, 'Unauthorized.');
 
-        $this->viewingId = null;
-        $this->clearCache();
-        $this->dispatch('toast', message: 'Permintaan ditolak', type: 'success');
+        try {
+            $swap = SwapRequest::find($id);
+            if (!$swap || $swap->target_id !== Auth::id()) {
+                $this->dispatch('toast', message: 'Permintaan tidak ditemukan', type: 'error');
+                return;
+            }
+
+            $service = app(SwapService::class);
+            $service->targetRespond($swap, false, 'Ditolak oleh target');
+
+            $this->viewingId = null;
+            $this->clearCache();
+            $this->dispatch('toast', message: 'Permintaan ditolak', type: 'success');
+            
+            // Trigger re-render
+            $this->resetPage();
+
+        } catch (ValidationException $e) {
+            $errorMsg = collect($e->errors())->flatten()->first() ?? 'Validasi gagal';
+            $this->dispatch('toast', message: $errorMsg, type: 'error');
+        } catch (\Exception $e) {
+            $this->dispatch('toast', message: 'Gagal memproses: ' . $e->getMessage(), type: 'error');
+        }
     }
 
     // Admin approve/reject
@@ -219,57 +257,36 @@ class SwapManager extends Component
 
     public function submitAdminReview(): void
     {
+        // Check permission
+        abort_unless(auth()->user()->can('setujui_tukar_jadwal'), 403, 'Unauthorized.');
+
         $swap = SwapRequest::with(['requesterAssignment', 'targetAssignment'])->find($this->reviewingId);
-        if (! $swap || $swap->status !== 'target_approved') {
+        if (! $swap) {
+            $this->dispatch('toast', message: 'Permintaan tidak ditemukan', type: 'error');
             return;
         }
 
-        DB::beginTransaction();
         try {
-            $newStatus = $this->reviewAction === 'approved' ? 'admin_approved' : 'admin_rejected';
-
-            $swap->update([
-                'status' => $newStatus,
-                'admin_response' => $this->reviewNotes,
-                'admin_responded_by' => Auth::id(),
-                'admin_responded_at' => now(),
-                'completed_at' => $newStatus === 'admin_approved' ? now() : null,
-            ]);
-
-            // If approved, swap the assignments
-            if ($newStatus === 'admin_approved') {
-                $reqAssignment = $swap->requesterAssignment;
-                $tgtAssignment = $swap->targetAssignment;
-
-                $reqUserId = $reqAssignment->user_id;
-                $tgtUserId = $tgtAssignment->user_id;
-
-                // Swap user_id and track original owners
-                $reqAssignment->update([
-                    'user_id' => $tgtUserId,
-                    'swapped_to_user_id' => $reqUserId, // Track who was here originally
-                    'status' => 'scheduled'
-                ]);
-
-                $tgtAssignment->update([
-                    'user_id' => $reqUserId,
-                    'swapped_to_user_id' => $tgtUserId, // Track who was here originally
-                    'status' => 'scheduled'
-                ]);
-            }
-
-            DB::commit();
+            $service = app(SwapService::class);
+            $approved = $this->reviewAction === 'approved';
+            
+            $service->adminRespond($swap, $approved, $this->reviewNotes);
 
             $this->closeAdminReview();
             $this->viewingId = null;
             $this->clearCache();
 
-            $msg = $this->reviewAction === 'approved' ? 'Tukar jadwal disetujui dan diproses' : 'Permintaan ditolak';
+            $msg = $approved ? 'Tukar jadwal disetujui dan diproses' : 'Permintaan ditolak';
             $this->dispatch('toast', message: $msg, type: 'success');
+            
+            // Trigger re-render
+            $this->resetPage();
 
+        } catch (ValidationException $e) {
+            $errorMsg = collect($e->errors())->flatten()->first() ?? 'Validasi gagal';
+            $this->dispatch('toast', message: $errorMsg, type: 'error');
         } catch (\Exception $e) {
-            DB::rollBack();
-            $this->dispatch('toast', message: 'Gagal memproses', type: 'error');
+            $this->dispatch('toast', message: 'Gagal memproses: ' . $e->getMessage(), type: 'error');
         }
     }
 
@@ -281,15 +298,15 @@ class SwapManager extends Component
     public function render()
     {
         $userId = Auth::id();
-        $isAdmin = Auth::user()->hasAnyRole(['Super Admin', 'Ketua', 'Wakil Ketua', 'BPH']);
+        $isAdmin = Auth::user()->can('setujui_tukar_jadwal');
 
         // Stats - cached
         $stats = Cache::remember("swap_stats_{$userId}_{$this->activeTab}", 60, function () use ($userId) {
             if ($this->activeTab === 'my-requests') {
                 return [
-                    'pending' => SwapRequest::where('user_id', $userId)->where('status', 'pending')->count(),
-                    'approved' => SwapRequest::where('user_id', $userId)->whereIn('status', ['target_approved', 'admin_approved'])->count(),
-                    'rejected' => SwapRequest::where('user_id', $userId)->whereIn('status', ['target_rejected', 'admin_rejected', 'cancelled'])->count(),
+                    'pending' => SwapRequest::where('requester_id', $userId)->where('status', 'pending')->count(),
+                    'approved' => SwapRequest::where('requester_id', $userId)->whereIn('status', ['target_approved', 'admin_approved'])->count(),
+                    'rejected' => SwapRequest::where('requester_id', $userId)->whereIn('status', ['target_rejected', 'admin_rejected', 'cancelled'])->count(),
                 ];
             } elseif ($this->activeTab === 'received') {
                 return [
@@ -308,10 +325,10 @@ class SwapManager extends Component
 
         // Query
         $query = match ($this->activeTab) {
-            'my-requests' => SwapRequest::where('user_id', $userId),
+            'my-requests' => SwapRequest::where('requester_id', $userId),
             'received' => SwapRequest::where('target_id', $userId),
             'admin' => SwapRequest::whereIn('status', ['target_approved', 'admin_approved', 'admin_rejected']),
-            default => SwapRequest::where('user_id', $userId),
+            default => SwapRequest::where('requester_id', $userId),
         };
 
         if ($this->statusFilter !== 'all') {

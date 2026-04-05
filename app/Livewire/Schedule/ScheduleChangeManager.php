@@ -6,9 +6,12 @@ use App\Models\ScheduleAssignment;
 use App\Models\ScheduleChangeRequest;
 use App\Models\AssignmentEditHistory;
 use App\Services\ActivityLogService;
+use App\Services\ScheduleChangeRequestService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Lazy;
 use Livewire\Attributes\On;
@@ -51,6 +54,9 @@ class ScheduleChangeManager extends Component
 
     public function mount(): void
     {
+        // Check permission
+        abort_unless(auth()->user()->can('ajukan_perubahan_jadwal'), 403, 'Unauthorized.');
+        
         $this->requestedDate = now()->addDay()->format('Y-m-d');
     }
 
@@ -83,6 +89,9 @@ class ScheduleChangeManager extends Component
 
     public function submitForm(): void
     {
+        // Check permission
+        abort_unless(auth()->user()->can('ajukan_perubahan_jadwal'), 403, 'Unauthorized.');
+
         $rules = [
             'selectedAssignment' => 'required|exists:schedule_assignments,id',
             'changeType' => 'required|in:reschedule,cancel',
@@ -102,60 +111,43 @@ class ScheduleChangeManager extends Component
             'reason.min' => 'Alasan minimal 10 karakter',
         ]);
 
-        $assignment = ScheduleAssignment::find($this->selectedAssignment);
+        try {
+            // Use service layer for validation and creation
+            $service = app(ScheduleChangeRequestService::class);
+            
+            $request = $service->submitRequest(
+                Auth::id(),
+                $this->selectedAssignment,
+                $this->changeType,
+                $this->reason,
+                $this->changeType === 'reschedule' ? Carbon::parse($this->requestedDate) : null,
+                $this->changeType === 'reschedule' ? $this->requestedSession : null
+            );
 
-        // Validasi: minimal 3 jam sebelum jadwal (untuk reschedule)
-        if ($this->changeType === 'reschedule' && !$assignment->canReschedule()) {
-            $this->addError('selectedAssignment', 'Pengajuan pindah jadwal minimal 3 jam sebelum sesi dimulai');
-            return;
-        }
+            $this->closeForm();
+            $this->clearCache();
+            $this->dispatch('toast', message: 'Pengajuan berhasil dikirim', type: 'success');
 
-        // Validasi: minimal 24 jam sebelum jadwal (untuk cancel)
-        if ($this->changeType === 'cancel') {
-            $deadline = $assignment->date->copy()->setTimeFromTimeString($assignment->time_start)->subHours(24);
-            if (now()->gt($deadline)) {
-                $this->addError('selectedAssignment', 'Pengajuan batal jadwal minimal 24 jam sebelum jadwal');
-                return;
+        } catch (ValidationException $e) {
+            // Handle validation errors from service
+            foreach ($e->errors() as $field => $messages) {
+                $formField = match ($field) {
+                    'assignment_id' => 'selectedAssignment',
+                    'change_type' => 'changeType',
+                    'requested_date' => 'requestedDate',
+                    'requested_session' => 'requestedSession',
+                    default => $field,
+                };
+                
+                $this->addError($formField, $messages[0]);
+                
+                if (in_array($formField, ['changeType', 'permission'])) {
+                    $this->dispatch('toast', message: $messages[0], type: 'error');
+                }
             }
+        } catch (\Exception $e) {
+            $this->dispatch('toast', message: 'Gagal mengirim pengajuan: ' . $e->getMessage(), type: 'error');
         }
-
-        // Validasi: tidak ada pending request untuk jadwal yang sama
-        $exists = ScheduleChangeRequest::where('user_id', Auth::id())
-            ->where('original_assignment_id', $this->selectedAssignment)
-            ->where('status', 'pending')
-            ->exists();
-        if ($exists) {
-            $this->addError('selectedAssignment', 'Sudah ada pengajuan untuk jadwal ini');
-
-            return;
-        }
-
-        // Jika reschedule, cek tidak bentrok dengan jadwal lain
-        if ($this->changeType === 'reschedule') {
-            $conflict = ScheduleAssignment::where('user_id', Auth::id())
-                ->where('date', $this->requestedDate)
-                ->where('session', $this->requestedSession)
-                ->exists();
-            if ($conflict) {
-                $this->addError('requestedDate', 'Anda sudah punya jadwal di waktu tersebut');
-
-                return;
-            }
-        }
-
-        ScheduleChangeRequest::create([
-            'user_id' => Auth::id(),
-            'original_assignment_id' => $this->selectedAssignment,
-            'change_type' => $this->changeType,
-            'requested_date' => $this->changeType === 'reschedule' ? $this->requestedDate : null,
-            'requested_session' => $this->changeType === 'reschedule' ? $this->requestedSession : null,
-            'reason' => $this->reason,
-            'status' => 'pending',
-        ]);
-
-        $this->closeForm();
-        $this->clearCache();
-        $this->dispatch('toast', message: 'Pengajuan berhasil dikirim', type: 'success');
     }
 
     // === VIEW & ACTIONS ===
@@ -179,6 +171,9 @@ class ScheduleChangeManager extends Component
         $this->viewingId = null;
         $this->clearCache();
         $this->dispatch('toast', message: 'Pengajuan dibatalkan', type: 'success');
+        
+        // Trigger re-render
+        $this->resetPage();
     }
 
     // === ADMIN REVIEW ===
@@ -207,83 +202,21 @@ class ScheduleChangeManager extends Component
             return;
         }
 
-        DB::beginTransaction();
         try {
-            $newStatus = $this->reviewAction === 'approved' ? 'approved' : 'rejected';
-
-            $request->update([
-                'status' => $newStatus,
-                'admin_response' => $this->reviewNotes,
-                'admin_responded_by' => Auth::id(),
-                'admin_responded_at' => now(),
-                'completed_at' => $newStatus === 'approved' ? now() : null,
-            ]);
-
-            // Jika disetujui, proses perubahan jadwal
-            if ($newStatus === 'approved') {
-                $assignment = $request->originalAssignment;
-                
-                // Simpan nilai lama
-                $oldValues = $assignment->only(['date', 'session', 'day', 'time_start', 'time_end', 'schedule_id']);
-
-                if ($request->change_type === 'cancel') {
-                    // Batalkan jadwal - hapus assignment
-                    $assignment->delete();
-                    
-                    AssignmentEditHistory::create([
-                        'assignment_id' => $assignment->id,
-                        'schedule_id' => $assignment->schedule_id,
-                        'edited_by' => Auth::id(),
-                        'action' => 'deleted',
-                        'old_values' => $oldValues,
-                        'new_values' => null,
-                        'reason' => 'Pengajuan batal jadwal disetujui',
-                    ]);
-                } else {
-                    // Pindah jadwal - cari/buat schedule untuk minggu tersebut
-                    $newSchedule = \App\Models\Schedule::forDate($request->requested_date->toDateString());
-                    
-                    if (! $newSchedule) {
-                        $weekStart = $request->requested_date->copy()->startOfWeek(\Carbon\Carbon::MONDAY);
-                        $newSchedule = \App\Models\Schedule::create([
-                            'week_start_date' => $weekStart->toDateString(),
-                            'week_end_date' => $weekStart->copy()->addDays(3)->toDateString(),
-                            'status' => 'draft',
-                            'total_slots' => 12,
-                        ]);
-                    }
-
-                    // Update assignment
-                    $assignment->update([
-                        'schedule_id' => $newSchedule->id,
-                        'date' => $request->requested_date,
-                        'session' => $request->requested_session,
-                        'time_start' => $this->getSessionTime($request->requested_session, 'start'),
-                        'time_end' => $this->getSessionTime($request->requested_session, 'end'),
-                        'edited_by' => Auth::id(),
-                        'edited_at' => now(),
-                        'edit_reason' => 'Pengajuan perubahan jadwal disetujui',
-                    ]);
-                    
-                    // Simpan history
-                    AssignmentEditHistory::create([
-                        'assignment_id' => $assignment->id,
-                        'schedule_id' => $newSchedule->id,
-                        'edited_by' => Auth::id(),
-                        'action' => 'updated',
-                        'old_values' => $oldValues,
-                        'new_values' => $assignment->only(['date', 'session', 'day', 'time_start', 'time_end', 'schedule_id']),
-                        'reason' => 'Pengajuan pindah jadwal disetujui',
-                    ]);
-                }
+            $service = app(ScheduleChangeRequestService::class);
+            
+            if ($this->reviewAction === 'approved') {
+                $service->approveRequest($request, Auth::id(), $this->reviewNotes);
+                $msg = 'Pengajuan disetujui dan diproses';
+            } else {
+                $service->rejectRequest($request, Auth::id(), $this->reviewNotes ?: 'Ditolak oleh admin');
+                $msg = 'Pengajuan ditolak';
             }
-
-            DB::commit();
 
             // Log activity
             $requestUserName = $request->user->name ?? 'Unknown';
             $originalDate = $request->originalAssignment?->date?->format('d/m/Y') ?? 'N/A';
-            if ($newStatus === 'approved') {
+            if ($this->reviewAction === 'approved') {
                 ActivityLogService::log("Menyetujui pengajuan perubahan jadwal {$requestUserName} dari tanggal {$originalDate}");
             } else {
                 ActivityLogService::log("Menolak pengajuan perubahan jadwal {$requestUserName} dari tanggal {$originalDate}");
@@ -292,25 +225,17 @@ class ScheduleChangeManager extends Component
             $this->closeReview();
             $this->viewingId = null;
             $this->clearCache();
-
-            $msg = $this->reviewAction === 'approved' ? 'Pengajuan disetujui dan diproses' : 'Pengajuan ditolak';
             $this->dispatch('toast', message: $msg, type: 'success');
+            
+            // Trigger re-render by resetting the query
+            $this->resetPage();
 
+        } catch (ValidationException $e) {
+            $errorMsg = collect($e->errors())->flatten()->first() ?? 'Validasi gagal';
+            $this->dispatch('toast', message: $errorMsg, type: 'error');
         } catch (\Exception $e) {
-            DB::rollBack();
             $this->dispatch('toast', message: 'Gagal memproses: '.$e->getMessage(), type: 'error');
         }
-    }
-
-    private function getSessionTime(int $session, string $type): string
-    {
-        $times = [
-            1 => ['start' => '07:30', 'end' => '10:00'],
-            2 => ['start' => '10:20', 'end' => '12:50'],
-            3 => ['start' => '13:30', 'end' => '16:00'],
-        ];
-
-        return $times[$session][$type] ?? '00:00';
     }
 
     private function clearCache(): void

@@ -42,7 +42,7 @@
         <div class="p-6">
             <div class="space-y-4">
                 @forelse($requests as $req)
-                    <x-ui.card shadow="sm" class="hover:shadow-md transition-shadow cursor-pointer border border-gray-100" wire:click="viewRequest({{ $req->id }})">
+                    <x-ui.card shadow="sm" class="hover:shadow-md transition-shadow cursor-pointer border border-gray-100" wire:click="viewRequest({{ $req->id }})" wire:key="request-{{ $req->id }}-{{ $req->status }}">
                         <div class="flex items-start justify-between">
                             <div class="flex-1">
                                 <div class="flex items-center space-x-2 mb-3">
@@ -109,12 +109,14 @@
                             <div class="flex items-center space-x-2 ml-4" wire:click.stop>
                                 @if($activeTab === 'admin' && $req->status === 'pending')
                                     <x-ui.button 
+                                        wire:key="btn-approve-{{ $req->id }}"
                                         wire:click="openReview({{ $req->id }}, 'approved')" 
                                         variant="success" 
                                         size="sm">
                                         Setujui
                                     </x-ui.button>
                                     <x-ui.button 
+                                        wire:key="btn-reject-{{ $req->id }}"
                                         wire:click="openReview({{ $req->id }}, 'rejected')" 
                                         variant="danger" 
                                         size="sm">
@@ -122,6 +124,7 @@
                                     </x-ui.button>
                                 @elseif($activeTab === 'my-requests' && $req->status === 'pending')
                                     <x-ui.button 
+                                        wire:key="btn-cancel-{{ $req->id }}"
                                         wire:click="cancelRequest({{ $req->id }})" 
                                         wire:confirm="Batalkan pengajuan ini?"
                                         variant="white" 

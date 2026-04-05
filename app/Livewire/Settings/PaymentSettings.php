@@ -69,9 +69,7 @@ class PaymentSettings extends Component
     public function mount(): void
     {
         // Authorization check
-        if (! auth()->user()->hasAnyRole(['Super Admin', 'Ketua', 'Wakil Ketua'])) {
-            abort(403, 'Anda tidak memiliki akses ke halaman ini.');
-        }
+        abort_unless(auth()->user()->can('kelola_pengaturan'), 403, 'Anda tidak memiliki akses ke halaman ini.');
 
         // Load existing configuration
         $config = $this->paymentService->getAll();

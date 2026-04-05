@@ -12,7 +12,7 @@ class SwapRequestCreate extends FormRequest
      */
     public function authorize(): bool
     {
-        return auth()->check() && auth()->user()->hasAnyRole(['Super Admin', 'Ketua', 'Wakil Ketua', 'BPH', 'Anggota']);
+        return auth()->check() && auth()->user()->can('ajukan_tukar_jadwal');
     }
 
     /**
