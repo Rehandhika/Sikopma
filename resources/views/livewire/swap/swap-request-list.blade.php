@@ -1,16 +1,4 @@
 <div class="space-y-6">
-    <!-- Page Header -->
-    <x-layout.page-header title="Tukar Shift">
-        <x-slot:actions>
-            <x-ui.button 
-                variant="primary" 
-                :href="route('admin.swap.create')" 
-                icon="plus">
-                Buat Permintaan
-            </x-ui.button>
-        </x-slot:actions>
-    </x-layout.page-header>
-
     <!-- Tabs -->
     <x-ui.card :padding="false">
         <div class="border-b border-gray-200">
@@ -32,20 +20,6 @@
                     Permintaan Masuk
                 </button>
             </nav>
-        </div>
-
-        <!-- Search and Filter -->
-        <div class="p-6 border-b border-gray-200">
-            <div class="flex items-center space-x-4">
-                <div class="flex-1">
-                    <x-ui.input 
-                        wire:model.live.debounce.300ms="search"
-                        type="text"
-                        placeholder="Cari berdasarkan nama atau NIM..."
-                        icon="magnifying-glass"
-                    />
-                </div>
-            </div>
         </div>
 
         <!-- Swap List -->

@@ -91,7 +91,7 @@ Route::middleware(['auth', 'active'])->prefix('admin')->name('admin.')->group(fu
     // Swap Requests Self-Service (ajukan_tukar_jadwal)
     Route::prefix('tukar-jadwal')->name('swap.')->group(function () {
         // Self-service - submit and view own swap requests
-        Route::get('/', \App\Livewire\Swap\SwapRequestList::class)->name('index');
+        Route::get('/', \App\Livewire\Schedule\UnifiedChangeManager::class)->name('index');
         Route::get('/dashboard', \App\Livewire\Swap\SwapDashboard::class)->name('dashboard');
         Route::get('/pengajuan-baru', \App\Livewire\Swap\CreateSwapRequest::class)->name('create');
         Route::get('/pengajuan-saya', \App\Livewire\Swap\UserSwapRequests::class)->name('my-requests');

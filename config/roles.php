@@ -198,6 +198,12 @@ return [
             'description' => 'Kelola semua permintaan tukar jadwal',
         ],
         
+        // Perubahan Jadwal - Management
+        'setujui_perubahan_jadwal' => [
+            'group' => 'Jadwal (Management)',
+            'description' => 'Setujui/tolak permintaan pindah atau batal jadwal',
+        ],
+        
         // Penalti - Management
         'kelola_penalti' => [
             'group' => 'Penalti (Management)',
@@ -321,7 +327,7 @@ return [
                     'check_in_out', 'lihat_absensi_sendiri', 'lihat_jadwal_sendiri', 'input_ketersediaan',
                     'akses_kasir', 'lihat_penalti_sendiri', 'ajukan_cuti', 'ajukan_tukar_jadwal',
                     'ubah_profil', 'kelola_absensi', 'kelola_jadwal', 'lihat_semua_jadwal',
-                    'setujui_cuti', 'kelola_cuti', 'setujui_tukar_jadwal', 'kelola_tukar_jadwal',
+                    'setujui_cuti', 'kelola_cuti', 'setujui_tukar_jadwal', 'setujui_perubahan_jadwal', 'kelola_tukar_jadwal',
                     'kelola_penalti', 'lihat_semua_penalti', 'kelola_pengguna', 'lihat_pengguna',
                     'kelola_peran', 'lihat_peran', 'kelola_produk', 'lihat_produk',
                     'kelola_stok', 'lihat_stok', 'kelola_pembelian', 'lihat_pembelian',
@@ -332,7 +338,7 @@ return [
                     'check_in_out', 'lihat_absensi_sendiri', 'lihat_jadwal_sendiri', 'input_ketersediaan',
                     'akses_kasir', 'lihat_penalti_sendiri', 'ajukan_cuti', 'ajukan_tukar_jadwal',
                     'ubah_profil', 'kelola_absensi', 'kelola_jadwal', 'lihat_semua_jadwal',
-                    'setujui_cuti', 'kelola_cuti', 'setujui_tukar_jadwal', 'kelola_tukar_jadwal',
+                    'setujui_cuti', 'kelola_cuti', 'setujui_tukar_jadwal', 'setujui_perubahan_jadwal', 'kelola_tukar_jadwal',
                     'kelola_penalti', 'lihat_semua_penalti', 'kelola_pengguna', 'lihat_pengguna',
                     'kelola_peran', 'lihat_peran', 'kelola_produk', 'lihat_produk',
                     'kelola_stok', 'lihat_stok', 'kelola_pembelian', 'lihat_pembelian',
@@ -342,7 +348,7 @@ return [
                 'sekretaris' => [
                     'check_in_out', 'lihat_absensi_sendiri', 'lihat_jadwal_sendiri', 'input_ketersediaan',
                     'akses_kasir', 'lihat_penalti_sendiri', 'ajukan_cuti', 'ajukan_tukar_jadwal',
-                    'ubah_profil', 'lihat_semua_jadwal', 'setujui_cuti', 'setujui_tukar_jadwal',
+                    'ubah_profil', 'lihat_semua_jadwal', 'setujui_cuti', 'setujui_tukar_jadwal', 'setujui_perubahan_jadwal',
                     'lihat_semua_penalti', 'lihat_pengguna', 'kelola_produk', 'lihat_produk',
                     'kelola_stok', 'lihat_stok', 'kelola_pembelian', 'lihat_pembelian',
                     'kelola_penjualan', 'lihat_semua_penjualan', 'lihat_laporan', 'ekspor_data',
@@ -360,7 +366,7 @@ return [
                     'check_in_out', 'lihat_absensi_sendiri', 'lihat_jadwal_sendiri', 'input_ketersediaan',
                     'akses_kasir', 'lihat_penalti_sendiri', 'ajukan_cuti', 'ajukan_tukar_jadwal',
                     'ubah_profil', 'kelola_absensi', 'kelola_jadwal', 'lihat_semua_jadwal',
-                    'setujui_cuti', 'kelola_cuti', 'setujui_tukar_jadwal', 'kelola_tukar_jadwal',
+                    'setujui_cuti', 'kelola_cuti', 'setujui_tukar_jadwal', 'setujui_perubahan_jadwal', 'kelola_tukar_jadwal',
                     'kelola_penalti', 'lihat_semua_penalti', 'kelola_pengguna', 'lihat_pengguna',
                     'kelola_peran', 'lihat_peran', 'kelola_produk', 'lihat_produk',
                     'kelola_stok', 'lihat_stok', 'kelola_pembelian', 'lihat_pembelian',
@@ -370,7 +376,7 @@ return [
                 'koordinator-psda' => [
                     'check_in_out', 'lihat_absensi_sendiri', 'lihat_jadwal_sendiri', 'input_ketersediaan',
                     'akses_kasir', 'lihat_penalti_sendiri', 'ajukan_cuti', 'ajukan_tukar_jadwal',
-                    'ubah_profil', 'lihat_semua_jadwal', 'setujui_cuti', 'setujui_tukar_jadwal',
+                    'ubah_profil', 'lihat_semua_jadwal', 'setujui_cuti', 'setujui_tukar_jadwal', 'setujui_perubahan_jadwal',
                     'lihat_semua_penalti', 'lihat_pengguna', 'lihat_produk', 'lihat_stok',
                     'lihat_pembelian', 'lihat_semua_penjualan', 'lihat_laporan', 'ekspor_data',
                     'lihat_poin_shu',
@@ -378,7 +384,7 @@ return [
                 'koordinator-produksi' => [
                     'check_in_out', 'lihat_absensi_sendiri', 'lihat_jadwal_sendiri', 'input_ketersediaan',
                     'akses_kasir', 'lihat_penalti_sendiri', 'ajukan_cuti', 'ajukan_tukar_jadwal',
-                    'ubah_profil', 'lihat_semua_jadwal', 'setujui_cuti', 'setujui_tukar_jadwal',
+                    'ubah_profil', 'lihat_semua_jadwal', 'setujui_cuti', 'setujui_tukar_jadwal', 'setujui_perubahan_jadwal',
                     'lihat_semua_penalti', 'lihat_pengguna', 'kelola_produk', 'lihat_produk',
                     'kelola_stok', 'lihat_stok', 'kelola_pembelian', 'lihat_pembelian',
                     'kelola_penjualan', 'lihat_semua_penjualan', 'lihat_laporan', 'ekspor_data',
@@ -387,14 +393,14 @@ return [
                 'koordinator-desain' => [
                     'check_in_out', 'lihat_absensi_sendiri', 'lihat_jadwal_sendiri', 'input_ketersediaan',
                     'akses_kasir', 'lihat_penalti_sendiri', 'ajukan_cuti', 'ajukan_tukar_jadwal',
-                    'ubah_profil', 'lihat_semua_jadwal', 'setujui_cuti', 'setujui_tukar_jadwal',
+                    'ubah_profil', 'lihat_semua_jadwal', 'setujui_cuti', 'setujui_tukar_jadwal', 'setujui_perubahan_jadwal',
                     'lihat_semua_penalti', 'lihat_pengguna', 'lihat_produk', 'lihat_stok',
                     'lihat_pembelian', 'lihat_semua_penjualan', 'lihat_laporan', 'lihat_poin_shu',
                 ],
                 'koordinator-humsar' => [
                     'check_in_out', 'lihat_absensi_sendiri', 'lihat_jadwal_sendiri', 'input_ketersediaan',
                     'akses_kasir', 'lihat_penalti_sendiri', 'ajukan_cuti', 'ajukan_tukar_jadwal',
-                    'ubah_profil', 'lihat_semua_jadwal', 'setujui_cuti', 'setujui_tukar_jadwal',
+                    'ubah_profil', 'lihat_semua_jadwal', 'setujui_cuti', 'setujui_tukar_jadwal', 'setujui_perubahan_jadwal',
                     'lihat_semua_penalti', 'lihat_produk', 'lihat_stok', 'lihat_pembelian',
                     'lihat_semua_penjualan', 'lihat_laporan', 'ekspor_data', 'kelola_poin_shu',
                     'lihat_poin_shu',

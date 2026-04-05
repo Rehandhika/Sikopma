@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ScheduleAssignment extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'schedule_id',
@@ -171,6 +172,14 @@ class ScheduleAssignment extends Model
         return $this->isScheduled() &&
                $this->date->isFuture() &&
                $this->date->diffInHours(now()) > 24;
+    }
+
+    public function canReschedule(): bool
+    {
+        if (!$this->isScheduled() || !$this->date->isFuture()) return false;
+        
+        $startDateTime = \Carbon\Carbon::parse($this->date->format('Y-m-d') . ' ' . $this->time_start);
+        return now()->addHours(3)->lte($startDateTime);
     }
 
     public function getSessionLabelAttribute(): string

@@ -187,8 +187,8 @@ class CheckInOut extends Component
                 number_format($this->currentAttendance->work_hours, 2)
             );
 
+            $this->checkOutTime = $this->currentAttendance->check_out?->format('H:i');
             $this->dispatch('toast', message: 'Check-out berhasil!', type: 'success');
-            $this->loadCurrentSchedule();
         } catch (\Exception $e) {
             $this->dispatch('toast', message: $e->getMessage(), type: 'error');
         }

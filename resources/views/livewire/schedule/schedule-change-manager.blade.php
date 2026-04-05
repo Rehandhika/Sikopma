@@ -9,126 +9,164 @@
             document.body.classList.remove('overflow-hidden');
         }
     })">
-    {{-- Header --}}
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">Pengajuan Perubahan Jadwal</h1>
-            <p class="text-sm text-gray-500">Ajukan pindah atau batalkan jadwal shift Anda</p>
-        </div>
-        <button wire:click="openForm" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Ajukan Perubahan
-        </button>
-    </div>
-
-    {{-- Tabs --}}
-    <div class="border-b border-gray-200">
-        <nav class="flex gap-8">
-            <button wire:click="setTab('my-requests')" @class(['pb-3 text-sm font-medium border-b-2 -mb-px', 'border-blue-500 text-blue-600' => $activeTab === 'my-requests', 'border-transparent text-gray-500 hover:text-gray-700' => $activeTab !== 'my-requests'])>
-                Pengajuan Saya
-            </button>
-            @if($isAdmin)
-            <button wire:click="setTab('admin')" @class(['pb-3 text-sm font-medium border-b-2 -mb-px', 'border-blue-500 text-blue-600' => $activeTab === 'admin', 'border-transparent text-gray-500 hover:text-gray-700' => $activeTab !== 'admin'])>
-                Persetujuan
-                @if($stats['pending'] > 0)
-                <span class="ml-2 px-2 py-0.5 text-xs bg-red-100 text-red-800 rounded-full">{{ $stats['pending'] }}</span>
-                @endif
-            </button>
-            @endif
-        </nav>
-    </div>
-
-    {{-- Stats --}}
-    <div class="grid grid-cols-3 gap-4">
-        <div class="bg-white rounded-lg border p-4">
-            <p class="text-2xl font-bold text-yellow-600">{{ $stats['pending'] }}</p>
-            <p class="text-sm text-gray-500">Menunggu</p>
-        </div>
-        <div class="bg-white rounded-lg border p-4">
-            <p class="text-2xl font-bold text-green-600">{{ $stats['approved'] }}</p>
-            <p class="text-sm text-gray-500">Disetujui</p>
-        </div>
-        <div class="bg-white rounded-lg border p-4">
-            <p class="text-2xl font-bold text-red-600">{{ $stats['rejected'] }}</p>
-            <p class="text-sm text-gray-500">Ditolak</p>
-        </div>
-    </div>
-
-    {{-- Filter --}}
-    <select wire:model.live="statusFilter" class="text-sm border-gray-300 rounded-lg">
-        <option value="all">Semua Status</option>
-        <option value="pending">Menunggu</option>
-        <option value="approved">Disetujui</option>
-        <option value="rejected">Ditolak</option>
-        <option value="cancelled">Dibatalkan</option>
-    </select>
-
-    {{-- Request List --}}
-    <div class="bg-white rounded-lg border divide-y">
-        @forelse($requests as $req)
-        <div wire:key="req-{{ $req->id }}" wire:click="viewRequest({{ $req->id }})" class="p-4 hover:bg-gray-50 cursor-pointer flex items-center justify-between">
-            <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-1">
-                    @if($activeTab === 'admin')
-                    <span class="font-medium text-gray-900">{{ $req->user->name ?? '-' }}</span>
-                    <span class="text-gray-300">•</span>
+    
+    <x-ui.card :padding="false">
+        <!-- Tabs -->
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+                <button
+                    type="button"
+                    wire:click="setTab('my-requests')"
+                    class="group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 
+                        {{ $activeTab === 'my-requests' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}"
+                >
+                    Pengajuan Saya
+                </button>
+                @if($isAdmin)
+                <button
+                    type="button"
+                    wire:click="setTab('admin')"
+                    class="group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 
+                        {{ $activeTab === 'admin' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}"
+                >
+                    Persetujuan
+                    @if($stats['pending'] > 0)
+                    <span class="ml-2 px-2 py-0.5 text-xs bg-red-100 text-red-700 font-bold rounded-full">{{ $stats['pending'] }}</span>
                     @endif
-                    <span @class(['px-2 py-0.5 text-xs rounded-full', 'bg-blue-100 text-blue-700' => $req->change_type === 'reschedule', 'bg-orange-100 text-orange-700' => $req->change_type === 'cancel'])>
-                        {{ $req->getChangeTypeLabel() }}
-                    </span>
-                    <span @class(['px-2 py-0.5 text-xs rounded-full', 'bg-yellow-100 text-yellow-700' => $req->status === 'pending', 'bg-green-100 text-green-700' => $req->status === 'approved', 'bg-red-100 text-red-700' => $req->status === 'rejected', 'bg-gray-100 text-gray-700' => $req->status === 'cancelled'])>
-                        {{ $req->getStatusLabel() }}
-                    </span>
-                </div>
-                @if($req->originalAssignment)
-                <p class="text-sm text-gray-600">
-                    Jadwal: {{ \Carbon\Carbon::parse($req->originalAssignment->date)->format('d M Y') }} 
-                    • Sesi {{ $req->originalAssignment->session }} ({{ $req->originalAssignment->time_start }}-{{ $req->originalAssignment->time_end }})
-                </p>
-                @endif
-                @if($req->change_type === 'reschedule' && $req->requested_date)
-                <p class="text-sm text-blue-600">
-                    → Pindah ke: {{ $req->requested_date->format('d M Y') }} • {{ $req->getSessionLabel() }}
-                </p>
-                @endif
-                <p class="text-sm text-gray-400 truncate mt-1">{{ $req->reason }}</p>
-            </div>
-            <div class="flex items-center gap-2" wire:click.stop>
-                @if($activeTab === 'admin' && $req->status === 'pending')
-                <button wire:click="openReview({{ $req->id }}, 'approved')" class="p-2 text-green-600 hover:bg-green-50 rounded-lg" title="Setujui">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                </button>
-                <button wire:click="openReview({{ $req->id }}, 'rejected')" class="p-2 text-red-600 hover:bg-red-50 rounded-lg" title="Tolak">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
                 @endif
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-            </div>
+            </nav>
         </div>
-        @empty
-        <div class="p-12 text-center text-gray-500">
-            <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            <p>Belum ada pengajuan</p>
-        </div>
-        @endforelse
-    </div>
 
-    {{ $requests->links() }}
+        <!-- Request List -->
+        <div class="p-6">
+            <div class="space-y-4">
+                @forelse($requests as $req)
+                    <x-ui.card shadow="sm" class="hover:shadow-md transition-shadow cursor-pointer border border-gray-100" wire:click="viewRequest({{ $req->id }})">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-3">
+                                    @php
+                                        $statusVariant = [
+                                            'pending' => 'warning',
+                                            'approved' => 'success',
+                                            'rejected' => 'danger',
+                                            'cancelled' => 'secondary'
+                                        ][$req->status] ?? 'primary';
+                                    @endphp
+                                    <x-ui.badge :variant="$statusVariant">
+                                        {{ $req->getStatusLabel() }}
+                                    </x-ui.badge>
+                                    <x-ui.badge :variant="$req->change_type === 'reschedule' ? 'info' : 'warning'">
+                                        {{ $req->getChangeTypeLabel() }}
+                                    </x-ui.badge>
+                                    <span class="text-sm text-gray-500">
+                                        {{ $req->created_at->diffForHumans() }}
+                                    </span>
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                                    <div>
+                                        <div class="text-xs font-medium text-gray-500 uppercase mb-1">
+                                            @if($activeTab === 'admin')
+                                                Dari: {{ $req->user->name ?? '-' }}
+                                            @else
+                                                Jadwal Asal
+                                            @endif
+                                        </div>
+                                        @if($req->originalAssignment)
+                                            <div class="font-semibold text-gray-900">
+                                                {{ \Carbon\Carbon::parse($req->originalAssignment->date)->format('d M Y') }}
+                                            </div>
+                                            <div class="text-sm text-gray-600 mt-1">
+                                                Sesi {{ $req->originalAssignment->session }} ({{ $req->originalAssignment->time_start }}-{{ $req->originalAssignment->time_end }})
+                                            </div>
+                                        @else
+                                            <div class="font-semibold text-gray-400 italic">Jadwal tidak ditemukan</div>
+                                        @endif
+                                    </div>
+
+                                    @if($req->change_type === 'reschedule' && $req->requested_date)
+                                    <div>
+                                        <div class="text-xs font-medium text-blue-500 uppercase mb-1">Tujuan Pindah</div>
+                                        <div class="font-semibold text-blue-700">
+                                            {{ $req->requested_date->format('d M Y') }}
+                                        </div>
+                                        <div class="text-sm text-blue-600 mt-1">
+                                            {{ $req->getSessionLabel() }}
+                                        </div>
+                                    </div>
+                                    @endif
+                                </div>
+
+                                @if($req->reason)
+                                    <div class="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
+                                        <span class="font-medium">Alasan:</span> {{ $req->reason }}
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="flex items-center space-x-2 ml-4" wire:click.stop>
+                                @if($activeTab === 'admin' && $req->status === 'pending')
+                                    <x-ui.button 
+                                        wire:click="openReview({{ $req->id }}, 'approved')" 
+                                        variant="success" 
+                                        size="sm">
+                                        Setujui
+                                    </x-ui.button>
+                                    <x-ui.button 
+                                        wire:click="openReview({{ $req->id }}, 'rejected')" 
+                                        variant="danger" 
+                                        size="sm">
+                                        Tolak
+                                    </x-ui.button>
+                                @elseif($activeTab === 'my-requests' && $req->status === 'pending')
+                                    <x-ui.button 
+                                        wire:click="cancelRequest({{ $req->id }})" 
+                                        wire:confirm="Batalkan pengajuan ini?"
+                                        variant="white" 
+                                        size="sm">
+                                        Batalkan
+                                    </x-ui.button>
+                                @endif
+                            </div>
+                        </div>
+                    </x-ui.card>
+                @empty
+                    <x-layout.empty-state 
+                        icon="calendar" 
+                        title="Belum ada pengajuan"
+                        description="Data pengajuan perubahan jadwal akan tampil di sini." />
+                @endforelse
+            </div>
+        </div>
+    </x-ui.card>
+
+    @if($requests->hasPages())
+    <div>
+        {{ $requests->links() }}
+    </div>
+    @endif
 
     {{-- Create Form Modal --}}
     @if($showForm)
     <div class="fixed inset-0 z-50 overflow-y-auto">
-        <div class="fixed inset-0 bg-black/50" wire:click="closeForm"></div>
+        <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity" wire:click="closeForm"></div>
         <div class="relative min-h-screen flex items-center justify-center p-4">
-            <div class="relative bg-white rounded-xl shadow-xl w-full max-w-md" @click.stop>
+            <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg" @click.stop>
+                <div class="flex items-center justify-between p-6 border-b border-gray-100">
+                    <h3 class="text-xl font-bold text-gray-900">Ajukan Perubahan Jadwal</h3>
+                    <button wire:click="closeForm" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <x-ui.icon name="x" class="w-6 h-6" />
+                    </button>
+                </div>
+                
                 <div class="p-6">
-                    <h3 class="text-lg font-semibold mb-4">Ajukan Perubahan Jadwal</h3>
-                    
-                    <form wire:submit="submitForm" class="space-y-4">
+                    <form wire:submit="submitForm" class="space-y-5">
                         {{-- Select Schedule --}}
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Jadwal</label>
-                            <select wire:model="selectedAssignment" class="w-full border-gray-300 rounded-lg text-sm">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Pilih Jadwal yang Ingin Diubah</label>
+                            <select wire:model="selectedAssignment" class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl text-sm shadow-sm">
                                 <option value="">-- Pilih jadwal --</option>
                                 @foreach($myAssignments as $asg)
                                 <option value="{{ $asg->id }}">
@@ -136,19 +174,19 @@
                                 </option>
                                 @endforeach
                             </select>
-                            @error('selectedAssignment') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                            @error('selectedAssignment') <p class="text-danger-500 text-xs font-medium mt-1.5">{{ $message }}</p> @enderror
                         </div>
 
                         {{-- Change Type --}}
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Perubahan</label>
-                            <div class="grid grid-cols-2 gap-2">
-                                <button type="button" wire:click="$set('changeType', 'reschedule')" @class(['p-3 border rounded-lg text-sm font-medium transition', 'border-blue-500 bg-blue-50 text-blue-700' => $changeType === 'reschedule', 'border-gray-200 text-gray-600 hover:border-gray-300' => $changeType !== 'reschedule'])>
-                                    <svg class="w-5 h-5 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Jenis Perubahan</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button type="button" wire:click="$set('changeType', 'reschedule')" @class(['p-4 border-2 rounded-xl text-sm font-bold transition-all duration-200 flex flex-col items-center justify-center gap-2', 'border-blue-500 bg-blue-50 text-blue-700' => $changeType === 'reschedule', 'border-gray-100 text-gray-500 hover:border-gray-300 hover:bg-gray-50' => $changeType !== 'reschedule'])>
+                                    <x-ui.icon name="calendar" class="w-6 h-6" />
                                     Pindah Jadwal
                                 </button>
-                                <button type="button" wire:click="$set('changeType', 'cancel')" @class(['p-3 border rounded-lg text-sm font-medium transition', 'border-orange-500 bg-orange-50 text-orange-700' => $changeType === 'cancel', 'border-gray-200 text-gray-600 hover:border-gray-300' => $changeType !== 'cancel'])>
-                                    <svg class="w-5 h-5 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                <button type="button" wire:click="$set('changeType', 'cancel')" @class(['p-4 border-2 rounded-xl text-sm font-bold transition-all duration-200 flex flex-col items-center justify-center gap-2', 'border-orange-500 bg-orange-50 text-orange-700' => $changeType === 'cancel', 'border-gray-100 text-gray-500 hover:border-gray-300 hover:bg-gray-50' => $changeType !== 'cancel'])>
+                                    <x-ui.icon name="x-circle" class="w-6 h-6" />
                                     Batalkan Jadwal
                                 </button>
                             </div>
@@ -156,39 +194,42 @@
 
                         {{-- Target Date & Session (only for reschedule) --}}
                         @if($changeType === 'reschedule')
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-2 gap-4 p-4 bg-blue-50/50 rounded-xl border border-blue-100">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Tujuan</label>
-                                <input type="date" wire:model="requestedDate" min="{{ now()->format('Y-m-d') }}" class="w-full border-gray-300 rounded-lg text-sm">
-                                @error('requestedDate') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Tanggal Tujuan</label>
+                                <input type="date" wire:model="requestedDate" min="{{ now()->format('Y-m-d') }}" class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl text-sm shadow-sm">
+                                @error('requestedDate') <p class="text-danger-500 text-xs font-medium mt-1.5">{{ $message }}</p> @enderror
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Sesi Tujuan</label>
-                                <select wire:model="requestedSession" class="w-full border-gray-300 rounded-lg text-sm">
+                                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Sesi Tujuan</label>
+                                <select wire:model="requestedSession" class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl text-sm shadow-sm">
                                     <option value="0">-- Pilih sesi --</option>
                                     <option value="1">Sesi 1 (07:30-10:00)</option>
                                     <option value="2">Sesi 2 (10:20-12:50)</option>
                                     <option value="3">Sesi 3 (13:30-16:00)</option>
                                 </select>
-                                @error('requestedSession') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                @error('requestedSession') <p class="text-danger-500 text-xs font-medium mt-1.5">{{ $message }}</p> @enderror
                             </div>
                         </div>
                         @endif
 
                         {{-- Reason --}}
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Alasan</label>
-                            <textarea wire:model="reason" rows="3" class="w-full border-gray-300 rounded-lg text-sm" placeholder="Jelaskan alasan perubahan jadwal..."></textarea>
-                            @error('reason') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Alasan Pengajuan</label>
+                            <textarea wire:model="reason" rows="3" class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl text-sm shadow-sm resize-none" placeholder="Jelaskan alasan secara detail..."></textarea>
+                            @error('reason') <p class="text-danger-500 text-xs font-medium mt-1.5">{{ $message }}</p> @enderror
                         </div>
 
                         {{-- Actions --}}
-                        <div class="flex gap-3 pt-4">
-                            <button type="button" wire:click="closeForm" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Batal</button>
-                            <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700" wire:loading.attr="disabled">
+                        <div class="flex gap-3 pt-2">
+                            <x-ui.button type="button" variant="white" wire:click="closeForm" class="flex-1 justify-center">Batal</x-ui.button>
+                            <x-ui.button type="submit" variant="primary" class="flex-1 justify-center">
                                 <span wire:loading.remove wire:target="submitForm">Kirim Pengajuan</span>
-                                <span wire:loading wire:target="submitForm">Mengirim...</span>
-                            </button>
+                                <span wire:loading wire:target="submitForm" class="flex items-center">
+                                    <x-ui.icon name="arrow-path" class="w-4 h-4 animate-spin mr-2" />
+                                    Mengirim...
+                                </span>
+                            </x-ui.button>
                         </div>
                     </form>
                 </div>
@@ -200,87 +241,102 @@
     {{-- Detail Modal --}}
     @if($viewingRequest)
     <div class="fixed inset-0 z-50 overflow-y-auto">
-        <div class="fixed inset-0 bg-black/50" wire:click="closeView"></div>
+        <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity" wire:click="closeView"></div>
         <div class="relative min-h-screen flex items-center justify-center p-4">
-            <div class="relative bg-white rounded-xl shadow-xl w-full max-w-md" @click.stop>
-                <div class="p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold">Detail Pengajuan</h3>
-                        <button wire:click="closeView" class="p-1 text-gray-400 hover:text-gray-600">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                        </button>
+            <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md" @click.stop>
+                <div class="flex items-center justify-between p-6 border-b border-gray-100">
+                    <h3 class="text-xl font-bold text-gray-900">Detail Pengajuan</h3>
+                    <button wire:click="closeView" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <x-ui.icon name="x" class="w-6 h-6" />
+                    </button>
+                </div>
+
+                <div class="p-6 space-y-5">
+                    {{-- Status badges --}}
+                    <div class="flex flex-wrap gap-2">
+                        <x-ui.badge :variant="$viewingRequest->change_type === 'reschedule' ? 'info' : 'warning'">
+                            {{ $viewingRequest->getChangeTypeLabel() }}
+                        </x-ui.badge>
+                        @php
+                            $statusVariant = [
+                                'pending' => 'warning',
+                                'approved' => 'success',
+                                'rejected' => 'danger',
+                                'cancelled' => 'secondary'
+                            ][$viewingRequest->status] ?? 'primary';
+                        @endphp
+                        <x-ui.badge :variant="$statusVariant">
+                            {{ $viewingRequest->getStatusLabel() }}
+                        </x-ui.badge>
                     </div>
 
-                    <div class="space-y-4">
-                        {{-- Status badges --}}
-                        <div class="flex gap-2">
-                            <span @class(['px-3 py-1 text-sm rounded-full', 'bg-yellow-100 text-yellow-700' => $viewingRequest->status === 'pending', 'bg-green-100 text-green-700' => $viewingRequest->status === 'approved', 'bg-red-100 text-red-700' => $viewingRequest->status === 'rejected', 'bg-gray-100 text-gray-700' => $viewingRequest->status === 'cancelled'])>
-                                {{ $viewingRequest->getStatusLabel() }}
-                            </span>
-                            <span @class(['px-3 py-1 text-sm rounded-full', 'bg-blue-100 text-blue-700' => $viewingRequest->change_type === 'reschedule', 'bg-orange-100 text-orange-700' => $viewingRequest->change_type === 'cancel'])>
-                                {{ $viewingRequest->getChangeTypeLabel() }}
-                            </span>
+                    @if($activeTab === 'admin')
+                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center border border-gray-200 shrink-0">
+                            <x-ui.icon name="user" class="w-5 h-5 text-gray-500" />
                         </div>
-
-                        @if($activeTab === 'admin')
                         <div>
-                            <p class="text-xs text-gray-500">Pemohon</p>
-                            <p class="font-medium">{{ $viewingRequest->user->name ?? '-' }}</p>
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-0.5">Pemohon</p>
+                            <p class="font-bold text-gray-900">{{ $viewingRequest->user->name ?? '-' }}</p>
                         </div>
-                        @endif
+                    </div>
+                    @endif
 
+                    <div class="grid grid-cols-1 {{ $viewingRequest->change_type === 'reschedule' ? 'sm:grid-cols-2 gap-4' : 'gap-4' }}">
                         {{-- Original Schedule --}}
-                        <div class="p-3 bg-gray-50 rounded-lg">
-                            <p class="text-xs text-gray-500 mb-1">Jadwal Asal</p>
+                        <div class="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 flex items-center"><x-ui.icon name="calendar" class="w-3.5 h-3.5 mr-1" /> Jadwal Asal</p>
                             @if($viewingRequest->originalAssignment)
-                            <p class="font-medium">{{ \Carbon\Carbon::parse($viewingRequest->originalAssignment->date)->format('d M Y') }}</p>
-                            <p class="text-sm text-gray-600">Sesi {{ $viewingRequest->originalAssignment->session }} ({{ $viewingRequest->originalAssignment->time_start }}-{{ $viewingRequest->originalAssignment->time_end }})</p>
+                            <p class="font-bold text-gray-900 mb-0.5">{{ \Carbon\Carbon::parse($viewingRequest->originalAssignment->date)->format('d M Y') }}</p>
+                            <p class="text-sm font-medium text-gray-600">Sesi {{ $viewingRequest->originalAssignment->session }} ({{ $viewingRequest->originalAssignment->time_start }}-{{ $viewingRequest->originalAssignment->time_end }})</p>
                             @else
-                            <p class="text-gray-400">Jadwal tidak ditemukan</p>
+                            <p class="text-gray-400 italic">Jadwal tidak ditemukan</p>
                             @endif
                         </div>
 
                         {{-- Target Schedule (for reschedule) --}}
                         @if($viewingRequest->change_type === 'reschedule' && $viewingRequest->requested_date)
-                        <div class="p-3 bg-blue-50 rounded-lg">
-                            <p class="text-xs text-blue-600 mb-1">Jadwal Tujuan</p>
-                            <p class="font-medium text-blue-700">{{ $viewingRequest->requested_date->format('d M Y') }}</p>
-                            <p class="text-sm text-blue-600">{{ $viewingRequest->getSessionLabel() }}</p>
-                        </div>
-                        @endif
-
-                        <div>
-                            <p class="text-xs text-gray-500">Alasan</p>
-                            <p class="text-gray-700">{{ $viewingRequest->reason }}</p>
-                        </div>
-
-                        <div>
-                            <p class="text-xs text-gray-500">Diajukan</p>
-                            <p class="text-gray-700">{{ $viewingRequest->created_at->format('d M Y H:i') }}</p>
-                        </div>
-
-                        @if($viewingRequest->admin_responded_at)
-                        <div class="p-3 bg-gray-50 rounded-lg text-sm">
-                            <p class="text-gray-500">Ditinjau oleh {{ $viewingRequest->adminResponder?->name ?? '-' }} • {{ $viewingRequest->admin_responded_at->format('d M Y H:i') }}</p>
-                            @if($viewingRequest->admin_response)
-                            <p class="text-gray-700 mt-1">"{{ $viewingRequest->admin_response }}"</p>
-                            @endif
+                        <div class="p-4 bg-blue-50/50 rounded-xl border border-blue-100">
+                            <p class="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1.5 flex items-center"><x-ui.icon name="arrow-right" class="w-3.5 h-3.5 mr-1" /> Jadwal Tujuan</p>
+                            <p class="font-bold text-blue-700 mb-0.5">{{ $viewingRequest->requested_date->format('d M Y') }}</p>
+                            <p class="text-sm font-medium text-blue-600">{{ $viewingRequest->getSessionLabel() }}</p>
                         </div>
                         @endif
                     </div>
 
-                    {{-- Actions --}}
-                    <div class="mt-6 flex gap-3">
-                        @if($activeTab === 'admin' && $viewingRequest->status === 'pending')
-                            <button wire:click="openReview({{ $viewingRequest->id }}, 'rejected')" class="flex-1 px-4 py-2 border border-red-300 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50">Tolak</button>
-                            <button wire:click="openReview({{ $viewingRequest->id }}, 'approved')" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700">Setujui</button>
-                        @elseif($activeTab === 'my-requests' && $viewingRequest->status === 'pending')
-                            <button wire:click="closeView" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Tutup</button>
-                            <button wire:click="cancelRequest({{ $viewingRequest->id }})" wire:confirm="Yakin ingin membatalkan pengajuan ini?" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700">Batalkan</button>
-                        @else
-                            <button wire:click="closeView" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Tutup</button>
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Alasan Pengajuan</p>
+                        <p class="text-gray-700 bg-white p-3 border border-gray-100 rounded-xl text-sm leading-relaxed">{{ $viewingRequest->reason }}</p>
+                    </div>
+
+                    <div class="flex justify-between items-center text-xs text-gray-400 font-medium">
+                        <span>Diajukan: {{ $viewingRequest->created_at->format('d M Y H:i') }}</span>
+                    </div>
+
+                    @if($viewingRequest->admin_responded_at)
+                    <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Tanggapan Admin</p>
+                        <p class="text-sm text-gray-600 mb-2">Oleh <span class="font-semibold">{{ $viewingRequest->adminResponder?->name ?? '-' }}</span> pada {{ $viewingRequest->admin_responded_at->format('d M Y H:i') }}</p>
+                        @if($viewingRequest->admin_response)
+                        <div class="border-l-2 border-gray-300 pl-3 py-1">
+                            <p class="text-gray-700 text-sm italic">"{{ $viewingRequest->admin_response }}"</p>
+                        </div>
                         @endif
                     </div>
+                    @endif
+                </div>
+
+                {{-- Actions --}}
+                <div class="p-6 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl flex gap-3">
+                    @if($activeTab === 'admin' && $viewingRequest->status === 'pending')
+                        <x-ui.button wire:click="openReview({{ $viewingRequest->id }}, 'rejected')" variant="danger" class="flex-1 justify-center bg-white" outline>Tolak</x-ui.button>
+                        <x-ui.button wire:click="openReview({{ $viewingRequest->id }}, 'approved')" variant="success" class="flex-1 justify-center">Setujui</x-ui.button>
+                    @elseif($activeTab === 'my-requests' && $viewingRequest->status === 'pending')
+                        <x-ui.button wire:click="closeView" variant="white" class="flex-1 justify-center">Tutup</x-ui.button>
+                        <x-ui.button wire:click="cancelRequest({{ $viewingRequest->id }})" wire:confirm="Yakin ingin membatalkan pengajuan ini?" variant="danger" class="flex-1 justify-center">Batalkan Pengajuan</x-ui.button>
+                    @else
+                        <x-ui.button wire:click="closeView" variant="white" class="w-full justify-center">Tutup</x-ui.button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -290,24 +346,28 @@
     {{-- Review Modal --}}
     @if($reviewingId)
     <div class="fixed inset-0 z-[60] overflow-y-auto">
-        <div class="fixed inset-0 bg-black/50" wire:click="closeReview"></div>
+        <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity" wire:click="closeReview"></div>
         <div class="relative min-h-screen flex items-center justify-center p-4">
-            <div class="relative bg-white rounded-xl shadow-xl w-full max-w-sm">
+            <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm" @click.stop>
                 <div class="p-6">
-                    <h3 class="text-lg font-semibold mb-4">
-                        {{ $reviewAction === 'approved' ? 'Setujui Pengajuan' : 'Tolak Pengajuan' }}
+                    <div class="w-12 h-12 {{ $reviewAction === 'approved' ? 'bg-success-100 text-success-600' : 'bg-danger-100 text-danger-600' }} rounded-full flex items-center justify-center mx-auto mb-4">
+                        <x-ui.icon name="{{ $reviewAction === 'approved' ? 'check' : 'x' }}" class="w-6 h-6" />
+                    </div>
+                    
+                    <h3 class="text-xl font-bold text-center text-gray-900 mb-2">
+                        {{ $reviewAction === 'approved' ? 'Setujui Pengajuan?' : 'Tolak Pengajuan?' }}
                     </h3>
+                    <p class="text-center text-gray-500 text-sm mb-6">Silakan tambahkan catatan opsional untuk pemohon.</p>
 
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Catatan (opsional)</label>
-                        <textarea wire:model="reviewNotes" rows="3" class="w-full border-gray-300 rounded-lg text-sm" placeholder="Tambahkan catatan..."></textarea>
+                    <div class="mb-6">
+                        <textarea wire:model="reviewNotes" rows="3" class="w-full border-gray-300 focus:border-{{ $reviewAction === 'approved' ? 'success' : 'danger' }}-500 focus:ring-{{ $reviewAction === 'approved' ? 'success' : 'danger' }}-500 rounded-xl text-sm shadow-sm resize-none" placeholder="Tambahkan catatan (opsional)..."></textarea>
                     </div>
 
                     <div class="flex gap-3">
-                        <button wire:click="closeReview" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Batal</button>
-                        <button wire:click="submitReview" @class(['flex-1 px-4 py-2 rounded-lg text-sm font-medium text-white', 'bg-green-600 hover:bg-green-700' => $reviewAction === 'approved', 'bg-red-600 hover:bg-red-700' => $reviewAction === 'rejected'])>
+                        <x-ui.button wire:click="closeReview" variant="white" class="flex-1 justify-center">Batal</x-ui.button>
+                        <x-ui.button wire:click="submitReview" variant="{{ $reviewAction === 'approved' ? 'success' : 'danger' }}" class="flex-1 justify-center">
                             {{ $reviewAction === 'approved' ? 'Ya, Setujui' : 'Ya, Tolak' }}
-                        </button>
+                        </x-ui.button>
                     </div>
                 </div>
             </div>

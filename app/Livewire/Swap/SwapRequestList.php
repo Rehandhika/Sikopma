@@ -15,8 +15,6 @@ class SwapRequestList extends Component
 
     public $tab = 'my-requests'; // my-requests, received, all
 
-    public $search = '';
-
     public function cancelRequest($id)
     {
         $swap = SwapRequest::with(['requesterAssignment', 'targetAssignment'])->find($id);
@@ -133,20 +131,6 @@ class SwapRequestList extends Component
                 'targetAssignment',
             ])
             ->orderBy('created_at', 'desc');
-
-        // Apply search filter
-        if ($this->search) {
-            $query->where(function ($q) {
-                $q->whereHas('requester', function ($subQuery) {
-                    $subQuery->where('name', 'like', '%'.$this->search.'%')
-                        ->orWhere('nim', 'like', '%'.$this->search.'%');
-                })
-                    ->orWhereHas('target', function ($subQuery) {
-                        $subQuery->where('name', 'like', '%'.$this->search.'%')
-                            ->orWhere('nim', 'like', '%'.$this->search.'%');
-                    });
-            });
-        }
 
         $swaps = $query->paginate(15);
 
