@@ -228,7 +228,7 @@ class User extends Authenticatable
      */
     public function isKoordinator(): bool
     {
-        return str_starts_with($this->getPrimaryRole() ?? '', 'Koordinator');
+        return str_starts_with($this->getPrimaryRole() ?? '', 'koordinator');
     }
 
     /**
@@ -236,7 +236,7 @@ class User extends Authenticatable
      */
     public function isBendahara(): bool
     {
-        return str_starts_with($this->getPrimaryRole() ?? '', 'Bendahara');
+        return $this->getPrimaryRole() === 'bendahara';
     }
 
     /**
@@ -244,7 +244,7 @@ class User extends Authenticatable
      */
     public function isPimpinan(): bool
     {
-        return in_array($this->getPrimaryRole(), ['Ketua', 'Wakil Ketua', 'Super Admin']);
+        return in_array($this->getPrimaryRole(), ['ketua', 'wakil-ketua', 'Super Admin']);
     }
 
     /**
@@ -252,6 +252,6 @@ class User extends Authenticatable
      */
     public function isSekretaris(): bool
     {
-        return $this->getPrimaryRole() === 'Sekretaris';
+        return $this->getPrimaryRole() === 'sekretaris';
     }
 }

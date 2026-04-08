@@ -271,7 +271,7 @@ class LeaveManager extends Component
     public function render()
     {
         $userId = Auth::id();
-        $isAdmin = Auth::user()->hasAnyRole(['Super Admin', 'Ketua', 'Wakil Ketua', 'BPH']);
+        $isAdmin = Auth::user()->hasAnyRole(['Super Admin', 'ketua', 'wakil-ketua']);
 
         $totalDays = 0;
         if ($this->start_date && $this->end_date) {

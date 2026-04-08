@@ -189,7 +189,7 @@ class SwapApprovals extends Component
     {
         // Get users with admin roles
         $adminUsers = User::whereHas('roles', function ($query) {
-            $query->whereIn('name', ['Super Admin', 'Ketua', 'Wakil Ketua', 'BPH']);
+            $query->whereIn('name', ['Super Admin', 'ketua', 'wakil-ketua']);
         })->get();
 
         foreach ($adminUsers as $admin) {

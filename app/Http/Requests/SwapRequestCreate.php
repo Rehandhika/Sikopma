@@ -36,7 +36,7 @@ class SwapRequestCreate extends FormRequest
                 Rule::exists('users', 'id')->where(function ($query) {
                     $query->where('status', 'active')
                         ->whereHas('roles', function ($subQuery) {
-                            $subQuery->whereIn('name', ['Super Admin', 'Ketua', 'Wakil Ketua', 'BPH', 'Anggota']);
+                            $subQuery->whereIn('name', ['Super Admin', 'ketua', 'wakil-ketua', 'anggota', 'sekretaris', 'bendahara', 'koordinator-toko', 'koordinator-psda', 'koordinator-produksi', 'koordinator-desain', 'koordinator-humsar']);
                         });
                 }),
             ],

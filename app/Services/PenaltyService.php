@@ -103,7 +103,7 @@ class PenaltyService
             );
 
             // Notify admins about critical threshold
-            $admins = User::role(['Super Admin', 'Ketua', 'Wakil Ketua'])->get();
+            $admins = User::role(['Super Admin', 'ketua', 'wakil-ketua'])->get();
             foreach ($admins as $admin) {
                 NotificationService::send(
                     $admin,
@@ -160,7 +160,7 @@ class PenaltyService
         ]);
 
         // Notify admins
-        $admins = User::role(['Super Admin', 'Ketua', 'Wakil Ketua'])->get();
+        $admins = User::role(['Super Admin', 'ketua', 'wakil-ketua'])->get();
         foreach ($admins as $admin) {
             NotificationService::send(
                 $admin,

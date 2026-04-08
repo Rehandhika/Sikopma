@@ -77,7 +77,7 @@ class ScheduleRepository
     {
         return User::where('status', 'active')
             ->whereHas('roles', function ($query) {
-                $query->whereIn('name', ['Super Admin', 'Ketua', 'Wakil Ketua', 'BPH', 'Anggota']);
+                $query->whereIn('name', ['Super Admin', 'ketua', 'wakil-ketua', 'anggota', 'sekretaris', 'bendahara', 'koordinator-toko', 'koordinator-psda', 'koordinator-produksi', 'koordinator-desain', 'koordinator-humsar']);
             })
             ->whereDoesntHave('scheduleAssignments', function ($query) use ($date, $session) {
                 $query->where('date', $date)
