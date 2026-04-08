@@ -1,28 +1,94 @@
-# ================================
-# Laravel Framework
-# ================================
+##############################################################################
+# SIWIRUS — Laravel 12 + Livewire 3 + Vite
+# .gitignore — Production-ready, VPS-deployed
+##############################################################################
+
+# ===========================================================================
+# ENVIRONMENT & SECRETS  ← JANGAN PERNAH COMMIT INI
+# ===========================================================================
+.env
+.env.*
+!.env.example
+*.backup
+*.env.backup
+local.env.backup
+prod.env.backup
+auth.json
+
+# ===========================================================================
+# PHP / COMPOSER
+# ===========================================================================
 /vendor
+composer.phar
+
+# ===========================================================================
+# NODE / NPM
+# ===========================================================================
 /node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ===========================================================================
+# VITE / FRONTEND BUILD OUTPUT
+# ===========================================================================
 /public/build
 /public/hot
+
+# ===========================================================================
+# LARAVEL RUNTIME — jangan commit file yang di-generate saat runtime
+# ===========================================================================
+
+# Storage symlink (dibuat via `php artisan storage:link`)
 /public/storage
+
+# Encryption keys
 /storage/*.key
+
+# Bootstrap cache (di-generate via `php artisan optimize`)
+/bootstrap/cache/*.php
+
+# Framework runtime (sessions, views, cache — sudah ada nested .gitignore)
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+!/storage/framework/cache/.gitignore
+!/storage/framework/sessions/.gitignore
+!/storage/framework/views/.gitignore
+
+# Logs (sudah ada nested .gitignore di storage/logs/)
+/storage/logs/*.log
+
+# Debugbar (dev tool — tidak perlu di repo)
+/storage/debugbar
+
+# Laravel Pail (dev log streaming)
 /storage/pail
-bootstrap/cache/*.php
 
-# ================================
-# Environment Files
-# ================================
-.env
-.env.backup
-.env.local
-.env.*.local
-.env.production
-.env.staging
+# ===========================================================================
+# TESTING
+# ===========================================================================
+.phpunit.result.cache
+.phpunit.cache
+/.phpunit.cache
+/coverage
+/.nyc_output
+.pest-mutate-cache
 
-# ================================
-# IDE & Editors
-# ================================
+# ===========================================================================
+# PHP TOOLS (dev-only)
+# ===========================================================================
+_ide_helper.php
+_ide_helper_models.php
+.phpstorm.meta.php
+.phpactor.json
+.php-cs-fixer.cache
+.phpcs-cache
+
+# ===========================================================================
+# IDE & EDITORS
+# ===========================================================================
 /.idea
 /.vscode
 /.fleet
@@ -32,42 +98,9 @@ bootstrap/cache/*.php
 *.sublime-workspace
 *.code-workspace
 
-# ================================
-# PHP Tools
-# ================================
-.phpactor.json
-.phpunit.result.cache
-.phpunit.cache
-.php-cs-fixer.cache
-.phpcs-cache
-phpstan.neon
-_ide_helper.php
-_ide_helper_models.php
-.phpstorm.meta.php
-
-# ================================
-# Testing & Coverage
-# ================================
-/coverage
-/.nyc_output
-/cypress/screenshots
-/cypress/videos
-/cypress/downloads
-.pest-mutate-cache
-
-# ================================
-# Build & Cache
-# ================================
-*.cache
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-# ================================
-# OS Generated Files
-# ================================
+# ===========================================================================
+# OS GENERATED
+# ===========================================================================
 .DS_Store
 .DS_Store?
 ._*
@@ -77,54 +110,30 @@ ehthumbs.db
 Thumbs.db
 Desktop.ini
 
-# ================================
-# Composer
-# ================================
-/auth.json
-composer.phar
-
-# ================================
-# Homestead & Vagrant
-# ================================
-Homestead.json
-Homestead.yaml
-Vagrantfile
-.vagrant
-
-# ================================
-# Docker
-# ================================
-.docker-sync*
-docker-compose.override.yml
-
-# ================================
-# Kiro AI Assistant
-# ================================
-/.kiro
-
-# ================================
-# Temporary & Backup Files
-# ================================
-*.bak
+# ===========================================================================
+# TEMPORARY & SWAP FILES
+# ===========================================================================
 *.swp
 *.swo
 *~
 *.tmp
 *.temp
 
-# ================================
-# Debug & Profiling
-# ================================
-/storage/debugbar
-clockwork.json
-.clockwork
+# ===========================================================================
+# DOCKER (jika dipakai di masa depan)
+# ===========================================================================
+.docker-sync*
+docker-compose.override.yml
 
-# ================================
-# Laravel Specific
-# ================================
-/storage/framework/cache/data/*
-/storage/framework/sessions/*
-/storage/framework/views/*
-!/storage/framework/cache/.gitignore
-!/storage/framework/sessions/.gitignore
-!/storage/framework/views/.gitignore
+# ===========================================================================
+# HOMESTEAD / VAGRANT (dev environment lokal)
+# ===========================================================================
+Homestead.json
+Homestead.yaml
+Vagrantfile
+.vagrant
+
+# ===========================================================================
+# KIRO AI ASSISTANT
+# ===========================================================================
+/.kiro
