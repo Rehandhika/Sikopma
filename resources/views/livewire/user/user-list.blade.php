@@ -281,9 +281,8 @@
     @endif
 
     {{-- Modal Tambah/Edit Anggota --}}
-    @if($showModal)
     <div class="fixed inset-0 z-50 overflow-y-auto" 
-        x-data="{ show: true }" 
+        x-data="{ show: @entangle('showModal') }" 
         x-show="show" 
         x-cloak
         @keydown.escape.window="$wire.closeModal()">
@@ -500,7 +499,6 @@
             </div>
         </div>
     </div>
-    @endif
 
     {{-- Loading Overlay --}}
     <div wire:loading.delay.longer wire:target="delete, toggleStatus" class="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-40">
