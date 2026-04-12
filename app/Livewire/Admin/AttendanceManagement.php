@@ -9,7 +9,6 @@ use App\Models\Schedule;
 use App\Services\ActivityLogService;
 use App\Traits\AuthorizesLivewireRequests;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Lazy;
 use Livewire\Attributes\Url;
@@ -165,7 +164,7 @@ class AttendanceManagement extends Component
                     
                     if ($now->greaterThan($sessionEnd)) {
                         $status = 'absent';
-                        $statusLabel = 'Absen';
+                        $statusLabel = 'Tidak Hadir';
                         $statusColor = 'danger';
                     }
                 }
@@ -211,28 +210,24 @@ class AttendanceManagement extends Component
     public function updatingFilterStatus(): void
     {
         $this->resetPage();
-        $this->clearStatsCache();
     }
 
     public function updatedDateFrom(): void
     {
         $this->datePreset = 'custom';
         $this->resetPage();
-        $this->clearStatsCache();
     }
 
     public function updatedDateTo(): void
     {
         $this->datePreset = 'custom';
         $this->resetPage();
-        $this->clearStatsCache();
     }
 
     public function applyFilter(): void
     {
         $this->datePreset = 'custom';
         $this->resetPage();
-        $this->clearStatsCache();
     }
 
     public function resetFilters(): void
@@ -243,17 +238,11 @@ class AttendanceManagement extends Component
         $this->search = '';
         $this->datePreset = 'today';
         $this->resetPage();
-        $this->clearStatsCache();
-    }
-
-    private function clearStatsCache(): void
-    {
-        Cache::forget($this->getStatsCacheKey());
     }
 
     private function getStatsCacheKey(): string
     {
-        return "admin_attendance_stats_{$this->dateFrom}_{$this->dateTo}_{$this->filterStatus}";
+        return "admin_attendance_stats_{$this->dateFrom}_{$this->dateTo}_{$this->filterStatus}_{$this->search}";
     }
 
     // === Detail Modal ===
@@ -383,7 +372,6 @@ class AttendanceManagement extends Component
         );
 
         $this->closeEditModal();
-        $this->clearStatsCache();
         $this->dispatch('toast', message: 'Data berhasil diperbarui', type: 'success');
     }
 
@@ -404,7 +392,6 @@ class AttendanceManagement extends Component
         );
     }
 
-    #[Computed]
     public function stats(): array
     {
         // Fetch all assignments in the period

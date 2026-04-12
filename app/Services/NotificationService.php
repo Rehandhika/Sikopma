@@ -193,7 +193,7 @@ class NotificationService
                 'type' => 'warning',
             ],
             'absent' => [
-                'title' => 'Absen Otomatis',
+                'title' => 'Tidak Hadir',
                 'message' => 'Anda tidak check-in pada jadwal yang ditentukan.',
                 'type' => 'error',
             ],

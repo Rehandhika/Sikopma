@@ -26,11 +26,12 @@
 
     {{-- Statistics --}}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        @php $stats = $this->stats(); @endphp
         <div class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Hadir</p>
-                    <p class="text-2xl font-bold text-success-600 mt-1">{{ $this->stats['present'] }}</p>
+                    <p class="text-2xl font-bold text-success-600 mt-1">{{ $stats['present'] }}</p>
                 </div>
                 <div class="w-10 h-10 bg-success-100 rounded-lg flex items-center justify-center">
                     <span class="w-3 h-3 bg-success-500 rounded-full"></span>
@@ -41,7 +42,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Terlambat</p>
-                    <p class="text-2xl font-bold text-warning-600 mt-1">{{ $this->stats['late'] }}</p>
+                    <p class="text-2xl font-bold text-warning-600 mt-1">{{ $stats['late'] }}</p>
                 </div>
                 <div class="w-10 h-10 bg-warning-100 rounded-lg flex items-center justify-center">
                     <span class="w-3 h-3 bg-warning-500 rounded-full"></span>
@@ -52,7 +53,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Tidak Hadir</p>
-                    <p class="text-2xl font-bold text-danger-600 mt-1">{{ $this->stats['absent'] }}</p>
+                    <p class="text-2xl font-bold text-danger-600 mt-1">{{ $stats['absent'] }}</p>
                 </div>
                 <div class="w-10 h-10 bg-danger-100 rounded-lg flex items-center justify-center">
                     <span class="w-3 h-3 bg-danger-500 rounded-full"></span>
@@ -63,7 +64,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">% Kehadiran</p>
-                    <p class="text-2xl font-bold text-primary-600 mt-1">{{ $this->stats['attendance_rate'] }}%</p>
+                    <p class="text-2xl font-bold text-primary-600 mt-1">{{ $stats['attendance_rate'] }}%</p>
                 </div>
                 <div class="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
                     <x-ui.icon name="chart-bar" class="w-5 h-5 text-primary-600" />
