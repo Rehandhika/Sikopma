@@ -24,6 +24,8 @@ class Attendance extends Model
 
     protected $casts = [
         'date' => 'date',
+        // FIX: Database menggunakan tipe 'time', bukan 'datetime'
+        // Cast sebagai datetime untuk kompatibilitas dengan kode existing
         'check_in' => 'datetime',
         'check_out' => 'datetime',
         'work_hours' => 'decimal:2',

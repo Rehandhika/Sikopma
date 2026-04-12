@@ -42,11 +42,15 @@ class AttendanceHistory extends Component
     {
         $attendances = Attendance::query()
             ->where('user_id', auth()->id())
-            ->when($this->dateFrom, fn ($q) => $q->whereDate('check_in', '>=', $this->dateFrom))
-            ->when($this->dateTo, fn ($q) => $q->whereDate('check_in', '<=', $this->dateTo))
+            // FIX: Gunakan kolom 'date' bukan 'check_in' agar data absent/excused muncul
+            ->when($this->dateFrom, fn ($q) => $q->whereDate('date', '>=', $this->dateFrom))
+            ->when($this->dateTo, fn ($q) => $q->whereDate('date', '<=', $this->dateTo))
             ->when($this->status, fn ($q) => $q->where('status', $this->status))
-            ->with('scheduleAssignment')
-            ->orderBy('check_in', 'desc')
+            // FIX: Load relasi schedule untuk menampilkan info sesi
+            ->with(['scheduleAssignment.schedule'])
+            // FIX: Order by date first, then check_in (handle null check_in)
+            ->orderBy('date', 'desc')
+            ->orderByRaw('check_in IS NULL, check_in DESC')
             ->paginate(15);
 
         return view('livewire.attendance.attendance-history', [
