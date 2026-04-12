@@ -8,6 +8,19 @@
                 @if($dateFrom !== $dateTo) - {{ \Carbon\Carbon::parse($dateTo)->translatedFormat('d M Y') }} @endif
             </p>
         </div>
+        <div class="flex gap-2">
+            @if(class_exists('\Maatwebsite\Excel\Facades\Excel'))
+                <x-ui.button 
+                    variant="secondary" 
+                    size="sm"
+                    wire:click="export"
+                    wire:loading.attr="disabled">
+                    <x-ui.icon name="arrow-down-tray" class="w-4 h-4 mr-1.5" />
+                    <span wire:loading.remove wire:target="export">Export Excel</span>
+                    <span wire:loading wire:target="export">Mengekspor...</span>
+                </x-ui.button>
+            @endif
+        </div>
     </div>
 
     {{-- Date Presets --}}
@@ -21,7 +34,7 @@
     </div>
 
     {{-- Stats Cards --}}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
             <div class="flex items-center justify-between">
                 <div>
@@ -54,6 +67,18 @@
                 </div>
                 <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
                     <x-ui.icon name="scale" class="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Dibatalkan</p>
+                    <p class="text-xl sm:text-2xl font-bold text-gray-600 dark:text-gray-400 mt-1">{{ number_format($this->stats->dismissed ?? 0) }}</p>
+                </div>
+                <div class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                    <x-ui.icon name="x-circle" class="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 </div>
             </div>
         </div>
@@ -138,6 +163,25 @@
                     @if($penalty->description)
                         <p class="text-xs text-gray-500 truncate">{{ $penalty->description }}</p>
                     @endif
+                    @if($penalty->reference_type)
+                        @php
+                            $refLabel = match($penalty->reference_type) {
+                                'attendance' => 'Absensi',
+                                'leave' => 'Cuti',
+                                'schedule' => 'Jadwal',
+                                default => ucfirst($penalty->reference_type)
+                            };
+                        @endphp
+                        <div class="flex items-center gap-1 text-xs text-gray-500">
+                            <x-ui.icon name="link" class="w-3 h-3" />
+                            <span>{{ $refLabel }} #{{ $penalty->reference_id }}</span>
+                        </div>
+                    @endif
+                    @if($penalty->status === 'dismissed' && $penalty->reviewer)
+                        <div class="text-xs text-gray-500">
+                            Direview oleh: {{ $penalty->reviewer->name }}
+                        </div>
+                    @endif
                     @if($penalty->status === 'appealed' && auth()->user()->can('kelola_penalti'))
                         <div class="mt-2 flex justify-end">
                             <x-ui.button 
@@ -164,6 +208,7 @@
                         <th class="px-4 py-3 text-left">Jenis</th>
                         <th class="px-4 py-3 text-center">Poin</th>
                         <th class="px-4 py-3 text-left">Deskripsi</th>
+                        <th class="px-4 py-3 text-left">Referensi</th>
                         <th class="px-4 py-3 text-center">Status</th>
                         <th class="px-4 py-3 text-center">Aksi</th>
                     </tr>
@@ -197,13 +242,40 @@
                                     <span>{{ $penalty->description ?? '-' }}</span>
                                 </div>
                             </td>
+                            {{-- Referensi --}}
+                            <td class="px-4 py-3 text-gray-600 dark:text-gray-400">
+                                @if($penalty->reference_type)
+                                    @php
+                                        $refLabel = match($penalty->reference_type) {
+                                            'attendance' => 'Absensi',
+                                            'leave' => 'Cuti',
+                                            'schedule' => 'Jadwal',
+                                            default => ucfirst($penalty->reference_type)
+                                        };
+                                    @endphp
+                                    <div class="flex items-center gap-1 text-xs">
+                                        <x-ui.icon name="link" class="w-3 h-3 text-gray-400" />
+                                        <span>{{ $refLabel }}</span>
+                                        @if($penalty->reference_id)
+                                            <span class="text-gray-400">#{{ $penalty->reference_id }}</span>
+                                        @endif
+                                    </div>
+                                @else
+                                    <span class="text-gray-400 text-xs">-</span>
+                                @endif
+                            </td>
                             <td class="px-4 py-3 text-center">
                                 <span class="px-2 py-0.5 rounded text-xs font-medium {{ $statusConfig['class'] }}">
                                     {{ $statusConfig['label'] }}
                                 </span>
                                 @if($penalty->status === 'appealed' && $penalty->appeal_reason)
                                     <div class="text-xs text-gray-500 mt-1 text-left max-w-xs mx-auto truncate" title="{{ $penalty->appeal_reason }}">
-                                        Ref: {{ Str::limit($penalty->appeal_reason, 20) }}
+                                        Alasan: {{ Str::limit($penalty->appeal_reason, 30) }}
+                                    </div>
+                                @endif
+                                @if($penalty->status === 'dismissed' && $penalty->reviewer)
+                                    <div class="text-xs text-gray-500 mt-1">
+                                        Oleh: {{ $penalty->reviewer->name }}
                                     </div>
                                 @endif
                             </td>
@@ -215,6 +287,13 @@
                                         wire:click="openReviewModal({{ $penalty->id }})">
                                         Review Banding
                                     </x-ui.button>
+                                @elseif($penalty->status === 'dismissed' && $penalty->review_notes)
+                                    <button 
+                                        class="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 hover:underline"
+                                        x-data
+                                        x-on:click="alert('Catatan Review:\n\n{{ addslashes($penalty->review_notes) }}')">
+                                        Lihat Catatan
+                                    </button>
                                 @else
                                     <span class="text-sm text-gray-500">-</span>
                                 @endif
@@ -222,7 +301,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-12 text-center text-gray-400 text-sm">Tidak ada data penalti</td>
+                            <td colspan="8" class="px-4 py-12 text-center text-gray-400 text-sm">Tidak ada data penalti</td>
                         </tr>
                     @endforelse
                 </tbody>

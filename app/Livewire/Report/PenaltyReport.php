@@ -33,6 +33,8 @@ class PenaltyReport extends Component
 
     public $showReviewModal = false;
 
+    public $showExportOptions = false;
+
     protected PenaltyService $penaltyService;
 
     protected $rules = [
@@ -211,6 +213,35 @@ class PenaltyReport extends Component
     }
 
     /**
+     * Export penalties to Excel
+     */
+    public function export()
+    {
+        try {
+            $query = Penalty::query()
+                ->whereBetween('date', [$this->dateFrom, $this->dateTo])
+                ->when($this->userFilter !== 'all', fn ($q) => $q->where('user_id', $this->userFilter))
+                ->when($this->statusFilter !== 'all', fn ($q) => $q->where('status', $this->statusFilter))
+                ->with(['user', 'penaltyType', 'reviewer'])
+                ->orderBy('date', 'desc')
+                ->get();
+
+            if ($query->isEmpty()) {
+                $this->dispatch('toast', message: 'Tidak ada data untuk diekspor', type: 'warning');
+                return;
+            }
+
+            return \Maatwebsite\Excel\Facades\Excel::download(
+                new \App\Exports\PenaltiesExport($query),
+                'laporan-penalti-' . now()->format('Y-m-d-His') . '.xlsx'
+            );
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error exporting penalties', ['error' => $e->getMessage()]);
+            $this->dispatch('toast', message: 'Gagal mengekspor data: ' . $e->getMessage(), type: 'error');
+        }
+    }
+
+    /**
      * Single optimized query untuk statistik
      */
     #[Computed]
@@ -223,6 +254,7 @@ class PenaltyReport extends Component
             $params[] = $this->userFilter;
         }
 
+        // FIX: Gunakan IFNULL untuk handle NULL values dengan benar
         $result = DB::select("
             SELECT 
                 COUNT(*) as total,
@@ -230,9 +262,11 @@ class PenaltyReport extends Component
                 SUM(CASE WHEN status = 'appealed' THEN 1 ELSE 0 END) as appealed,
                 SUM(CASE WHEN status = 'dismissed' THEN 1 ELSE 0 END) as dismissed,
                 SUM(CASE WHEN status = 'expired' THEN 1 ELSE 0 END) as expired,
-                COALESCE(SUM(points), 0) as total_points
+                IFNULL(SUM(points), 0) as total_points
             FROM penalties 
-            WHERE date BETWEEN ? AND ? {$userCondition}
+            WHERE date BETWEEN ? AND ? 
+            AND deleted_at IS NULL
+            {$userCondition}
         ", $params);
 
         return $result[0] ?? (object) [
@@ -256,9 +290,15 @@ class PenaltyReport extends Component
             ->whereBetween('date', [$this->dateFrom, $this->dateTo])
             ->when($this->userFilter !== 'all', fn ($q) => $q->where('user_id', $this->userFilter))
             ->when($this->statusFilter !== 'all', fn ($q) => $q->where('status', $this->statusFilter))
-            ->with(['user:id,name,nim', 'penaltyType:id,name,code'])
-            ->select('id', 'user_id', 'penalty_type_id', 'date', 'points', 'description', 'status', 'reference_type', 'reference_id')
+            // FIX: Load reviewer untuk dismissed penalties
+            ->with([
+                'user:id,name,nim', 
+                'penaltyType:id,name,code',
+                'reviewer:id,name' // Load reviewer info
+            ])
+            ->select('id', 'user_id', 'penalty_type_id', 'date', 'points', 'description', 'status', 'reference_type', 'reference_id', 'appeal_reason', 'appealed_at', 'reviewed_by', 'reviewed_at', 'review_notes')
             ->latest('date')
+            ->latest('id') // Secondary sort untuk konsistensi
             ->paginate(15);
 
         return view('livewire.report.penalty-report', ['penalties' => $penalties])
