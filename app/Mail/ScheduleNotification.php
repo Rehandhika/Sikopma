@@ -61,6 +61,14 @@ class ScheduleNotification extends Mailable
      */
     public function envelope(): Envelope
     {
+        // Determine priority level
+        $priorityLevel = match ($this->priority) {
+            'urgent' => 1,
+            'high' => 2,
+            'low' => 5,
+            default => 3,
+        };
+
         return new Envelope(
             from: new Address(config('mail.from.address'), config('mail.from.name')),
             subject: $this->title,
@@ -93,32 +101,5 @@ class ScheduleNotification extends Mailable
     public function attachments(): array
     {
         return [];
-    }
-
-    /**
-     * Build the message.
-     */
-    public function build()
-    {
-        $email = $this->from(config('mail.from.address'), config('mail.from.name'))
-            ->subject($this->title)
-            ->view('emails.schedule-notification');
-
-        // Add priority based on notification type and priority setting
-        switch ($this->priority) {
-            case 'urgent':
-                $email->priority(1);
-                break;
-            case 'high':
-                $email->priority(2);
-                break;
-            case 'low':
-                $email->priority(5);
-                break;
-            default:
-                $email->priority(3);
-        }
-
-        return $email;
     }
 }

@@ -51,10 +51,10 @@ class PenaltyService
         // Notify user
         NotificationService::send(
             $user,
-            'penalty_assigned',
+            'warning',
             'Penalti Baru',
             "Anda mendapat penalti: {$penaltyType->name} ({$penaltyType->points} poin). {$description}",
-            ['penalty_id' => $penalty->id],
+            ['penalty_id' => $penalty->id, 'category' => 'penalty'],
             route('admin.my-penalties')
         );
 
@@ -95,10 +95,10 @@ class PenaltyService
             // Critical warning notification - notify user and admins
             NotificationService::send(
                 $user,
-                'penalty_critical',
+                'error',
                 'Peringatan Kritis Penalti',
                 "Total poin penalti Anda: {$totalPoints}. Anda telah mencapai batas kritis. Harap segera hubungi administrator.",
-                null,
+                ['category' => 'penalty', 'total_points' => $totalPoints],
                 route('admin.my-penalties')
             );
 
@@ -107,10 +107,10 @@ class PenaltyService
             foreach ($admins as $admin) {
                 NotificationService::send(
                     $admin,
-                    'user_penalty_critical',
+                    'error',
                     'User Mencapai Batas Kritis Penalti',
                     "{$user->name} telah mencapai {$totalPoints} poin penalti (batas kritis: {$criticalThreshold} poin).",
-                    ['user_id' => $user->id],
+                    ['user_id' => $user->id, 'category' => 'penalty', 'total_points' => $totalPoints],
                     route('admin.users.index')
                 );
             }
@@ -121,10 +121,10 @@ class PenaltyService
             // Approaching critical threshold (80%) - stronger warning
             NotificationService::send(
                 $user,
-                'penalty_approaching_critical',
+                'warning',
                 'Peringatan: Mendekati Batas Kritis',
                 "Total poin penalti Anda: {$totalPoints}. Anda mendekati batas kritis ({$criticalThreshold} poin). Harap segera perbaiki kedisiplinan Anda.",
-                null,
+                ['category' => 'penalty', 'total_points' => $totalPoints],
                 route('admin.my-penalties')
             );
 
@@ -134,10 +134,10 @@ class PenaltyService
             // Warning notification
             NotificationService::send(
                 $user,
-                'penalty_warning',
+                'warning',
                 'Peringatan Penalti',
                 "Total poin penalti Anda: {$totalPoints}. Batas kritis: {$criticalThreshold} poin. Harap perhatikan kedisiplinan Anda.",
-                null,
+                ['category' => 'penalty', 'total_points' => $totalPoints],
                 route('admin.my-penalties')
             );
 
